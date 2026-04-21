@@ -1,13 +1,14 @@
 from pydantic import BaseModel, field_validator, EmailStr
+from typing import Optional
 
 class UserCreate(BaseModel):
     username: str
     password: str
     firstname: str
     lastname: str
-    email: EmailStr | None
-    phone_number: str | None
-    departament: str | None
+    email: Optional[EmailStr] = None
+    phone_number: Optional[str] = None
+    departament: Optional[str] = None
 
     @field_validator("email")
     def validate_email(cls, v):

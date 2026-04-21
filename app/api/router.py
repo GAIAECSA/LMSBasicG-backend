@@ -6,6 +6,7 @@ from app.api.v1 import (
     category_routes as category,
     subcategory_routes as subcategory,
     course_routes as course,
+    module_routes as module,
 )
 
 router = APIRouter()
@@ -38,4 +39,10 @@ router.include_router(
     course.router,
     prefix="/courses",
     tags=["courses"]
+)
+
+router.include_router(
+    module.router,
+    prefix="/modules",
+    tags=["modules"]
 )

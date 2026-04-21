@@ -1,4 +1,4 @@
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator
 from typing import Optional
 from decimal import Decimal
 from enum import Enum
@@ -28,6 +28,26 @@ class CourseCreate(BaseModel):
     total_students: int = Field(default=0, ge=0)
 
     subcategory_id: int
+
+    @field_validator("name")
+    def validate_name(cls, v):
+        v = v.strip()
+        if not v:
+            raise ValueError("El nombre del curso no puede estar vacío")
+        return v
+
+    @field_validator("description")
+    def validate_description(cls, v):
+        v = v.strip()
+        if not v:
+            raise ValueError("La descripción del curso no puede estar vacía")
+        return v
+
+    @field_validator("price")
+    def validate_price(cls, v):
+        if v is not None and v < 0:
+            raise ValueError("El precio del curso no puede ser negativo")
+        return v
 
 class CourseUpdate(BaseModel):
     name: Optional[str] = Field(None, min_length=1)
