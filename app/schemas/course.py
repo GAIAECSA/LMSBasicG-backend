@@ -1,0 +1,70 @@
+from pydantic import BaseModel, Field
+from typing import Optional
+from decimal import Decimal
+from enum import Enum
+
+
+class CourseLevel(str, Enum):
+    PRINCIPIANTE = "PRINCIPIANTE"
+    INTERMEDIO = "INTERMEDIO"
+    AVANZADO = "AVANZADO"
+
+
+class CourseCreate(BaseModel):
+    name: str = Field(..., min_length=1)
+    description: str = Field(..., min_length=1)
+    price: Decimal = Field(..., ge=0)
+    is_free: bool
+    level: CourseLevel
+    is_published: bool
+    duration_hours: int = Field(..., ge=0)
+    total_lessons: int = Field(..., ge=0)
+
+    image_url: Optional[str] = None
+    discount_price: Optional[Decimal] = Field(None, ge=0)
+    currency: str = Field(default="USD", max_length=10)
+    rating: Optional[Decimal] = Field(None, ge=0, le=5)
+    total_students: int = Field(default=0, ge=0)
+
+    subcategory_id: int
+
+class CourseUpdate(BaseModel):
+    name: Optional[str] = Field(None, min_length=1)
+    description: Optional[str] = Field(None, min_length=1)
+    price: Optional[Decimal] = Field(None, ge=0)
+    is_free: Optional[bool] = None
+    level: Optional[CourseLevel] = None
+    is_published: Optional[bool] = None
+    duration_hours: Optional[int] = Field(None, ge=0)
+    total_lessons: Optional[int] = Field(None, ge=0)
+
+    image_url: Optional[str] = None
+    discount_price: Optional[Decimal] = Field(None, ge=0)
+    currency: Optional[str] = Field(None, max_length=10)
+    rating: Optional[Decimal] = Field(None, ge=0, le=5)
+    total_students: Optional[int] = Field(None, ge=0)
+
+    subcategory_id: Optional[int] = None
+
+class CourseResponse(BaseModel):
+    id: int
+    name: str
+    description: str
+    price: Decimal
+    is_free: bool
+    level: CourseLevel
+    is_published: bool
+    duration_hours: int
+    total_lessons: int
+
+    image_url: Optional[str] = None
+    discount_price: Optional[Decimal] = None
+    currency: str
+    published_at: Optional[str] = None
+    rating: Optional[Decimal] = None
+    total_students: int
+
+    subcategory_id: int
+
+    class Config:
+        from_attributes = True

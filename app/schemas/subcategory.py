@@ -1,7 +1,9 @@
 from pydantic import BaseModel, field_validator
 
 class SubcategoryCreate(BaseModel):
+    
     name: str
+
     category_id: int
 
     @field_validator("name")
@@ -18,7 +20,9 @@ class SubcategoryCreate(BaseModel):
         return v
 
 class SubcategoryUpdate(BaseModel):
+
     name: str
+
     category_id: int
 
 class SubcategoryResponse(BaseModel):

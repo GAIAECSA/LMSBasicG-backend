@@ -7,7 +7,7 @@ def create_subcategory(db: Session, data: SubcategoryCreate):
     existing = subcategory_repo.get_by_name_and_category(db, data.name, data.category_id)
     if existing:
         raise Exception("La subcategoría ya existe en esta categoría")
-
+    
     subcategory = Subcategory(**data.model_dump())
     return subcategory_repo.create(db, subcategory)
 

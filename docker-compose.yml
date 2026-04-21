@@ -5,7 +5,7 @@ services:
     build: .
     container_name: fastapi_app_basic_lms
     ports:
-      - "8000:8000"
+      - "9000:9000"
     volumes:
       - ./app:/app/app
     env_file:
