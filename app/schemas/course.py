@@ -17,6 +17,7 @@ class CourseCreate(BaseModel):
     is_free: bool
     level: CourseLevel
     is_published: bool
+    open_enrollment: bool
     duration_hours: int = Field(..., ge=0)
     total_lessons: int = Field(..., ge=0)
 
@@ -35,6 +36,7 @@ class CourseUpdate(BaseModel):
     is_free: Optional[bool] = None
     level: Optional[CourseLevel] = None
     is_published: Optional[bool] = None
+    open_enrollment: Optional[bool] = None
     duration_hours: Optional[int] = Field(None, ge=0)
     total_lessons: Optional[int] = Field(None, ge=0)
 

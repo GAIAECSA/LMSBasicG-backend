@@ -5,8 +5,9 @@ class User(Base):
     __tablename__ = "users"
 
     id = Column(Integer, primary_key=True, index=True)
-    email = Column(String, unique=True, index=True, nullable=False)
+    username = Column(String, unique=True, index=True, nullable=False)
     password = Column(String, nullable=False)
+    email = Column(String, index=True)
     firstname = Column(String, nullable=False)
     lastname = Column(String, nullable=False)
     
@@ -21,6 +22,7 @@ class User(Base):
 
     __table_args__ = (
         CheckConstraint("trim(email) <> ''", name="email_not_blank"),
+        CheckConstraint("trim(username) <> ''", name="username_not_blank"),
         CheckConstraint("trim(password) <> ''", name="password_not_blank"),
         CheckConstraint("trim(firstname) <> ''", name="firstname_not_blank"),
         CheckConstraint("trim(lastname) <> ''", name="lastname_not_blank"),

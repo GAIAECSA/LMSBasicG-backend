@@ -1,10 +1,11 @@
 from pydantic import BaseModel, field_validator, EmailStr
 
 class UserCreate(BaseModel):
-    email: EmailStr
+    username: str
     password: str
     firstname: str
     lastname: str
+    email: EmailStr | None
     phone_number: str | None
     departament: str | None
 
@@ -13,6 +14,13 @@ class UserCreate(BaseModel):
         v = v.strip()
         if not v:
             raise ValueError("El correo electrónico no puede estar vacío")
+        return v
+    
+    @field_validator("username")
+    def validate_username(cls, v):
+        v = v.strip()
+        if not v:
+            raise ValueError("El nombre de usuario no puede estar vacío")
         return v
     
     @field_validator("password")
@@ -37,5 +45,5 @@ class UserCreate(BaseModel):
         return v
 
 class UserLogin(BaseModel):
-    email: str
+    username: str
     password: str

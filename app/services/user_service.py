@@ -1,5 +1,5 @@
 from sqlalchemy.orm import Session
-from app.repositories import user_repo, role_repo
+from app.repositories import user_repo
 from app.core.security import hash_password, verify_password
 from app.models.user import User
 from app.schemas.user import UserCreate, UserLogin
@@ -17,7 +17,7 @@ def create_user(db: Session, data: UserCreate):
     return user_repo.create(db, user)
 
 def authenticate_user(db: Session, data: UserLogin):
-    user = user_repo.get_by_email(db, data.email)
+    user = user_repo.get_by_username(db, data.username)
     if not user:
         return None
     if not verify_password(data.password, user.password):

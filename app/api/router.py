@@ -3,7 +3,9 @@ from fastapi import APIRouter
 from app.api.v1 import (
     role_routes as role,
     user_routes as user,
-    category_routes as category
+    category_routes as category,
+    subcategory_routes as subcategory,
+    course_routes as course,
 )
 
 router = APIRouter()
@@ -24,4 +26,16 @@ router.include_router(
     category.router,
     prefix="/categories",
     tags=["categories"]
+)
+
+router.include_router(
+    subcategory.router,
+    prefix="/subcategories",
+    tags=["subcategories"]
+)
+
+router.include_router(
+    course.router,
+    prefix="/courses",
+    tags=["courses"]
 )

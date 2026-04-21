@@ -4,21 +4,34 @@ from app.repositories import course_repo
 from app.schemas.course import CourseCreate, CourseUpdate
 
 def create_course(db: Session, data: CourseCreate):
+    existing = course_repo.get_by_name_and_subcategory(db, data.name, data.subcategory_id)
+    if existing:
+        raise Exception("El curso ya existe en esta subcategoría")
+    
     course = Course(**data.model_dump())
     return course_repo.create(db, course)
 
 def update_course(db: Session, course_id: int, data: CourseUpdate):
     course = course_repo.get_by_id(db, course_id)
     if not course:
-        return None
-    for key, value in data.model_dump().items():
+        raise Exception("Curso no encontrado")
+
+    update_data = data.model_dump(exclude_unset=True)
+
+    if "name" in update_data and update_data["name"] != course.name:
+        existing = course_repo.get_by_name_and_subcategory(db, update_data["name"], course.subcategory_id)
+        if existing:
+            raise Exception("El curso ya existe en esta subcategoría")
+    
+    for key, value in update_data.items():
         setattr(course, key, value)
+
     return course_repo.update(db, course)
 
 def delete_course(db: Session, course_id: int):
     course = course_repo.get_by_id(db, course_id)
     if not course:
-        return None
+        raise Exception("Curso no encontrado")
     return course_repo.delete(db, course)
 
 def get_course(db: Session, course_id: int):

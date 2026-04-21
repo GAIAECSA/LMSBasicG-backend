@@ -5,6 +5,7 @@ from app.models.role import Role
 from app.models.user import User
 from app.models.category import Category
 from app.models.subcategory import Subcategory
+from app.models.course import Course
 
 def create_tables():
     print("Creando tablas...")

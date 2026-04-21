@@ -27,3 +27,6 @@ def get_by_subcategory_id(db: Session, subcategory_id: int):
 
 def get_all(db: Session):
     return db.query(Course).filter(Course.deleted == False).all()
+
+def get_by_name_and_subcategory(db: Session, name: str, subcategory_id: int):
+    return db.query(Course).filter(Course.name == name, Course.subcategory_id == subcategory_id, Course.deleted == False).first()
