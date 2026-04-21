@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, Boolean, ForeignKey, func, DateTime
+from sqlalchemy import Column, Integer, String, Boolean, ForeignKey, func, DateTime, CheckConstraint
 from app.db.base import Base
 
 class User(Base):
@@ -18,3 +18,10 @@ class User(Base):
     deleted = Column(Boolean, index=True, default=False)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), onupdate=func.now())
+
+    __table_args__ = (
+        CheckConstraint("trim(email) <> ''", name="email_not_blank"),
+        CheckConstraint("trim(password) <> ''", name="password_not_blank"),
+        CheckConstraint("trim(firstname) <> ''", name="firstname_not_blank"),
+        CheckConstraint("trim(lastname) <> ''", name="lastname_not_blank"),
+    )

@@ -8,7 +8,7 @@ def create(db: Session, role: Role):
     return role
 
 def get_by_id(db: Session, role_id: int):
-    return db.query(Role).filter(Role.id == role_id).first()
+    return db.query(Role).filter(Role.id == role_id, Role.deleted == False).first()
 
 def get_by_name(db: Session, name: str):
-    return db.query(Role).filter(Role.name == name).first()
+    return db.query(Role).filter(Role.name == name, Role.deleted == False).first()

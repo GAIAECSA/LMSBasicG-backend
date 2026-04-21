@@ -10,7 +10,7 @@ router = APIRouter()
 @router.post("/roles", response_model=RoleResponse)
 def create_role(data: RoleCreate, db: Session = Depends(get_db)):
     try:
-        return role_service.create_role(db, data.name)
+        return role_service.create_role(db, data)
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
     

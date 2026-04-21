@@ -15,12 +15,12 @@ def get_db():
         db.close()
 
 @router.post("/register")
-def register(user: UserCreate, db: Session = Depends(get_db)):
-    return user_service.create_user(db, user.email, user.password)
+def register(data: UserCreate, db: Session = Depends(get_db)):
+    return user_service.create_user(db, data)
 
 @router.post("/login")
-def login(user: UserLogin, db: Session = Depends(get_db)):
-    db_user = user_service.authenticate_user(db, user.email, user.password)
+def login(data: UserLogin, db: Session = Depends(get_db)):
+    db_user = user_service.authenticate_user(db, data)
     if not db_user:
         raise HTTPException(status_code=401, detail="Credenciales inválidas")
 

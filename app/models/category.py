@@ -1,8 +1,8 @@
-from sqlalchemy import Column, Integer, String, DateTime, Boolean, func, CheckConstraint
+from sqlalchemy import Column, Integer, String, Boolean, DateTime, func, CheckConstraint
 from app.db.base import Base
 
-class Role(Base):
-    __tablename__ = "roles"
+class Category(Base):
+    __tablename__ = "categories"
 
     id = Column(Integer, primary_key=True, index=True)
     name = Column(String, unique=True, index=True, nullable=False)
