@@ -8,6 +8,7 @@ from app.models.subcategory import Subcategory
 from app.models.course import Course
 from app.models.module import Module
 from app.models.lesson import Lesson
+from app.models.lesson_block_type import LessonBlockType
 
 def create_tables():
     print("Creando tablas...")
