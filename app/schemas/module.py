@@ -15,8 +15,8 @@ class ModuleCreate(BaseModel):
 
     @field_validator("order")
     def validate_order(cls, v):
-        if v <= 0:
-            raise ValueError("El orden del módulo no puede ser cero o negativo")
+        if v < 0:
+            raise ValueError("El orden del módulo no puede ser negativo")
         return v
     
     @field_validator("course_id")

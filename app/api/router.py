@@ -7,6 +7,7 @@ from app.api.v1 import (
     subcategory_routes as subcategory,
     course_routes as course,
     module_routes as module,
+    lesson_routes as lesson,
 )
 
 router = APIRouter()
@@ -45,4 +46,10 @@ router.include_router(
     module.router,
     prefix="/modules",
     tags=["modules"]
+)
+
+router.include_router(
+    lesson.router,
+    prefix="/lessons",
+    tags=["lessons"]
 )

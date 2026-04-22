@@ -11,7 +11,7 @@ class Course(Base):
     price = Column(Numeric(10,2), nullable=False, default=0)
     is_free = Column(Boolean, nullable=False, default=False)
     level = Column(Enum("PRINCIPIANTE", "INTERMEDIO", "AVANZADO", name="course_level"),nullable=False)
-    is_published = Column(Boolean, nullable=False, default=False)
+    is_published = Column(Boolean, nullable=False, default=True)
     open_enrollment = Column(Boolean, nullable=False, default=False)
     duration_hours = Column(Integer, nullable=False, default=0)
     total_lessons = Column(Integer, nullable=False, default=0)
