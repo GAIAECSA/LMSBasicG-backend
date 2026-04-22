@@ -18,4 +18,5 @@ class LessonBlock(Base):
 
     __table_args__ = (
         CheckConstraint("trim(name) <> ''", name="name_not_blank"),
+        CheckConstraint('"order" >= 0', name="module_order_non_negative"),
     )
