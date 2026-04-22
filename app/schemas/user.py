@@ -12,6 +12,8 @@ class UserCreate(BaseModel):
 
     @field_validator("email")
     def validate_email(cls, v):
+        if v is None:
+            return v
         v = v.strip()
         if not v:
             raise ValueError("El correo electrónico no puede estar vacío")
