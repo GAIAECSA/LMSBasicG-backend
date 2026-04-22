@@ -25,6 +25,9 @@ def get_by_id(db: Session, category_id: int):
 def get_by_category_id(db: Session, category_id: int):
     return db.query(Subcategory).filter(Subcategory.category_id == category_id, Subcategory.deleted == False).all()
 
+def get_all(db: Session):
+    return db.query(Subcategory).filter(Subcategory.deleted == False).all()
+
 def get_by_name_and_category(db: Session, name: str, category_id: int):
     return db.query(Subcategory).filter(
         Subcategory.name == name,

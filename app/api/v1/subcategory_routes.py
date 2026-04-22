@@ -48,3 +48,10 @@ def get_subcategories_by_category(category_id: int, db: Session = Depends(get_db
         return subcategory_service.get_subcategories_by_category(db, category_id)
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
+    
+@router.get("/subcategories", response_model=list[SubcategoryResponse])
+def get_all_subcategories(db: Session = Depends(get_db)):
+    try:
+        return subcategory_service.get_all_subcategories(db)
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))

@@ -43,3 +43,6 @@ def get_subcategory(db: Session, subcategory_id: int):
 
 def get_subcategories_by_category(db: Session, category_id: int):
     return subcategory_repo.get_by_category_id(db, category_id)
+
+def get_all_subcategories(db: Session):
+    return subcategory_repo.get_all(db)

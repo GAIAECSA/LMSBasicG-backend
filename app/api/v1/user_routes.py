@@ -3,7 +3,8 @@ from sqlalchemy.orm import Session
 from app.db.session import SessionLocal
 from app.schemas.user import UserCreate, UserLogin
 from app.services import user_service
-from app.utils.jwt import create_access_token
+from app.utils.jwt import create_access_token, get_current_user_id
+
 
 router = APIRouter()
 
@@ -26,7 +27,20 @@ def login(data: UserLogin, db: Session = Depends(get_db)):
 
     token = create_access_token({
         "sub": db_user.id,
+        "username": db_user.username,
         "role_id": db_user.role_id
     })
 
-    return {"access_token": token, "token_type": "bearer", "role_id": db_user.role_id}
+    return {"access_token": token, "token_type": "bearer"}
+
+@router.get("/me")
+def read_current_user(
+    db: Session = Depends(get_db),
+    user_id: int = Depends(get_current_user_id)
+):
+    user = user_service.get_current_user(db, user_id)
+
+    if not user:
+        raise HTTPException(status_code=404, detail="Usuario no encontrado")
+
+    return user

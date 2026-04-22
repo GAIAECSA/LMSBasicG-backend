@@ -1,6 +1,10 @@
 from datetime import datetime, timedelta
 from jose import jwt, JWTError
+from fastapi import Depends, HTTPException
+from fastapi.security import OAuth2PasswordBearer
 from app.core.config import settings
+
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="login")
 
 def create_access_token(data: dict):
     to_encode = data.copy()
@@ -8,11 +12,22 @@ def create_access_token(data: dict):
     to_encode.update({"exp": expire})
     return jwt.encode(to_encode, settings.SECRET_KEY, algorithm=settings.ALGORITHM)
 
-def verify_token(token: str):
+def decode_access_token(token: str):
     try:
-        payload = jwt.decode(token, settings.secret_key, algorithms=[settings.algorithm])
-        print("Decoded Payload:", payload)
+        payload = jwt.decode(token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM])
         return payload
     except JWTError:
         return None
-    
+
+def get_current_user_id(token: str = Depends(oauth2_scheme)):
+    payload = decode_access_token(token)
+
+    if payload is None:
+        raise HTTPException(status_code=401, detail="Token inválido")
+
+    user_id = payload.get("sub")
+
+    if user_id is None:
+        raise HTTPException(status_code=401, detail="Token inválido")
+
+    return int(user_id)

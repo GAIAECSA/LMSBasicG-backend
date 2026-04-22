@@ -9,3 +9,6 @@ def create(db: Session, user: User):
     db.commit()
     db.refresh(user)
     return user
+
+def me(db: Session, user_id: int):
+    return db.query(User).filter(User.id == user_id, User.deleted == False).first()

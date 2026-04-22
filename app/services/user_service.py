@@ -23,3 +23,6 @@ def authenticate_user(db: Session, data: UserLogin):
     if not verify_password(data.password, user.password):
         return None
     return user
+
+def get_current_user(db: Session, user_id: int):
+    return user_repo.me(db, user_id)
