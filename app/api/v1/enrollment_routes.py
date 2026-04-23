@@ -5,6 +5,7 @@ from sqlalchemy.orm import Session
 from app.db.session import SessionLocal
 from app.schemas.enrollment import EnrollmentCreate, EnrollmentUpdate, EnrollmentResponse
 from app.services import enrollment_service
+from app.websockets import manager
 
 router = APIRouter()
 
@@ -25,7 +26,7 @@ async def create_enrollment(
         enrollment = enrollment_service.create_enrollment(db, data, image)
 
         if enrollment.role_id == 4:
-            await manager.send_to_admins({
+            await manager.ConnectionManager.send_to_admins({
                 "event": "new_student_enrollment",
                 "message": "Nuevo estudiante matriculado"
             })
