@@ -50,3 +50,6 @@ def get_enrollment(db: Session, enrollment_id: int):
 
 def get_enrollments_by_course_and_role(db: Session, course_id: int, role_id: int):
     return enrollment_repo.get_all_by_course_id_and_role_id(db, course_id, role_id)
+
+def get_enrollments_by_role(db:Session, role_id: int):
+    return enrollment_repo.get_all_by_role(db, role_id)

@@ -16,3 +16,10 @@ class RoleResponse(BaseModel):
 
     class Config:
         from_attributes = True
+
+class RoleBasicResponse(BaseModel):
+    id: int
+    name: str
+
+    class Config:
+        from_attributes = True

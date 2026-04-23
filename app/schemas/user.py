@@ -63,3 +63,12 @@ class UserResponse(BaseModel):
 
     class Config:
         orm_mode = True
+
+class UserBasicResponse(BaseModel):
+    id: int
+    firstname: str
+    lastname: str
+    role_id: int
+
+    class Config:
+        orm_mode = True

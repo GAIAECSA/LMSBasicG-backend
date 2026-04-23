@@ -57,9 +57,16 @@ def get_enrollment(enrollment_id: int, db: Session = Depends(get_db)):
     except Exception as e:
         raise HTTPException(status_code=404, detail=str(e))
 
-@router.get("/enrollments", response_model=list[EnrollmentResponse])
-def get_enrollments_by_course_and_role(course_id: int, role_id: int, db: Session = Depends(get_db)):
+@router.get("/enrollments/by-course-role", response_model=list[EnrollmentResponse])
+def get_by_course_and_role(course_id: int, role_id: int, db: Session = Depends(get_db)):
     try:
         return enrollment_service.get_enrollments_by_course_and_role(db, course_id, role_id)
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    
+@router.get("/enrollments/by-role", response_model=list[EnrollmentResponse])
+def get_by_role(role_id: int, db: Session = Depends(get_db)):
+    try:
+        return enrollment_service.get_enrollments_by_role(db, role_id)
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))

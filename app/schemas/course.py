@@ -158,3 +158,10 @@ class CourseResponse(BaseModel):
 
     class Config:
         from_attributes = True
+
+class CourseBasicResponse(BaseModel):
+    id: int
+    name: str
+
+    class Config:
+        from_attributes = True

@@ -1,6 +1,9 @@
 from pydantic import BaseModel, field_validator
 from typing import Optional
 from fastapi import Form
+from app.schemas.user import UserBasicResponse
+from app.schemas.course import CourseBasicResponse
+from app.schemas.role import RoleBasicResponse
 
 class EnrollmentCreate(BaseModel):
     
@@ -57,13 +60,12 @@ class EnrollmentUpdate(BaseModel):
 
 class EnrollmentResponse(BaseModel):
     id: int
-    
     accepted: bool
     reference_code: Optional[str] = None
-    
-    student_id: int
-    course_id: int
-    role_id: int
+
+    student: UserBasicResponse
+    course: CourseBasicResponse
+    role: RoleBasicResponse
 
     class Config:
         from_attributes = True
