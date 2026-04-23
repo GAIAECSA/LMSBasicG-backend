@@ -15,7 +15,9 @@ def create_course(db: Session, data: CourseCreate, image: UploadFile | None = No
     if existing:
         raise Exception("El curso ya existe en esta subcategoría")
 
-    image_url = save_course_image(image)
+    image_url = None
+    if image:
+        image_url = save_course_image(image)
 
     course = Course(
         **data.model_dump(),
@@ -24,12 +26,7 @@ def create_course(db: Session, data: CourseCreate, image: UploadFile | None = No
 
     return course_repo.create(db, course)
 
-def update_course(
-    db: Session,
-    course_id: int,
-    data: CourseUpdate,
-    image: UploadFile | None = None
-):
+def update_course(db: Session,course_id: int,data: CourseUpdate,image: UploadFile | None = None):
     course = course_repo.get_by_id(db, course_id)
 
     if not course:

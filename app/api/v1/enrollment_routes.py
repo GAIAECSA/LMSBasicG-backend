@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, UploadFile, File
 from sqlalchemy.orm import Session
 from app.db.session import SessionLocal
 from app.schemas.enrollment import EnrollmentCreate, EnrollmentUpdate, EnrollmentResponse
@@ -14,16 +14,20 @@ def get_db():
         db.close()
 
 @router.post("/enrollments", response_model=EnrollmentResponse)
-def create_enrollment(data: EnrollmentCreate, db: Session = Depends(get_db)):
+def create_enrollment(
+        data: EnrollmentCreate = Depends(EnrollmentCreate.as_form),
+        image: UploadFile = File(None),
+        db: Session = Depends(get_db)
+    ):
     try:
-        return enrollment_service.create_enrollment(db, data)
+        return enrollment_service.create_enrollment(db, data, image)
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
     
 @router.put("/enrollments/{enrollment_id}", response_model=EnrollmentResponse)
-def update_enrollment(enrollment_id: int, data: EnrollmentUpdate, db: Session = Depends(get_db)):
+def update_enrollment(enrollment_id: int, data: EnrollmentUpdate = Depends(EnrollmentUpdate.as_form), image: UploadFile = File(None), db: Session = Depends(get_db)):
     try:
-        return enrollment_service.update_enrollment(db, enrollment_id, data)
+        return enrollment_service.update_enrollment(db, enrollment_id, data, image)
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
     
