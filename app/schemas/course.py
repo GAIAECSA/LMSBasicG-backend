@@ -22,6 +22,7 @@ class CourseCreate(BaseModel):
     duration_hours: int = Field(..., ge=0)
     total_lessons: int = Field(..., ge=0)
     subcategory_id: int
+    discount_price: Optional[Decimal] = Field(None, ge=0)
 
     @classmethod
     def as_form(
@@ -36,6 +37,7 @@ class CourseCreate(BaseModel):
         duration_hours: int = Form(...),
         total_lessons: int = Form(...),
         subcategory_id: int = Form(...),
+        discount_price: Optional[Decimal] = Form(None),
     ):
         return cls(
             name=name,
@@ -48,6 +50,7 @@ class CourseCreate(BaseModel):
             duration_hours=duration_hours,
             total_lessons=total_lessons,
             subcategory_id=subcategory_id,
+            discount_price=discount_price,
         )
 
     @field_validator("name")
@@ -81,6 +84,7 @@ class CourseUpdate(BaseModel):
     duration_hours: Optional[int] = None
     total_lessons: Optional[int] = None
     subcategory_id: Optional[int] = None
+    discount_price: Optional[Decimal] = None
 
     @classmethod
     def as_form(
@@ -95,6 +99,7 @@ class CourseUpdate(BaseModel):
         duration_hours: Optional[int] = Form(None),
         total_lessons: Optional[int] = Form(None),
         subcategory_id: Optional[int] = Form(None),
+        discount_price: Optional[Decimal] = Form(None),
     ):
         return cls(
             name=name,
@@ -107,6 +112,7 @@ class CourseUpdate(BaseModel):
             duration_hours=duration_hours,
             total_lessons=total_lessons,
             subcategory_id=subcategory_id,
+            discount_price=discount_price,
         )
 
     @field_validator("name")
@@ -131,10 +137,6 @@ class CourseUpdate(BaseModel):
             raise ValueError("El precio no puede ser negativo")
         return v
 
-
-# =========================
-# RESPONSE
-# =========================
 class CourseResponse(BaseModel):
     id: int
     name: str
