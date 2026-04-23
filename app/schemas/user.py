@@ -50,3 +50,15 @@ class UserCreate(BaseModel):
 class UserLogin(BaseModel):
     username: str
     password: str
+
+class UserResponse(BaseModel):
+    id: int
+    username: str
+    firstname: str
+    lastname: str
+    email: Optional[EmailStr] = None
+    phone_number: Optional[str] = None
+    departament: Optional[str] = None
+
+    class Config:
+        orm_mode = True
