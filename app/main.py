@@ -26,6 +26,8 @@ app.add_middleware(
 )
 
 os.makedirs("uploads/courses", exist_ok=True)
+os.makedirs("uploads/course_vouchers", exist_ok=True)
+
 app.mount("/uploads", StaticFiles(directory="uploads"), name="uploads")
 
 app.include_router(api_router, prefix="/api/v1")
