@@ -61,7 +61,7 @@ def get_courses_by_subcategory(subcategory_id: int, db: Session = Depends(get_db
 @router.get("/", response_model=list[CourseResponse])
 def get_all_courses(db: Session = Depends(get_db)):
     try:
-        return course_service.list_courses(db)
+        return course_service.get_all_courses(db)
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
     
