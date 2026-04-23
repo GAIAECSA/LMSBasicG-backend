@@ -8,7 +8,8 @@ from app.api.v1 import (
     course_routes as course,
     module_routes as module,
     lesson_routes as lesson,
-    lesson_block_type_routes as lesson_block_type
+    lesson_block_type_routes as lesson_block_type,
+    enrollment_routes as enrollment
 )
 
 router = APIRouter()
@@ -59,4 +60,10 @@ router.include_router(
     lesson_block_type.router,
     prefix="/lesson-block-types",
     tags=["lesson-block-types"]
+)
+
+router.include_router(
+    enrollment.router,
+    prefix="/enrollments",
+    tags=["enrollments"]
 )

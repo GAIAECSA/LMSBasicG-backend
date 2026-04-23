@@ -1,15 +1,24 @@
+# app/schemas/course.py
+
 from pydantic import BaseModel, Field, field_validator
 from typing import Optional
 from decimal import Decimal
 from enum import Enum
+from fastapi import Form
 
 
+# =========================
+# ENUMS
+# =========================
 class CourseLevel(str, Enum):
     PRINCIPIANTE = "PRINCIPIANTE"
     INTERMEDIO = "INTERMEDIO"
     AVANZADO = "AVANZADO"
 
 
+# =========================
+# CREATE
+# =========================
 class CourseCreate(BaseModel):
     name: str = Field(..., min_length=1)
     description: str = Field(..., min_length=1)
@@ -20,14 +29,34 @@ class CourseCreate(BaseModel):
     open_enrollment: bool
     duration_hours: int = Field(..., ge=0)
     total_lessons: int = Field(..., ge=0)
-
-    image_url: Optional[str] = None
-    discount_price: Optional[Decimal] = Field(None, ge=0)
-    currency: str = Field(default="USD", max_length=10)
-    rating: Optional[Decimal] = Field(None, ge=0, le=5)
-    total_students: int = Field(default=0, ge=0)
-
     subcategory_id: int
+
+    @classmethod
+    def as_form(
+        cls,
+        name: str = Form(...),
+        description: str = Form(...),
+        price: Decimal = Form(...),
+        is_free: bool = Form(...),
+        level: CourseLevel = Form(...),
+        is_published: bool = Form(...),
+        open_enrollment: bool = Form(...),
+        duration_hours: int = Form(...),
+        total_lessons: int = Form(...),
+        subcategory_id: int = Form(...),
+    ):
+        return cls(
+            name=name,
+            description=description,
+            price=price,
+            is_free=is_free,
+            level=level,
+            is_published=is_published,
+            open_enrollment=open_enrollment,
+            duration_hours=duration_hours,
+            total_lessons=total_lessons,
+            subcategory_id=subcategory_id,
+        )
 
     @field_validator("name")
     def validate_name(cls, v):
@@ -45,29 +74,79 @@ class CourseCreate(BaseModel):
 
     @field_validator("price")
     def validate_price(cls, v):
-        if v is not None and v < 0:
-            raise ValueError("El precio del curso no puede ser negativo")
+        if v < 0:
+            raise ValueError("El precio no puede ser negativo")
         return v
 
+
+# =========================
+# UPDATE (PARCIAL)
+# =========================
 class CourseUpdate(BaseModel):
-    name: Optional[str] = Field(None, min_length=1)
-    description: Optional[str] = Field(None, min_length=1)
-    price: Optional[Decimal] = Field(None, ge=0)
+    name: Optional[str] = None
+    description: Optional[str] = None
+    price: Optional[Decimal] = None
     is_free: Optional[bool] = None
     level: Optional[CourseLevel] = None
     is_published: Optional[bool] = None
     open_enrollment: Optional[bool] = None
-    duration_hours: Optional[int] = Field(None, ge=0)
-    total_lessons: Optional[int] = Field(None, ge=0)
-
-    image_url: Optional[str] = None
-    discount_price: Optional[Decimal] = Field(None, ge=0)
-    currency: Optional[str] = Field(None, max_length=10)
-    rating: Optional[Decimal] = Field(None, ge=0, le=5)
-    total_students: Optional[int] = Field(None, ge=0)
-
+    duration_hours: Optional[int] = None
+    total_lessons: Optional[int] = None
     subcategory_id: Optional[int] = None
 
+    @classmethod
+    def as_form(
+        cls,
+        name: Optional[str] = Form(None),
+        description: Optional[str] = Form(None),
+        price: Optional[Decimal] = Form(None),
+        is_free: Optional[bool] = Form(None),
+        level: Optional[CourseLevel] = Form(None),
+        is_published: Optional[bool] = Form(None),
+        open_enrollment: Optional[bool] = Form(None),
+        duration_hours: Optional[int] = Form(None),
+        total_lessons: Optional[int] = Form(None),
+        subcategory_id: Optional[int] = Form(None),
+    ):
+        return cls(
+            name=name,
+            description=description,
+            price=price,
+            is_free=is_free,
+            level=level,
+            is_published=is_published,
+            open_enrollment=open_enrollment,
+            duration_hours=duration_hours,
+            total_lessons=total_lessons,
+            subcategory_id=subcategory_id,
+        )
+
+    @field_validator("name")
+    def validate_name(cls, v):
+        if v is not None:
+            v = v.strip()
+            if not v:
+                raise ValueError("El nombre no puede estar vacío")
+        return v
+
+    @field_validator("description")
+    def validate_description(cls, v):
+        if v is not None:
+            v = v.strip()
+            if not v:
+                raise ValueError("La descripción no puede estar vacía")
+        return v
+
+    @field_validator("price")
+    def validate_price(cls, v):
+        if v is not None and v < 0:
+            raise ValueError("El precio no puede ser negativo")
+        return v
+
+
+# =========================
+# RESPONSE
+# =========================
 class CourseResponse(BaseModel):
     id: int
     name: str
@@ -76,17 +155,16 @@ class CourseResponse(BaseModel):
     is_free: bool
     level: CourseLevel
     is_published: bool
+    open_enrollment: bool
     duration_hours: int
     total_lessons: int
+    subcategory_id: int
 
     image_url: Optional[str] = None
     discount_price: Optional[Decimal] = None
-    currency: str
-    published_at: Optional[str] = None
+    currency: Optional[str] = "USD"
     rating: Optional[Decimal] = None
-    total_students: int
-
-    subcategory_id: int
+    total_students: Optional[int] = 0
 
     class Config:
         from_attributes = True
