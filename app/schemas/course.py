@@ -6,19 +6,11 @@ from decimal import Decimal
 from enum import Enum
 from fastapi import Form
 
-
-# =========================
-# ENUMS
-# =========================
 class CourseLevel(str, Enum):
     PRINCIPIANTE = "PRINCIPIANTE"
     INTERMEDIO = "INTERMEDIO"
     AVANZADO = "AVANZADO"
 
-
-# =========================
-# CREATE
-# =========================
 class CourseCreate(BaseModel):
     name: str = Field(..., min_length=1)
     description: str = Field(..., min_length=1)
@@ -78,10 +70,6 @@ class CourseCreate(BaseModel):
             raise ValueError("El precio no puede ser negativo")
         return v
 
-
-# =========================
-# UPDATE (PARCIAL)
-# =========================
 class CourseUpdate(BaseModel):
     name: Optional[str] = None
     description: Optional[str] = None
