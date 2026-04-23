@@ -26,6 +26,7 @@ def get_current_user_id(token: str = Depends(oauth2_scheme)):
         raise HTTPException(status_code=401, detail="Token inválido")
 
     user_id = payload.get("sub")
+    user_id = int(user_id)
 
     if user_id is None:
         raise HTTPException(status_code=401, detail="Token inválido")
