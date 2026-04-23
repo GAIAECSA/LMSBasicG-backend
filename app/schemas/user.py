@@ -56,6 +56,7 @@ class UserResponse(BaseModel):
     username: str
     firstname: str
     lastname: str
+    role_id: int
     email: Optional[EmailStr] = None
     phone_number: Optional[str] = None
     departament: Optional[str] = None
