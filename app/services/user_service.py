@@ -6,6 +6,9 @@ from app.schemas.user import UserCreate, UserLogin
 
 def create_user(db: Session, data: UserCreate):
 
+    if user_repo.get_by_username(db, data.username):
+        raise ValueError("El nombre de usuario ya existe")
+
     data_dict = data.model_dump(exclude={"password", "role_id"})
 
     user = User(
