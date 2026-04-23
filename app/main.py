@@ -2,6 +2,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.api.router import router as api_router
 from fastapi.staticfiles import StaticFiles
+import os
 
 app = FastAPI()
 
@@ -24,6 +25,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+os.makedirs("uploads/courses", exist_ok=True)
 app.mount("/uploads", StaticFiles(directory="uploads"), name="uploads")
 
 app.include_router(api_router, prefix="/api/v1")

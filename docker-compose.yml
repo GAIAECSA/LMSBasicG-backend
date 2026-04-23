@@ -8,6 +8,7 @@ services:
       - "9000:9000"
     volumes:
       - ./app:/app/app
+      - ./uploads:/app/uploads
     env_file:
       - .env
     restart: always
