@@ -17,7 +17,7 @@ def get_db():
         db.close()
 
 @router.post("/enrollments", response_model=EnrollmentResponse)
-async def create_enrollment(
+def create_enrollment(
         data: EnrollmentCreate = Depends(EnrollmentCreate.as_form),
         image: UploadFile = File(None),
         db: Session = Depends(get_db)
@@ -25,11 +25,11 @@ async def create_enrollment(
     try:
         enrollment = enrollment_service.create_enrollment(db, data, image)
 
-        if enrollment.role_id == 4:
-            await manager.ConnectionManager.send_to_admins({
-                "event": "new_student_enrollment",
-                "message": "Nuevo estudiante matriculado"
-            })
+        #if enrollment.role_id == 4:
+         #   await manager.ConnectionManager.send_to_admins({
+          #      "event": "new_student_enrollment",
+           #     "message": "Nuevo estudiante matriculado"
+            #})
 
         return enrollment
     except Exception as e:
