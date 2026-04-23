@@ -23,7 +23,7 @@ def get_by_id(db: Session, enrollment_id: int):
     return (
         db.query(Enrollment)
         .options(
-            joinedload(Enrollment.student),
+            joinedload(Enrollment.user),
             joinedload(Enrollment.course),
             joinedload(Enrollment.role),
         )
@@ -38,7 +38,7 @@ def get_all_by_course_id_and_role_id(db: Session, course_id: int, role_id: int):
     return (
         db.query(Enrollment)
         .options(
-            joinedload(Enrollment.student),
+            joinedload(Enrollment.user),
             joinedload(Enrollment.course),
             joinedload(Enrollment.role),
         )
@@ -54,7 +54,7 @@ def get_all_by_role(db: Session, role_id):
     return (
         db.query(Enrollment)
         .options(
-            joinedload(Enrollment.student),
+            joinedload(Enrollment.user),
             joinedload(Enrollment.course),
             joinedload(Enrollment.role),
         )
