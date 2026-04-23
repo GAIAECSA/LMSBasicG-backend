@@ -7,7 +7,9 @@ class Enrollment(Base):
     id = Column(Integer, primary_key=True, index=True)
     
     accepted = Column(Boolean, default=False)
+    
     voucher_url = Column(String, nullable=True)
+    reference_code = Column(String, nullable=True)
 
     user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
     course_id = Column(Integer, ForeignKey("courses.id"), nullable=False)

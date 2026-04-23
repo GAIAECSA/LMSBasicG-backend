@@ -5,6 +5,7 @@ from fastapi import Form
 class EnrollmentCreate(BaseModel):
     
     accepted: Optional[bool] = None
+    reference_code: Optional[str] = None
     
     student_id: int
     course_id: int
@@ -14,12 +15,14 @@ class EnrollmentCreate(BaseModel):
     def as_form(
         cls,
         accepted: Optional[bool] = Form(None),
+        reference_code: Optional[str] = Form(None),
         student_id: int = Form(...),
         course_id: int = Form(...),
         role_id: int = Form(...),
     ):
         return cls(
             accepted=accepted,
+            reference_code=reference_code,
             student_id=student_id,
             course_id=course_id,
             role_id=role_id,
@@ -28,6 +31,8 @@ class EnrollmentCreate(BaseModel):
 class EnrollmentUpdate(BaseModel):
     
     accepted: Optional[bool] = None
+
+    reference_code: Optional[str] = None
     
     student_id: Optional[int] = None
     course_id: Optional[int] = None
@@ -37,12 +42,14 @@ class EnrollmentUpdate(BaseModel):
     def as_form(
         cls,
         accepted: Optional[bool] = Form(None),
+        reference_code: Optional[str] = Form(None),
         student_id: Optional[int] = Form(None),
         course_id: Optional[int] = Form(None),
         role_id: Optional[int] = Form(None),
     ):
         return cls(
             accepted=accepted,
+            reference_code=reference_code,
             student_id=student_id,
             course_id=course_id,
             role_id=role_id,
@@ -52,6 +59,7 @@ class EnrollmentResponse(BaseModel):
     id: int
     
     accepted: bool
+    reference_code: Optional[str] = None
     
     student_id: int
     course_id: int
