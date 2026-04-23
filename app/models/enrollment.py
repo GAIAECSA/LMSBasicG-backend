@@ -1,4 +1,5 @@
 from sqlalchemy import Column, Integer, String, Boolean, DateTime, func, ForeignKey
+from sqlalchemy.orm import relationship
 from app.db.base import Base
 
 class Enrollment(Base):
@@ -18,3 +19,7 @@ class Enrollment(Base):
     deleted = Column(Boolean, default=False)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), onupdate=func.now())
+
+    student = relationship("User")
+    course = relationship("Course")
+    role = relationship("Role")
