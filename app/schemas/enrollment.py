@@ -64,7 +64,7 @@ class EnrollmentResponse(BaseModel):
     reference_code: Optional[str] = None
     voucher_url: Optional[str] = None 
 
-    student: UserBasicResponse
+    user: UserBasicResponse
     course: CourseBasicResponse
     role: RoleBasicResponse
 
