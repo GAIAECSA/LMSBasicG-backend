@@ -5,12 +5,13 @@ from app.schemas.enrollment import EnrollmentCreate, EnrollmentUpdate
 from fastapi import UploadFile
 from app.utils.file_upload import save_course_voucher
 import os
+from app.websockets.manager import manager
 
 def create_enrollment(db: Session, data: EnrollmentCreate, image: UploadFile | None = None):
     voucher_url = None
     if image:
         voucher_url = save_course_voucher(image)
-        
+    
     enrollment = Enrollment(**data.model_dump(), voucher_url=voucher_url) 
     return enrollment_repo.create(db, enrollment)
 

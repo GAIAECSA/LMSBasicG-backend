@@ -9,7 +9,8 @@ from app.api.v1 import (
     module_routes as module,
     lesson_routes as lesson,
     lesson_block_type_routes as lesson_block_type,
-    enrollment_routes as enrollment
+    enrollment_routes as enrollment,
+    websocket_routes as websocket
 )
 
 router = APIRouter()
@@ -66,4 +67,14 @@ router.include_router(
     enrollment.router,
     prefix="/enrollments",
     tags=["enrollments"]
+)
+
+
+
+# Websocket
+
+router.include_router(
+    websocket.router,
+    prefix="/websockets",
+    tags=["websocket"]
 )

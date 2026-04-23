@@ -1,3 +1,5 @@
+from app.schemas import enrollment
+from app.websockets import manager
 from fastapi import APIRouter, Depends, HTTPException, UploadFile, File
 from sqlalchemy.orm import Session
 from app.db.session import SessionLocal
@@ -14,13 +16,21 @@ def get_db():
         db.close()
 
 @router.post("/enrollments", response_model=EnrollmentResponse)
-def create_enrollment(
+async def create_enrollment(
         data: EnrollmentCreate = Depends(EnrollmentCreate.as_form),
         image: UploadFile = File(None),
         db: Session = Depends(get_db)
     ):
     try:
-        return enrollment_service.create_enrollment(db, data, image)
+        enrollment = enrollment_service.create_enrollment(db, data, image)
+
+        if enrollment.role_id == 4:
+            await manager.send_to_admins({
+                "event": "new_student_enrollment",
+                "message": "Nuevo estudiante matriculado"
+            })
+
+        return enrollment
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
     
