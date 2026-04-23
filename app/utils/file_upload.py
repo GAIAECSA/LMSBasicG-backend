@@ -29,14 +29,21 @@ def save_course_voucher(file: UploadFile) -> str | None:
     if not file:
         return None
 
-    if not file.content_type.startswith("image/"):
-        raise ValueError("El archivo debe ser una imagen")
+    allowed_types = [
+        "image/jpeg",
+        "image/png",
+        "image/webp",
+        "application/pdf"
+    ]
+
+    if file.content_type not in allowed_types:
+        raise ValueError("Solo se permiten imágenes o PDF")
 
     os.makedirs(UPLOAD_DIR_IMAGE_COURSE_VOUCHER, exist_ok=True)
 
-    extension = file.filename.split(".")[-1]
-    filename = f"{uuid4()}.{extension}"
+    extension = file.filename.split(".")[-1].lower()
 
+    filename = f"{uuid4()}.{extension}"
     filepath = os.path.join(UPLOAD_DIR_IMAGE_COURSE_VOUCHER, filename)
 
     with open(filepath, "wb") as buffer:
