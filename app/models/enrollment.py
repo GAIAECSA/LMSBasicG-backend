@@ -20,6 +20,6 @@ class Enrollment(Base):
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), onupdate=func.now())
 
-    student = relationship("User")
+    user = relationship("User")
     course = relationship("Course")
     role = relationship("Role")
