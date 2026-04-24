@@ -60,7 +60,7 @@ class EnrollmentUpdate(BaseModel):
 
 class EnrollmentResponse(BaseModel):
     id: int
-    accepted: bool
+    accepted: Optional[bool]
     reference_code: Optional[str] = None
     voucher_url: Optional[str] = None 
 
