@@ -4,6 +4,7 @@ from fastapi import UploadFile
 
 UPLOAD_DIR_IMAGE_COURSE = "uploads/courses"
 UPLOAD_DIR_IMAGE_COURSE_VOUCHER = "uploads/course_vouchers"
+UPLOAD_DIR_LESSON_BLOCK_FILE = "uploads/lesson_blocks"
 
 
 def save_course_image(file: UploadFile) -> str | None:
@@ -50,3 +51,30 @@ def save_course_voucher(file: UploadFile) -> str | None:
         buffer.write(file.file.read())
 
     return f"/{filepath}"
+
+def save_lesson_file(file: UploadFile) -> str | None:
+    if not file:
+        return None
+
+    allowed_types = [
+        "image/jpeg",
+        "image/png",
+        "image/webp",
+        "application/pdf"
+    ]
+
+    if file.content_type not in allowed_types:
+        raise ValueError("Solo se permiten imágenes o PDF")
+    
+    os.makedirs(UPLOAD_DIR_LESSON_BLOCK_FILE, exist_ok=True)
+
+    extension = file.filename.split(".")[-1].lower()
+
+    filename = f"{uuid4()}.{extension}"
+    filepath = os.path.join(UPLOAD_DIR_IMAGE_COURSE_VOUCHER, filename)
+
+    with open(filepath, "wb") as buffer:
+        buffer.write(file.file.read())
+
+    return f"/{filepath}"
+    
