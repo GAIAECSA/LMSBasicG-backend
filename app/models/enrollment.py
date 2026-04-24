@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, Boolean, DateTime, func, ForeignKey
+from sqlalchemy import Column, Integer, String, Boolean, DateTime, func, ForeignKey, Text
 from sqlalchemy.orm import relationship
 from app.db.base import Base
 
@@ -8,6 +8,7 @@ class Enrollment(Base):
     id = Column(Integer, primary_key=True, index=True)
     
     accepted = Column(Boolean)
+    comment = Column(Text)
     
     voucher_url = Column(String, nullable=True)
     reference_code = Column(String, nullable=True)

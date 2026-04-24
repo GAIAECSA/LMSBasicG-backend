@@ -14,6 +14,8 @@ def create_enrollment(db: Session, data: EnrollmentCreate, image: UploadFile | N
             raise Exception("Matrícula en revisión")
         elif existing.accepted is True:
             raise Exception("Ya estás matriculado en este curso")
+        elif existing.accepted is False:
+            raise Exception("Tu solicitud de matrícula no fue aprobada. Puedes revisar los detalles en el curso y volver a intentarlo cuando hayas realizado los ajustes necesarios.")
 
     voucher_url = None
     if image:

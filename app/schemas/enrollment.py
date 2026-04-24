@@ -9,6 +9,7 @@ class EnrollmentCreate(BaseModel):
     
     accepted: Optional[bool] = None
     reference_code: Optional[str] = None
+    comment: Optional[str] = None
     
     user_id: int
     course_id: int
@@ -19,6 +20,7 @@ class EnrollmentCreate(BaseModel):
         cls,
         accepted: Optional[bool] = Form(None),
         reference_code: Optional[str] = Form(None),
+        comment: Optional[str] = Form(None),
         user_id: int = Form(...),
         course_id: int = Form(...),
         role_id: int = Form(...),
@@ -26,6 +28,7 @@ class EnrollmentCreate(BaseModel):
         return cls(
             accepted=accepted,
             reference_code=reference_code,
+            comment=comment,
             user_id=user_id,
             course_id=course_id,
             role_id=role_id,
@@ -34,7 +37,7 @@ class EnrollmentCreate(BaseModel):
 class EnrollmentUpdate(BaseModel):
     
     accepted: Optional[bool] = None
-
+    comment: Optional[str] = None
     reference_code: Optional[str] = None
     
     user_id: Optional[int] = None
@@ -46,6 +49,7 @@ class EnrollmentUpdate(BaseModel):
         cls,
         accepted: Optional[bool] = Form(None),
         reference_code: Optional[str] = Form(None),
+        comment: Optional[str] = Form(None),
         user_id: Optional[int] = Form(None),
         course_id: Optional[int] = Form(None),
         role_id: Optional[int] = Form(None),
@@ -53,6 +57,7 @@ class EnrollmentUpdate(BaseModel):
         return cls(
             accepted=accepted,
             reference_code=reference_code,
+            comment=comment,
             user_id=user_id,
             course_id=course_id,
             role_id=role_id,
@@ -62,6 +67,7 @@ class EnrollmentResponse(BaseModel):
     id: int
     accepted: Optional[bool]
     reference_code: Optional[str] = None
+    comment: Optional[str] = None
     voucher_url: Optional[str] = None 
 
     user: UserBasicResponse
