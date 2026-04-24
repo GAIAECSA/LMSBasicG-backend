@@ -39,11 +39,6 @@ def update_user(db: Session, user_id: int, data: UserUpdate):
         if existing_user and existing_user.id != user_id:
             raise ValueError("El nombre de usuario ya existe")
 
-    if "email" in update_data and update_data["email"] is not None:
-        existing_email = user_repo.get_by_email(db, update_data["email"])
-        if existing_email and existing_email.id != user_id:
-            raise ValueError("El correo electrónico ya está en uso")
-
     if "password" in update_data:
         update_data["password"] = hash_password(update_data["password"])
 
