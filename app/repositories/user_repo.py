@@ -10,7 +10,16 @@ def create(db: Session, user: User):
     db.refresh(user)
     return user
 
+def update(db: Session, user: User):
+    db.merge(user)
+    db.commit()
+    db.refresh(user)
+    return user
+
 def me(db: Session, user_id: int):
+    return db.query(User).filter(User.id == user_id, User.deleted == False).first()
+
+def get_by_id(db: Session, user_id: int):
     return db.query(User).filter(User.id == user_id, User.deleted == False).first()
 
 def get_all(db: Session):

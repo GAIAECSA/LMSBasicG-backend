@@ -19,8 +19,8 @@ def delete(db: Session, subcategory: Subcategory):
     db.commit()
     return subcategory
 
-def get_by_id(db: Session, category_id: int):
-    return db.query(Subcategory).filter(Subcategory.id == category_id, Subcategory.deleted == False).first()
+def get_by_id(db: Session, subcategory_id: int):
+    return db.query(Subcategory).filter(Subcategory.id == subcategory_id, Subcategory.deleted == False).first()
 
 def get_by_category_id(db: Session, category_id: int):
     return db.query(Subcategory).filter(Subcategory.category_id == category_id, Subcategory.deleted == False).all()
