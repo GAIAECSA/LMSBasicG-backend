@@ -25,9 +25,9 @@ def create_lesson_block(
         raise HTTPException(status_code=400, detail=str(e))
 
 @router.put("/lesson-blocks/{lesson_block_id}", response_model=LessonBlockResponse)
-def update_lesson_block(lesson_block_id: int, data: LessonBlockUpdate, db: Session = Depends(get_db)):
+def update_lesson_block(lesson_block_id: int, data: LessonBlockUpdate, file: UploadFile = File(None), db: Session = Depends(get_db)):
     try:
-        return lesson_block_service.update_lesson_block(db, lesson_block_id, data)
+        return lesson_block_service.update_lesson_block(db, lesson_block_id, data, file)
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
     
