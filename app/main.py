@@ -25,6 +25,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+os.makedirs("uploads/lesson_blocks", exist_ok=True)
 os.makedirs("uploads/courses", exist_ok=True)
 os.makedirs("uploads/course_vouchers", exist_ok=True)
 
