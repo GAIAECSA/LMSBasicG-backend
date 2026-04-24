@@ -50,7 +50,7 @@ def get_all_by_course_id_and_role_id(db: Session, course_id: int, role_id: int):
         .all()
     )
 
-def get_all_by_user(db: Session, user_id):
+def get_all_by_user(db: Session, user_id: int):
     return (
         db.query(Enrollment)
         .options(
@@ -60,6 +60,24 @@ def get_all_by_user(db: Session, user_id):
         )
         .filter(Enrollment.user_id == user_id, Enrollment.deleted == False)
     )
+
+def get_pending_enrollment_by_course_user(db: Session, course_id: int, user_id: int):
+    return (
+        db.query(Enrollment)
+        .options(
+            joinedload(Enrollment.user),
+            joinedload(Enrollment.course),
+            joinedload(Enrollment.role)
+        )
+        .filter(
+            Enrollment.user_id == user_id,
+            Enrollment.course_id == course_id,
+            Enrollment.accepted.is_(None),
+            Enrollment.deleted == False
+        )
+        .first()
+    )
+
 
 def get_all_by_role(db: Session, role_id: int):
     return (

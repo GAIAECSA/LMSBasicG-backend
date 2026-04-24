@@ -5,14 +5,19 @@ from app.schemas.enrollment import EnrollmentCreate, EnrollmentUpdate
 from fastapi import UploadFile
 from app.utils.file_upload import save_course_voucher
 import os
-from app.websockets.manager import manager
 
 def create_enrollment(db: Session, data: EnrollmentCreate, image: UploadFile | None = None):
+    existing_enrollment = enrollment_repo.get_pending_enrollment_by_course_user(db, data.course_id, data.user_id)
+
+    if existing_enrollment:
+        raise Exception("Matricula en revisión")
+
     voucher_url = None
     if image:
         voucher_url = save_course_voucher(image)
     
-    enrollment = Enrollment(**data.model_dump(), voucher_url=voucher_url) 
+    enrollment = Enrollment(**data.model_dump(), voucher_url=voucher_url)
+     
     return enrollment_repo.create(db, enrollment)
 
 def update_enrollment(db: Session,enrollment_id: int,data: EnrollmentUpdate,image: UploadFile | None = None):
