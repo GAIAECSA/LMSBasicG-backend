@@ -1,4 +1,5 @@
-from sqlalchemy import Column, Integer, String, Boolean, DateTime, ForeignKey, func, JSON, CheckConstraint
+from sqlalchemy import Column, Integer, String, Boolean, DateTime, ForeignKey, func, CheckConstraint
+from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import relationship
 from app.db.base import Base
 
@@ -7,7 +8,7 @@ class LessonBlock(Base):
 
     id = Column(Integer, primary_key=True, index=True)
 
-    content = Column(JSON, nullable=False)
+    content = Column(JSONB, nullable=False)
 
     is_required = Column(Boolean, default=True)
     completion_type = Column(String)
@@ -25,6 +26,6 @@ class LessonBlock(Base):
     lesson_block_type= relationship("LessonBlockType")
 
     __table_args__ = (
-        CheckConstraint("content <> '{}'::json", name="content_not_empty"),
-    )
+        CheckConstraint("content <> '{}'::jsonb", name="content_not_empty"),
+    )   
 
