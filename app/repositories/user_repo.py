@@ -12,3 +12,6 @@ def create(db: Session, user: User):
 
 def me(db: Session, user_id: int):
     return db.query(User).filter(User.id == user_id, User.deleted == False).first()
+
+def get_all(db: Session):
+    return db.query(User).filter(User.deleted == False).all()

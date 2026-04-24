@@ -44,3 +44,10 @@ def read_current_user(
         raise HTTPException(status_code=404, detail="Usuario no encontrado")
 
     return user
+
+@router.get("/users", response_model=list[UserResponse])
+def get_all_subcategories(db: Session = Depends(get_db)):
+    try:
+        return user_service.get_all_users(db)
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))

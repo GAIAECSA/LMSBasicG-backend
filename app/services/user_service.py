@@ -29,3 +29,6 @@ def authenticate_user(db: Session, data: UserLogin):
 
 def get_current_user(db: Session, user_id: int):
     return user_repo.me(db, user_id)
+
+def get_all_users(db: Session):
+    return user_repo.get_all(db)
