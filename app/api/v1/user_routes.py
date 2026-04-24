@@ -46,7 +46,7 @@ def read_current_user(
     return user
 
 @router.get("/users", response_model=list[UserResponse])
-def get_all_subcategories(db: Session = Depends(get_db)):
+def get_all_users(db: Session = Depends(get_db)):
     try:
         return user_service.get_all_users(db)
     except Exception as e:
