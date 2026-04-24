@@ -7,10 +7,13 @@ from app.utils.file_upload import save_course_voucher
 import os
 
 def create_enrollment(db: Session, data: EnrollmentCreate, image: UploadFile | None = None):
-    existing_enrollment = enrollment_repo.get_pending_enrollment_by_course_user(db, data.course_id, data.user_id)
+    existing = enrollment_repo.get_existing_enrollment(db, data.course_id, data.user_id)
 
-    if existing_enrollment:
-        raise Exception("Matricula en revisión")
+    if existing:
+        if existing.accepted is None:
+            raise Exception("Matrícula en revisión")
+        elif existing.accepted is True:
+            raise Exception("Ya estás matriculado en este curso")
 
     voucher_url = None
     if image:

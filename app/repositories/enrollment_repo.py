@@ -61,18 +61,12 @@ def get_all_by_user(db: Session, user_id: int):
         .filter(Enrollment.user_id == user_id, Enrollment.deleted == False)
     )
 
-def get_pending_enrollment_by_course_user(db: Session, course_id: int, user_id: int):
+def get_existing_enrollment(db: Session, course_id: int, user_id: int):
     return (
         db.query(Enrollment)
-        .options(
-            joinedload(Enrollment.user),
-            joinedload(Enrollment.course),
-            joinedload(Enrollment.role)
-        )
         .filter(
             Enrollment.user_id == user_id,
             Enrollment.course_id == course_id,
-            Enrollment.accepted.is_(None),
             Enrollment.deleted == False
         )
         .first()

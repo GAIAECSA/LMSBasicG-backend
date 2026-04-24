@@ -7,7 +7,7 @@ class Enrollment(Base):
 
     id = Column(Integer, primary_key=True, index=True)
     
-    accepted = Column(Boolean, default=False)
+    accepted = Column(Boolean)
     
     voucher_url = Column(String, nullable=True)
     reference_code = Column(String, nullable=True)
