@@ -52,7 +52,14 @@ def save_course_voucher(file: UploadFile) -> str | None:
 
     return f"/{filepath}"
 
-def save_lesson_file(file: UploadFile) -> str | None:
+import os
+from uuid import uuid4
+from fastapi import UploadFile
+
+UPLOAD_DIR_LESSON_BLOCK_FILE = "uploads/lesson_blocks"
+
+
+def save_lesson_file(file: UploadFile) -> dict | None:
     if not file:
         return None
 
@@ -65,16 +72,20 @@ def save_lesson_file(file: UploadFile) -> str | None:
 
     if file.content_type not in allowed_types:
         raise ValueError("Solo se permiten imágenes o PDF")
-    
+
     os.makedirs(UPLOAD_DIR_LESSON_BLOCK_FILE, exist_ok=True)
 
     extension = file.filename.split(".")[-1].lower()
 
     filename = f"{uuid4()}.{extension}"
-    filepath = os.path.join(UPLOAD_DIR_IMAGE_COURSE_VOUCHER, filename)
+    filepath = os.path.join(UPLOAD_DIR_LESSON_BLOCK_FILE, filename)
 
     with open(filepath, "wb") as buffer:
         buffer.write(file.file.read())
 
-    return f"/{filepath}"
+    return {
+        "file_url": f"/uploads/lesson_blocks/{filename}",
+        "filename": file.filename,
+        "stored_name": filename
+    }
     

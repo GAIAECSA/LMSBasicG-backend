@@ -2,9 +2,25 @@ from sqlalchemy.orm import Session
 from app.repositories import lesson_block_repo
 from app.models.lesson_block import LessonBlock
 from app.schemas.lesson_block import LessonBlockCreate, LessonBlockUpdate
+from fastapi import UploadFile
+from app.utils.file_upload import save_lesson_file
+import os
 
-def create_lesson_block(db: Session, data: LessonBlockCreate):
-    lesson_block = LessonBlock(**data.model_dump())
+def create_lesson_block(db: Session, data: LessonBlockCreate, file: UploadFile | None = None):
+    content = {}
+
+    if file:
+        file_data = save_lesson_file(file)
+
+        content = {
+            "file_url": file_data["file_url"],
+            "filename": file_data["filename"]
+        }
+    
+    elif data.content:
+        content = data.content
+
+    lesson_block = LessonBlock(**data.model_dump(), content = content)
     return lesson_block_repo.create(db, lesson_block)
 
 def update_lesson_block(db: Session, lesson_block_id: int, data: LessonBlockUpdate):

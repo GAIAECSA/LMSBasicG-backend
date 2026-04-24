@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, UploadFile, File
 from sqlalchemy.orm import Session
 from app.db.session import SessionLocal
 from app.schemas.lesson_block import LessonBlockCreate, LessonBlockUpdate, LessonBlockResponse
@@ -13,10 +13,14 @@ def get_db():
     finally:
         db.close()
 
-@router.post("/lesson-blocks", response_model=LessonBlockResponse)
-def create_lesson_block(data: LessonBlockCreate, db: Session = Depends(get_db)):
+@router.post("/lesson-blocks")
+def create_lesson_block(
+    data: LessonBlockCreate = Depends(LessonBlockCreate.as_form),
+    file: UploadFile = File(None),
+    db: Session = Depends(get_db)
+):
     try:
-        return lesson_block_service.create_lesson_block(db, data)
+        return lesson_block_service.create_lesson_block(db, data, file)
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
 
