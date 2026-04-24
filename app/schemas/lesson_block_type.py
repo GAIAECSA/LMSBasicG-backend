@@ -65,3 +65,10 @@ class LessonBlockTypeResponse(BaseModel):
 
     class Config:
         from_attributes = True
+
+class LessonBlockBasicResponse(BaseModel):
+    id: int
+    key: str
+
+    class Config:
+        from_attributes = True

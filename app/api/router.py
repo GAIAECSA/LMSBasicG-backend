@@ -8,6 +8,7 @@ from app.api.v1 import (
     course_routes as course,
     module_routes as module,
     lesson_routes as lesson,
+    lesson_block_routes as lesson_block,
     lesson_block_type_routes as lesson_block_type,
     enrollment_routes as enrollment,
     websocket_routes as websocket
@@ -58,6 +59,12 @@ router.include_router(
 )
 
 router.include_router(
+    lesson_block.router,
+    prefix="/lesson-blocks",
+    tags=["lesson-blocks"]
+)
+
+router.include_router(
     lesson_block_type.router,
     prefix="/lesson-block-types",
     tags=["lesson-block-types"]
@@ -68,8 +75,6 @@ router.include_router(
     prefix="/enrollments",
     tags=["enrollments"]
 )
-
-
 
 # Websocket
 

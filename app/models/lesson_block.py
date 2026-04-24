@@ -1,22 +1,30 @@
-from sqlalchemy import Column, Integer, String, Boolean, DateTime, func, CheckConstraint, ForeignKey, JSON
+from sqlalchemy import Column, Integer, String, Boolean, DateTime, ForeignKey, func, JSON, CheckConstraint
+from sqlalchemy.orm import relationship
 from app.db.base import Base
 
 class LessonBlock(Base):
-    __tablename__ = "lesson_block_types"
+    __tablename__ = "lesson_blocks"
 
     id = Column(Integer, primary_key=True, index=True)
 
-    order = Column(Integer, nullable=False, default=0)
     content = Column(JSON, nullable=False)
 
-    lesson_block_type_id = Column(Integer, ForeignKey("lesson_block_types.id"), nullable=False)
-    reference_id = Column(Integer)
+    is_required = Column(Boolean, default=True)
+    completion_type = Column(String)
+    completion_value = Column(Integer)
+    order = Column(Integer, default=0)
 
+    lesson_id = Column(Integer, ForeignKey("lessons.id"), nullable=False)
+    block_type_id = Column(Integer, ForeignKey("lesson_block_types.id"), nullable=False)
+
+    is_active = Column(Boolean, default=True)
     deleted = Column(Boolean, default=False)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), onupdate=func.now())
 
+    lesson_block_type= relationship("LessonBlockType")
+
     __table_args__ = (
-        CheckConstraint("trim(name) <> ''", name="name_not_blank"),
-        CheckConstraint('"order" >= 0', name="module_order_non_negative"),
+        CheckConstraint("content <> '{}'::json", name="content_not_empty"),
     )
+
