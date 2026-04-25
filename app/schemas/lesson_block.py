@@ -2,6 +2,7 @@ from pydantic import BaseModel
 from typing import Optional, Any, Dict
 from enum import Enum
 from fastapi import Form
+from app.schemas.lesson_block_type import LessonBlockTypeBasicResponse
 
 
 class LessonBlockCompletitionType(str, Enum):
@@ -103,7 +104,7 @@ class LessonBlockResponse(BaseModel):
 
     is_active: bool
 
-    lesson_block_type: LessonBlockBasicResponse
+    lesson_block_type: LessonBlockTypeBasicResponse
 
     class Config:
         from_attributes = True
