@@ -12,10 +12,10 @@ def create_lesson_block(db: Session, data: LessonBlockCreate, file: UploadFile |
     if file:
         #file_data = save_lesson_file(file)
 
-        content = {
+        content = {"base":"base"}
             #"file_url": file_data["file_url"],
             #"filename": file_data["filename"]
-        }
+        #}
     elif data.content:
         content = data.content
     else:
