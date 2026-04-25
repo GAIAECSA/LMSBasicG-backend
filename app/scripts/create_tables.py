@@ -12,6 +12,7 @@ from app.models.lesson_block import LessonBlock
 from app.models.block_progress import BlockProgress
 from app.models.lesson_block_type import LessonBlockType
 from app.models.enrollment import Enrollment
+from app.models.quizz_response import QuizzResponse
 
 def create_tables():
     print("Creando tablas...")
