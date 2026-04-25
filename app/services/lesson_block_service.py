@@ -7,12 +7,12 @@ from app.utils.file_upload import save_lesson_file
 import os
 
 def create_lesson_block(db: Session, data: LessonBlockCreate, file: UploadFile | None = None):
-    content = {}
+    content = {"base":"base"}
 
     if file:
         #file_data = save_lesson_file(file)
 
-        content = {"base":"base"}
+        pass
             #"file_url": file_data["file_url"],
             #"filename": file_data["filename"]
         #}
