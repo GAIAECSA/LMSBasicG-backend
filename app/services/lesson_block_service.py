@@ -9,6 +9,9 @@ import os
 def create_lesson_block(db: Session, data: LessonBlockCreate, file: UploadFile | None = None):
     content = {}
 
+    if file and data.content:
+        raise ValueError("No puedes enviar archivo y content al mismo tiempo")
+
     if file:
         file_data = save_lesson_file(file)
 
@@ -20,27 +23,37 @@ def create_lesson_block(db: Session, data: LessonBlockCreate, file: UploadFile |
     elif data.content:
         content = data.content
 
-    lesson_block = LessonBlock(**data.model_dump(), content = content)
+    lesson_block = LessonBlock(
+        **data.model_dump(exclude={"content"}),
+        content=content
+    )
+
     return lesson_block_repo.create(db, lesson_block)
 
-def update_lesson_block(db: Session, lesson_block_id: int, data: LessonBlockUpdate, file: UploadFile | None = None):
+def update_lesson_block(
+    db: Session,
+    lesson_block_id: int,
+    data: LessonBlockUpdate,
+    file: UploadFile | None = None
+):
     lesson_block = lesson_block_repo.get_by_id(db, lesson_block_id)
     if not lesson_block:
         raise Exception("Bloque no encontrado")
 
-    update_data = data.model_dump(exclude_unset=True)
+    if file and data.content:
+        raise ValueError("No puedes enviar archivo y content al mismo tiempo")
+
+    update_data = data.model_dump(exclude_unset=True, exclude={"content"})
 
     for key, value in update_data.items():
         setattr(lesson_block, key, value)
 
     if file:
         old_content = lesson_block.content or {}
-
         old_file_url = old_content.get("file_url")
 
         if old_file_url:
             old_path = old_file_url.lstrip("/")
-
             if os.path.exists(old_path):
                 os.remove(old_path)
 
@@ -50,6 +63,9 @@ def update_lesson_block(db: Session, lesson_block_id: int, data: LessonBlockUpda
             "file_url": file_data["file_url"],
             "filename": file_data["filename"]
         }
+
+    elif data.content is not None:
+        lesson_block.content = data.content
 
     return lesson_block_repo.update(db, lesson_block)
 
