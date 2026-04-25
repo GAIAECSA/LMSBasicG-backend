@@ -3,7 +3,7 @@ from typing import Optional
 from datetime import datetime
 
 
-class ProgressCreate(BaseModel):
+class BlockProgressCreate(BaseModel):
     enrollment_id: int
     lesson_block_id: int
 
@@ -13,7 +13,7 @@ class ProgressCreate(BaseModel):
     completed_at: Optional[datetime] = None
 
 
-class ProgressUpdate(BaseModel):
+class BlockProgressUpdate(BaseModel):
     is_completed: Optional[bool] = None
     attempts: Optional[int] = None
 
@@ -21,7 +21,7 @@ class ProgressUpdate(BaseModel):
     completed_at: Optional[datetime] = None
 
 
-class ProgressResponse(BaseModel):
+class BlockProgressResponse(BaseModel):
     id: int
     enrollment_id: int
     lesson_block_id: int

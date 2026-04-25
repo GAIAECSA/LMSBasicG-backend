@@ -1,5 +1,5 @@
 from sqlalchemy.orm import Session, joinedload
-from app.models.progress import Progress
+from app.models.block_progress import Progress
 
 def create(db: Session, progress: Progress):
     db.add(progress)

@@ -2,8 +2,8 @@ from sqlalchemy import Column, Integer, Boolean, DateTime, ForeignKey, func, Uni
 from sqlalchemy.orm import relationship
 from app.db.base import Base
 
-class Progress(Base):
-    __tablename__ = "progress"
+class BlockProgress(Base):
+    __tablename__ = "block_progress"
 
     id = Column(Integer, primary_key=True)
 
