@@ -3,7 +3,7 @@ from sqlalchemy.dialects.postgresql import JSONB
 from app.db.base import Base
 
 class QuizzResponse(Base):
-    __tablename__ = "quizz_response"
+    __tablename__ = "quizz_attempts"
 
     id = Column(Integer, primary_key=True)
 
