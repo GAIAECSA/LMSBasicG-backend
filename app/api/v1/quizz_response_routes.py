@@ -33,6 +33,12 @@ def update_quizz_response(quizz_response_id: int, data: QuizzResponseUpdate, db:
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
 
+@router.get("/quiz-responses/enrollment/{enrollment_id}", response_model=list[QuizzResponseResponse])
+def get_by_enrollment(enrollment_id: int, db: Session = Depends(get_db)):
+    try:
+        return quizz_response_service.get_by_enrollment(db, enrollment_id)
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))
 
 @router.get("/quiz-responses/{quizz_response_id}", response_model=QuizzResponseResponse)
 def get_quizz_response(quizz_response_id: int, db: Session = Depends(get_db)):
@@ -40,14 +46,6 @@ def get_quizz_response(quizz_response_id: int, db: Session = Depends(get_db)):
         return quizz_response_service.get_quizz_response(db, quizz_response_id)
     except Exception as e:
         raise HTTPException(status_code=404, detail=str(e))
-
-
-@router.get("/quiz-responses/enrollment/{enrollment_id}", response_model=list[QuizzResponseResponse])
-def get_by_enrollment(enrollment_id: int, db: Session = Depends(get_db)):
-    try:
-        return quizz_response_service.get_by_enrollment(db, enrollment_id)
-    except Exception as e:
-        raise HTTPException(status_code=400, detail=str(e))
 
 
 @router.delete("/quiz-responses/{quizz_response_id}")
