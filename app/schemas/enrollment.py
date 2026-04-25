@@ -76,3 +76,11 @@ class EnrollmentResponse(BaseModel):
 
     class Config:
         from_attributes = True
+    
+class EnrollmentBasicResponse(BaseModel):
+    id: int
+
+    user: UserBasicResponse
+
+    class Config:
+        from_attributes = True

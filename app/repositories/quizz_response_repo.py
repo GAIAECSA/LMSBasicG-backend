@@ -1,5 +1,6 @@
 from sqlalchemy.orm import Session
 from app.models.quizz_response import QuizzResponse
+from sqlalchemy.orm import joinedload
 
 def create(db: Session, quizz_response: QuizzResponse):
     db.add(quizz_response)
@@ -24,3 +25,17 @@ def get_by_id(db: Session, quizz_response_id: int):
 
 def get_all_by_enrollment(db: Session, enrollment_id: int):
     return db.query(QuizzResponse).filter(QuizzResponse.deleted == False, QuizzResponse.enrollment_id == enrollment_id).all()
+
+def get_all_by_lesson_block(db: Session, lesson_block_id: int):
+    return (
+        db.query(QuizzResponse)
+        .options(
+            joinedload(QuizzResponse.lesson_block),
+            joinedload(QuizzResponse.enrollment)
+        )
+        .filter(
+            QuizzResponse.lesson_block_id == lesson_block_id,
+            QuizzResponse.deleted == False
+        )
+        .all()
+    )

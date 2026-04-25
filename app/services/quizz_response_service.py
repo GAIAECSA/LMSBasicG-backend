@@ -34,3 +34,6 @@ def get_quizz_response(db: Session, quizz_response_id: int):
 
 def get_by_enrollment(db: Session, enrollment_id: int):
     return quizz_response_repo.get_all_by_enrollment(db, enrollment_id)
+
+def get_by_block(db: Session, lesson_block_id: int):
+    return quizz_response_repo.get_all_by_lesson_block(db, lesson_block_id)

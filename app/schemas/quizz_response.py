@@ -1,5 +1,6 @@
-from pydantic import BaseModel, field_validator
+from pydantic import BaseModel
 from typing import Optional
+from app.schemas.enrollment import EnrollmentBasicResponse
 
 class QuizzResponseCreate(BaseModel):
 
@@ -22,7 +23,6 @@ from datetime import datetime
 class QuizzResponseResponse(BaseModel):
     id: int
 
-    enrollment_id: int
     lesson_block_id: int
 
     quizz: str
@@ -32,6 +32,7 @@ class QuizzResponseResponse(BaseModel):
     is_passed: Optional[bool]
 
     created_at: datetime
+    enrollment: EnrollmentBasicResponse
 
     class Config:
         orm_mode = True

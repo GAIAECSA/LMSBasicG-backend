@@ -1,4 +1,5 @@
 from sqlalchemy import Column, Integer, Boolean, DateTime, ForeignKey, func
+from sqlalchemy.orm import relationship
 from sqlalchemy.dialects.postgresql import JSONB
 from app.db.base import Base
 
@@ -18,3 +19,6 @@ class QuizzResponse(Base):
 
     deleted = Column(Boolean, default=False)
     created_at = Column(DateTime, server_default=func.now())
+
+    enrollment = relationship("Enrollment", backref="progress")
+    lesson_block = relationship("LessonBlock", backref="progress")
