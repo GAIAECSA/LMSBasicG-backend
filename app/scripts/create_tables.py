@@ -9,6 +9,7 @@ from app.models.course import Course
 from app.models.module import Module
 from app.models.lesson import Lesson
 from app.models.lesson_block import LessonBlock
+from app.models.block_progress import BlockProgress
 from app.models.lesson_block_type import LessonBlockType
 from app.models.enrollment import Enrollment
 

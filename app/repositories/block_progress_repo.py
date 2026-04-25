@@ -27,6 +27,16 @@ def get_by_id(db: Session, progress_id: int):
         )\
         .first()
 
+def get_by_enrollment_block(db: Session, enrollment_id: int, lesson_block_id: int):
+    return db.query(BlockProgress)\
+        .filter(
+            BlockProgress.enrollment_id == enrollment_id,
+            BlockProgress.lesson_block_id == lesson_block_id,
+            BlockProgress.deleted == False
+        )\
+        .first()
+
+
 def get_by_enrollment(db: Session, enrollment_id: int):
     return db.query(BlockProgress)\
         .filter(
