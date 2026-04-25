@@ -9,9 +9,6 @@ import os
 def create_lesson_block(db: Session, data: LessonBlockCreate, file: UploadFile | None = None):
     content = {}
 
-    if file and data.content:
-        raise ValueError("No puedes enviar archivo y content al mismo tiempo")
-
     if file:
         file_data = save_lesson_file(file)
 
@@ -20,7 +17,7 @@ def create_lesson_block(db: Session, data: LessonBlockCreate, file: UploadFile |
             "filename": file_data["filename"]
         }
     
-    elif data.content:
+    else:
         content = data.content
 
     lesson_block = LessonBlock(
@@ -39,9 +36,6 @@ def update_lesson_block(
     lesson_block = lesson_block_repo.get_by_id(db, lesson_block_id)
     if not lesson_block:
         raise Exception("Bloque no encontrado")
-
-    if file and data.content:
-        raise ValueError("No puedes enviar archivo y content al mismo tiempo")
 
     update_data = data.model_dump(exclude_unset=True, exclude={"content"})
 
@@ -64,7 +58,7 @@ def update_lesson_block(
             "filename": file_data["filename"]
         }
 
-    elif data.content is not None:
+    else:
         lesson_block.content = data.content
 
     return lesson_block_repo.update(db, lesson_block)

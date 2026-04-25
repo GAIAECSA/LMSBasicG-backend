@@ -20,8 +20,8 @@ class BlockProgress(Base):
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), onupdate=func.now())
 
-    enrollment = relationship("Enrollment", backref="progress")
-    lesson_block = relationship("LessonBlock", backref="progress")
+    #enrollment = relationship("Enrollment", backref="progress")
+    #lesson_block = relationship("LessonBlock", backref="progress")
 
     __table_args__ = (
         UniqueConstraint("enrollment_id", "lesson_block_id", name="uq_enrollment_block"),
