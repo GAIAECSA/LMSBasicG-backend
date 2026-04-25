@@ -3,7 +3,7 @@ from sqlalchemy.dialects.postgresql import JSONB
 from app.db.base import Base
 
 class QuizzResponse(Base):
-    __tablename__ = "quizz_attempts"
+    __tablename__ = "quizz_response"
 
     id = Column(Integer, primary_key=True)
 
@@ -16,4 +16,5 @@ class QuizzResponse(Base):
     score = Column(Integer)
     is_passed = Column(Boolean)
 
+    deleted = Column(Boolean, default=False)
     created_at = Column(DateTime, server_default=func.now())
