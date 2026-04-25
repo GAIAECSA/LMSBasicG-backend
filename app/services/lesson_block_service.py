@@ -10,15 +10,16 @@ def create_lesson_block(db: Session, data: LessonBlockCreate, file: UploadFile |
     content = {}
 
     if file:
-        file_data = save_lesson_file(file)
+        #file_data = save_lesson_file(file)
 
         content = {
-            "file_url": file_data["file_url"],
-            "filename": file_data["filename"]
+            #"file_url": file_data["file_url"],
+            #"filename": file_data["filename"]
         }
-    
-    else:
+    elif data.content:
         content = data.content
+    else:
+        pass
 
     lesson_block = LessonBlock(
         **data.model_dump(exclude={"content"}),
@@ -58,8 +59,10 @@ def update_lesson_block(
             "filename": file_data["filename"]
         }
 
-    else:
+    elif data.content is not None:
         lesson_block.content = data.content
+    else:
+        pass
 
     return lesson_block_repo.update(db, lesson_block)
 
