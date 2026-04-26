@@ -23,6 +23,9 @@ def delete(db: Session, quizz_response: QuizzResponse):
 def get_by_id(db: Session, quizz_response_id: int):
     return db.query(QuizzResponse).filter(QuizzResponse.id == quizz_response_id, QuizzResponse.deleted == False).first()
 
+def get_by_enrollment_and_lesson_block(db: Session, enrollment_id: int, lesson_block_id: int):
+    return db.query(QuizzResponse).filter(QuizzResponse.deleted == False, QuizzResponse.enrollment_id == enrollment_id, QuizzResponse.lesson_block_id == lesson_block_id).first()
+
 def get_all_by_enrollment(db: Session, enrollment_id: int):
     return db.query(QuizzResponse).filter(QuizzResponse.deleted == False, QuizzResponse.enrollment_id == enrollment_id).all()
 
