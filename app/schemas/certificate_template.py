@@ -7,25 +7,25 @@ import json
 class CertificateTemplateCreate(BaseModel):
     course_id: int
     background_image_url: Optional[str] = None
-    fields: List[Dict[str, Any]]
+    fields: Optional[List[Dict[str, Any]]] = None
     qr_config: Optional[Dict[str, Any]] = None
 
     @classmethod
     def as_form(
         cls,
         course_id: int = Form(...),
-        fields: str = Form(...),  # viene como string
+        fields: Optional[str] = Form(None),
         qr_config: Optional[str] = Form(None),
     ):
         return cls(
             course_id=course_id,
-            fields=json.loads(fields),
+            fields=json.loads(fields) if fields else None,
             qr_config=json.loads(qr_config) if qr_config else None,
         )
 
     @field_validator("fields")
     def validate_fields(cls, v):
-        if not isinstance(v, list):
+        if v is not None and not isinstance(v, list):
             raise ValueError("fields debe ser una lista")
         return v
 
