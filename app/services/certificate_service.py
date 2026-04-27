@@ -95,3 +95,6 @@ def verify_certificate(db: Session, code: str):
         raise Exception("Certificado inválido")
 
     return certificate
+
+def calculate_final_grade_average():
+    pass
