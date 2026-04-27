@@ -15,33 +15,53 @@ async def create_certificate_template(
     background_image: Optional[UploadFile] = None,
     request: Request = None
 ):
+    print("\n\n========== CREATE TEMPLATE ==========")
+
     existing = certificate_template_repo.get_by_course(db, data.course_id)
     if existing:
         raise Exception("Plantilla existente en el curso")
 
     form = await request.form()
 
+    print("📦 FORM KEYS:", list(form.keys()))
+    print("📄 DATA FIELDS:", data.fields)
+
     # 🔹 background image
     image_url = None
     if isinstance(background_image, UploadFile):
+        print("🖼️ Background image:", background_image.filename)
         image_url = save_certificate_template_image(background_image)
+    else:
+        print("🖼️ No background image")
 
     processed_fields = []
 
     for field in data.fields:
+        print("\n-----------------------------")
+        print("🧩 FIELD RAW:", field)
+
         field_dict = field.copy()
         field_id = field_dict.get("id")
 
         file_key = f"signature_{field_id}"
-        file = form.get(file_key)
+        print("🔑 Looking for:", file_key)
 
-        # 🔥 solo si realmente llegó archivo
+        file = form.get(file_key)
+        print("📎 File found:", file)
+
         if isinstance(file, UploadFile) and file.filename:
-            field_dict["signatureImage"] = save_certificate_template_image(file)
+            print("✅ Saving file...")
+            url = save_certificate_template_image(file)
+            field_dict["signatureImage"] = url
+            print("💾 URL:", url)
         else:
+            print("❌ No file for:", file_key)
             field_dict["signatureImage"] = None
 
         processed_fields.append(field_dict)
+
+    print("\n========== FINAL PROCESSED FIELDS ==========")
+    print(processed_fields)
 
     template = CertificateTemplate(
         course_id=data.course_id,
@@ -50,7 +70,11 @@ async def create_certificate_template(
         qr_config=data.qr_config
     )
 
-    return certificate_template_repo.create(db, template)
+    result = certificate_template_repo.create(db, template)
+
+    print("🎉 TEMPLATE CREATED")
+
+    return result
 
 
 async def update_certificate_template(
@@ -60,38 +84,65 @@ async def update_certificate_template(
     background_image: Optional[UploadFile] = None,
     request: Request = None
 ):
+    print("\n\n========== UPDATE TEMPLATE ==========")
+
     template = certificate_template_repo.get_by_id(db, template_id)
     if not template:
         raise Exception("Plantilla no encontrada")
 
     form = await request.form()
 
+    print("📦 FORM KEYS:", list(form.keys()))
+    print("📄 EXISTING FIELDS:", template.fields)
+    print("📄 UPDATE DATA FIELDS:", data.fields)
+
     # 🔹 background image
     if isinstance(background_image, UploadFile):
+        print("🖼️ New background image:", background_image.filename)
         template.background_image_url = save_certificate_template_image(background_image)
 
     updated_fields = []
 
-    for field in data.fields:
+    # 🔥 IMPORTANTE: usamos fields existentes si data.fields no viene completo
+    base_fields = data.fields if data.fields else template.fields
+
+    for field in base_fields:
+        print("\n-----------------------------")
+        print("🧩 FIELD:", field)
+
         field_dict = field.copy()
         field_id = field_dict.get("id")
 
         file_key = f"signature_{field_id}"
-        file = form.get(file_key)
+        print("🔑 Looking for:", file_key)
 
-        # 🔥 actualizar solo si llega archivo nuevo
+        file = form.get(file_key)
+        print("📎 File found:", file)
+
         if isinstance(file, UploadFile) and file.filename:
-            field_dict["signatureImage"] = save_certificate_template_image(file)
+            print("✅ Updating file...")
+            url = save_certificate_template_image(file)
+            field_dict["signatureImage"] = url
+            print("💾 New URL:", url)
         else:
-            # mantener lo existente si no se envía nuevo archivo
+            print("⏭️ Keeping existing signatureImage")
             field_dict["signatureImage"] = field_dict.get("signatureImage")
 
         updated_fields.append(field_dict)
 
-    template.fields = updated_fields
-    template.qr_config = data.qr_config
+    print("\n========== FINAL UPDATED FIELDS ==========")
+    print(updated_fields)
 
-    return certificate_template_repo.update(db, template)
+    template.fields = updated_fields
+
+    if data.qr_config:
+        template.qr_config = data.qr_config
+
+    result = certificate_template_repo.update(db, template)
+
+    print("🎉 TEMPLATE UPDATED")
+
+    return result
 
 
 def delete_certificate_template(db: Session, certificate_template_id: int):
