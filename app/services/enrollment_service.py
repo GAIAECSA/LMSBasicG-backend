@@ -28,9 +28,9 @@ def create_enrollment(db: Session, data: EnrollmentCreate, image: UploadFile | N
 
     enrollment = enrollment_repo.create(db, enrollment)
 
-    user = enrollment.user 
+    role = enrollment.role 
 
-    if user.role_id == 4:
+    if role.id == 4:
 
         certificate_data = CertificateCreate(
             user_id=data.user_id,
