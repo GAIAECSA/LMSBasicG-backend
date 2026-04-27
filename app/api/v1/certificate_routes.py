@@ -9,9 +9,17 @@ from app.schemas.certificate import (
     CertificateResponse
 )
 from app.services import certificate_service
+from sqlalchemy.orm import Session
+from app.db.session import SessionLocal
 
+router = APIRouter()
 
-router = APIRouter(prefix="/certificates", tags=["Certificates"])
+def get_db():
+    db = SessionLocal()
+    try:
+        yield db
+    finally:
+        db.close()
 
 
 @router.post("/", response_model=CertificateResponse)

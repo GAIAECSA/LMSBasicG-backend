@@ -9,12 +9,17 @@ from app.schemas.certificate_template import (
 )
 from app.services import certificate_template_service
 
+from sqlalchemy.orm import Session
+from app.db.session import SessionLocal
 
-router = APIRouter(
-    prefix="/certificate-templates",
-    tags=["Certificate Templates"]
-)
+router = APIRouter()
 
+def get_db():
+    db = SessionLocal()
+    try:
+        yield db
+    finally:
+        db.close()
 
 @router.post("/", response_model=CertificateTemplateResponse)
 def create_template(
