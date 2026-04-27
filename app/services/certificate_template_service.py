@@ -53,7 +53,7 @@ async def create_certificate_template(
     return certificate_template_repo.create(db, template)
 
 
-dasync def update_certificate_template(
+async def update_certificate_template(
     db: Session,
     template_id: int,
     data: CertificateTemplateUpdate,
