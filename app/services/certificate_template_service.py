@@ -15,31 +15,62 @@ async def create_certificate_template(
     background_image: Optional[UploadFile] = None,
     request: Request = None
 ):
+    print("\n\n========== CREATE CERTIFICATE TEMPLATE ==========")
+
+    # 🔍 1. verificar duplicado
     existing = certificate_template_repo.get_by_course(db, data.course_id)
     if existing:
         raise Exception("Plantilla existente en el curso")
 
-    form = await request.form()  # 👈 requiere async
+    # 🔍 2. leer form
+    form = await request.form()
 
-    # 🔹 fondo
+    print("📦 FORM KEYS RECIBIDAS:")
+    print(list(form.keys()))
+
+    # 🔍 3. fondo
     image_url = None
     if background_image:
+        print("🖼️ Background image recibida:", background_image.filename)
         image_url = save_certificate_template_image(background_image)
+    else:
+        print("🖼️ No background image")
 
     processed_fields = []
 
+    # 🔍 4. recorrer fields
     for field in data.fields:
         field_dict = field.copy()
         field_id = field_dict.get("id")
 
         file_key = f"signature_{field_id}"
 
-        if file_key in form:
-            file = form[file_key]
+        print("\n-----------------------------------")
+        print("🧩 Field ID:", field_id)
+        print("🔑 Expected key:", file_key)
+
+        file = form.get(file_key)
+
+        print("📎 File encontrado:", file)
+
+        if file:
+            print("📄 Tipo:", type(file))
+
+        # 🔥 validación real
+        if isinstance(file, UploadFile) and file.filename:
+            print("✅ Archivo válido, guardando...")
             url = save_certificate_template_image(file)
             field_dict["signatureImage"] = url
+            print("💾 URL guardada:", url)
+        else:
+            print("❌ NO SE ENCONTRÓ ARCHIVO PARA:", file_key)
+            field_dict["signatureImage"] = field_dict.get("signatureImage")
 
         processed_fields.append(field_dict)
+
+    # 🔍 5. resultado final
+    print("\n========== RESULTADO FINAL ==========")
+    print(processed_fields)
 
     template = CertificateTemplate(
         course_id=data.course_id,
@@ -48,7 +79,12 @@ async def create_certificate_template(
         qr_config=data.qr_config
     )
 
-    return certificate_template_repo.create(db, template)
+    result = certificate_template_repo.create(db, template)
+
+    print("🎉 TEMPLATE CREADO")
+    print("====================================\n")
+
+    return result
 
 
 def update_certificate_template(
