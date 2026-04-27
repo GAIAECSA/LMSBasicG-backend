@@ -55,21 +55,44 @@ def update_certificate_template(
     db: Session,
     template_id: int,
     data: CertificateTemplateUpdate,
-    background_image: Optional[UploadFile] = None
+    background_image: Optional[UploadFile] = None,
+    request: Request = None
 ):
     template = certificate_template_repo.get_by_id(db, template_id)
 
     if not template:
         raise Exception("Plantilla no encontrada")
 
+    form = request.form() if request else {}
+
     update_data = data.model_dump(exclude_unset=True)
 
     for key, value in update_data.items():
-        setattr(template, key, value)
+        if key != "fields":  #
+            setattr(template, key, value)
 
     if background_image:
         image_url = save_certificate_template_image(background_image)
         template.background_image_url = image_url
+
+    if "fields" in update_data and update_data["fields"] is not None:
+
+        processed_fields = []
+
+        for field in update_data["fields"]:
+            field_dict = dict(field)
+            field_id = field_dict.get("id")
+
+            file_key = f"signature_{field_id}"
+
+            if file_key in form:
+                file = form[file_key]
+                url = save_certificate_template_image(file)
+                field_dict["signatureImage"] = url
+
+            processed_fields.append(field_dict)
+
+        template.fields = processed_fields
 
     return certificate_template_repo.update(db, template)
 

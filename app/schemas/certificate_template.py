@@ -32,20 +32,13 @@ class CertificateTemplateCreate(BaseModel):
 
 
 class CertificateTemplateUpdate(BaseModel):
-    background_image_url: Optional[str] = None
-    fields: Optional[List[Dict[str, Any]]] = None
-    qr_config: Optional[Dict[str, Any]] = None
+    data: Optional[str] = Form(None)
 
     @classmethod
-    def as_form(
-        cls,
-        fields: Optional[str] = Form(None),
-        qr_config: Optional[str] = Form(None),
-    ):
-        return cls(
-            fields=json.loads(fields) if fields else None,
-            qr_config=json.loads(qr_config) if qr_config else None,
-        )
+    def as_form(cls, data: str = Form(...)):
+        payload = json.loads(data)
+
+        return cls(**payload)
 
     @field_validator("fields")
     def validate_fields(cls, v):
