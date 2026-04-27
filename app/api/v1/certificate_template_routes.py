@@ -42,6 +42,7 @@ async def create_template(
 @router.put("/{template_id}", response_model=CertificateTemplateResponse)
 async def update_template(
     template_id: int,
+    request: Request,
     data: CertificateTemplateUpdate = Depends(CertificateTemplateUpdate.as_form),
     background_image: UploadFile = File(None),
     db: Session = Depends(get_db)
@@ -51,7 +52,8 @@ async def update_template(
             db=db,
             template_id=template_id,
             data=data,
-            background_image=background_image
+            background_image=background_image,
+            request=request   # 🔥 IMPORTANTE
         )
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
