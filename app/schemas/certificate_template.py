@@ -37,16 +37,13 @@ class CertificateTemplateUpdate(BaseModel):
     qr_config: Optional[Dict[str, Any]] = None
 
     @classmethod
-    def as_form(
-        cls,
-        data: str = Form(...)
-    ):
+    def as_form(cls, data: str = Form(...)):
         payload = json.loads(data)
 
         return cls(
             course_id=payload.get("course_id"),
             fields=payload.get("fields"),
-            qr_config=payload.get("qr_config")
+            qr_config=payload.get("qr_config"),
         )
 
 

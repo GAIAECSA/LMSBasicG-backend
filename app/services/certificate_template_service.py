@@ -37,25 +37,24 @@ async def create_certificate_template(
     processed_fields = []
 
     for field in data.fields:
-        print("\n-----------------------------")
-        print("🧩 FIELD RAW:", field)
-
         field_dict = field.copy()
+
         field_id = field_dict.get("id")
+        field_id = field_id.strip()  # 🔥 FIX CRÍTICO
 
         file_key = f"signature_{field_id}"
-        print("🔑 Looking for:", file_key)
+
+        print("\n-----------------------------")
+        print(f"🧩 FIELD RAW: {field_dict}")
+        print(f"🔑 Looking for: {file_key}")
 
         file = form.get(file_key)
-        print("📎 File found:", file)
 
         if isinstance(file, UploadFile) and file.filename:
-            print("✅ Saving file...")
-            url = save_certificate_template_image(file)
-            field_dict["signatureImage"] = url
-            print("💾 URL:", url)
+            print(f"📎 File found: {file.filename}")
+            field_dict["signatureImage"] = save_certificate_template_image(file)
         else:
-            print("❌ No file for:", file_key)
+            print(f"❌ No file for: {file_key}")
             field_dict["signatureImage"] = None
 
         processed_fields.append(field_dict)
@@ -106,26 +105,25 @@ async def update_certificate_template(
     # 🔥 IMPORTANTE: usamos fields existentes si data.fields no viene completo
     base_fields = data.fields if data.fields else template.fields
 
-    for field in base_fields:
-        print("\n-----------------------------")
-        print("🧩 FIELD:", field)
-
+    for field in data.fields:
         field_dict = field.copy()
+
         field_id = field_dict.get("id")
+        field_id = field_id.strip()
 
         file_key = f"signature_{field_id}"
-        print("🔑 Looking for:", file_key)
+
+        print("\n-----------------------------")
+        print(f"🧩 FIELD RAW: {field_dict}")
+        print(f"🔑 Looking for: {file_key}")
 
         file = form.get(file_key)
-        print("📎 File found:", file)
 
         if isinstance(file, UploadFile) and file.filename:
-            print("✅ Updating file...")
-            url = save_certificate_template_image(file)
-            field_dict["signatureImage"] = url
-            print("💾 New URL:", url)
+            print(f"📎 NEW FILE: {file.filename}")
+            field_dict["signatureImage"] = save_certificate_template_image(file)
         else:
-            print("⏭️ Keeping existing signatureImage")
+            print("♻️ KEEP OLD IMAGE")
             field_dict["signatureImage"] = field_dict.get("signatureImage")
 
         updated_fields.append(field_dict)
