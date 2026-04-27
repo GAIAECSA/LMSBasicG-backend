@@ -4,7 +4,7 @@ from app.models.certificate import Certificate
 from app.repositories import certificate_repo
 from app.schemas.certificate import CertificateCreate, CertificateUpdate
 from app.utils.file_upload import save_certificate
-from app.services.enrollment_service import get_enrollment_by_user_and_course
+from app.repositories.enrollment_repo import get_existing_enrollment
 from app.services.quizz_response_service import get_by_enrollment
 import uuid
 import os
@@ -104,7 +104,7 @@ def verify_certificate(db: Session, code: str):
     return certificate
 
 def calculate_final_grade_average(db: Session, user_id: int, course_id: int) -> float | None:
-    enrollment = get_enrollment_by_user_and_course(db, user_id, course_id)
+    enrollment = get_existing_enrollment(db, user_id, course_id)
     if not enrollment:
         return None
 
