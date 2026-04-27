@@ -39,9 +39,9 @@ class CertificateResponse(BaseModel):
     user_id: int
     course_id: int
 
-    student_name: str
-    course_name: str
-    final_grade: Decimal
+    student_name: Optional[str]
+    course_name: Optional[str]
+    final_grade: Optional[Decimal] = None
 
     certificate_code: str
     file_url: Optional[str]
