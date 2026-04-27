@@ -29,7 +29,7 @@ async def create_certificate_template(
     processed_fields = []
 
     for field in data.fields:
-        field_dict = field.model_dump()
+        field_dict = field.copy()
         field_id = field_dict.get("id")
 
         file_key = f"signature_{field_id}"
