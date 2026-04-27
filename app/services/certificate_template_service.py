@@ -5,7 +5,7 @@ from app.schemas.certificate_template import (
     CertificateTemplateCreate,
     CertificateTemplateUpdate
 )
-from fastapi import UploadFile, Request
+from fastapi import UploadFile, Request, Form
 from typing import Optional
 from app.utils.file_upload import save_certificate_template_image
 
