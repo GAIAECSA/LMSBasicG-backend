@@ -15,12 +15,10 @@ class CertificateCreate(BaseModel):
         cls,
         user_id: int = Form(...),
         course_id: int = Form(...),
-        template_id: Optional[int] = Form(None),
     ):
         return cls(
             user_id=user_id,
             course_id=course_id,
-            template_id=template_id,
         )
 
 class CertificateUpdate(BaseModel):
@@ -29,11 +27,9 @@ class CertificateUpdate(BaseModel):
     @classmethod
     def as_form(
         cls,
-        template_id: Optional[int] = Form(None),
         is_valid: Optional[bool] = Form(None),
     ):
         return cls(
-            template_id=template_id,
             is_valid=is_valid,
         )
 
