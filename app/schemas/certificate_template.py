@@ -40,12 +40,6 @@ class CertificateTemplateUpdate(BaseModel):
 
         return cls(**payload)
 
-    @field_validator("fields")
-    def validate_fields(cls, v):
-        if v is not None and not isinstance(v, list):
-            raise ValueError("fields debe ser una lista")
-        return v
-
 
 class CertificateTemplateResponse(BaseModel):
     id: int
