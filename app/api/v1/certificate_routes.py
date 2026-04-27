@@ -22,16 +22,16 @@ def get_db():
         db.close()
 
 
-@router.post("/", response_model=CertificateResponse)
-def create_certificate(
-    data: CertificateCreate = Depends(CertificateCreate.as_form),
-    file: UploadFile | None = File(None),
-    db: Session = Depends(get_db)
-):
-    try:
-        return certificate_service.create_certificate(db, data, file)
-    except Exception as e:
-        raise HTTPException(status_code=400, detail=str(e))
+#@router.post("/", response_model=CertificateResponse)
+#def create_certificate(
+    #data: CertificateCreate = Depends(CertificateCreate.as_form),
+    #file: UploadFile | None = File(None),
+    #db: Session = Depends(get_db)
+#):
+    #try:
+        #return certificate_service.create_certificate(db, data, file)
+    #except Exception as e:
+        #raise HTTPException(status_code=400, detail=str(e))
 
 
 @router.put("/{certificate_id}", response_model=CertificateResponse)

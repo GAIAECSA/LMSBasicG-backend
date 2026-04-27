@@ -9,7 +9,6 @@ from app.utils.file_upload import save_lesson_file
 class CertificateCreate(BaseModel):
     user_id: int = Field(..., gt=0)
     course_id: int = Field(..., gt=0)
-    template_id: Optional[int] = Field(None, gt=0)
 
     @classmethod
     def as_form(
@@ -25,7 +24,6 @@ class CertificateCreate(BaseModel):
         )
 
 class CertificateUpdate(BaseModel):
-    template_id: Optional[int] = Field(None, gt=0)
     is_valid: Optional[bool] = None
 
     @classmethod
@@ -44,7 +42,6 @@ class CertificateResponse(BaseModel):
 
     user_id: int
     course_id: int
-    template_id: Optional[int]
 
     student_name: str
     course_name: str

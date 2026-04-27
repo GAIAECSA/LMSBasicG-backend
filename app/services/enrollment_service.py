@@ -4,9 +4,12 @@ from app.repositories import enrollment_repo
 from app.schemas.enrollment import EnrollmentCreate, EnrollmentUpdate
 from fastapi import UploadFile
 from app.utils.file_upload import save_course_voucher
+from app.services.certificate_service import create_certificate
+from app.schemas.certificate import CertificateCreate
 import os
 
 def create_enrollment(db: Session, data: EnrollmentCreate, image: UploadFile | None = None):
+
     existing = enrollment_repo.get_existing_enrollment(db, data.course_id, data.user_id)
 
     if existing:
@@ -15,15 +18,32 @@ def create_enrollment(db: Session, data: EnrollmentCreate, image: UploadFile | N
         elif existing.accepted is True:
             raise Exception("Ya estás matriculado en este curso")
         elif existing.accepted is False:
-            raise Exception("Tu solicitud de matrícula no fue aprobada. Puedes revisar los detalles en el curso y volver a intentarlo cuando hayas realizado los ajustes necesarios.")
+            raise Exception("Tu solicitud de matrícula no fue aprobada.")
 
     voucher_url = None
     if image:
         voucher_url = save_course_voucher(image)
     
     enrollment = Enrollment(**data.model_dump(), voucher_url=voucher_url)
-     
-    return enrollment_repo.create(db, enrollment)
+
+    enrollment = enrollment_repo.create(db, enrollment)
+
+    user = enrollment.user 
+
+    if user.role_id == 4:
+
+        certificate_data = CertificateCreate(
+            user_id=data.user_id,
+            course_id=data.course_id
+        )
+
+        create_certificate(
+            db=db,
+            data=certificate_data,
+            file=None
+        )
+
+    return enrollment
 
 def update_enrollment(db: Session,enrollment_id: int,data: EnrollmentUpdate,image: UploadFile | None = None):
     enrollment = enrollment_repo.get_by_id(db, enrollment_id)
