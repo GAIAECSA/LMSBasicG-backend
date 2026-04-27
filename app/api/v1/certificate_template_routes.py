@@ -1,5 +1,5 @@
 from fastapi import APIRouter, Depends, HTTPException, UploadFile, File
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, Request
 
 from app.db.session import get_db
 from app.schemas.certificate_template import (
@@ -22,16 +22,18 @@ def get_db():
         db.close()
 
 @router.post("/", response_model=CertificateTemplateResponse)
-def create_template(
+async def create_template(
+    request: Request,
     data: CertificateTemplateCreate = Depends(CertificateTemplateCreate.as_form),
     background_image: UploadFile = File(None),
     db: Session = Depends(get_db)
 ):
     try:
-        return certificate_template_service.create_certificate_template(
+        return await certificate_template_service.create_certificate_template(
             db=db,
             data=data,
-            background_image=background_image
+            background_image=background_image,
+            request=request
         )
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))

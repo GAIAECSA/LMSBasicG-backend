@@ -5,27 +5,46 @@ from app.schemas.certificate_template import (
     CertificateTemplateCreate,
     CertificateTemplateUpdate
 )
-from fastapi import UploadFile
+from fastapi import UploadFile, Request
 from typing import Optional
 from app.utils.file_upload import save_certificate_template_image
 
-def create_certificate_template(
+async def create_certificate_template(
     db: Session,
     data: CertificateTemplateCreate,
-    background_image: Optional[UploadFile] = None
+    background_image: Optional[UploadFile] = None,
+    request: Request = None
 ):
     existing = certificate_template_repo.get_by_course(db, data.course_id)
     if existing:
         raise Exception("Plantilla existente en el curso")
 
+    form = await request.form()  # 👈 requiere async
+
+    # 🔹 fondo
     image_url = None
     if background_image:
         image_url = save_certificate_template_image(background_image)
 
+    processed_fields = []
+
+    for field in data.fields:
+        field_dict = field.model_dump()
+        field_id = field_dict.get("id")
+
+        file_key = f"signature_{field_id}"
+
+        if file_key in form:
+            file = form[file_key]
+            url = save_certificate_template_image(file)
+            field_dict["signatureImage"] = url
+
+        processed_fields.append(field_dict)
+
     template = CertificateTemplate(
         course_id=data.course_id,
         background_image_url=image_url,
-        fields=data.fields,
+        fields=processed_fields,
         qr_config=data.qr_config
     )
 
