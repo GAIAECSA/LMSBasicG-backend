@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, Boolean, DateTime, ForeignKey, func
+from sqlalchemy import Column, Integer, Boolean, DateTime, ForeignKey, func, Numeric
 from sqlalchemy.orm import relationship
 from sqlalchemy.dialects.postgresql import JSONB
 from app.db.base import Base
@@ -14,7 +14,7 @@ class QuizzResponse(Base):
     quizz = Column(JSONB, nullable=False)
     response = Column(JSONB, nullable=False)
 
-    score = Column(Integer)
+    score = Column(Numeric(4, 2), nullable=False)
     is_passed = Column(Boolean)
 
     deleted = Column(Boolean, default=False)

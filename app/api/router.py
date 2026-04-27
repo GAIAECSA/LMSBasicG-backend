@@ -13,6 +13,7 @@ from app.api.v1 import (
     lesson_block_type_routes as lesson_block_type,
     enrollment_routes as enrollment,
     certificate_template_routes as certificate_template,
+    certificate_routes as certificate,
 
     quizz_response_routes as quizz_response,
     websocket_routes as websocket
@@ -91,6 +92,13 @@ router.include_router(
     prefix="/certificate_template",
     tags=["certificate_template"]
 )
+
+router.include_router(
+    certificate.router,
+    prefix="/certificate",
+    tags=["certificate"]
+)
+
 
 # User response
 

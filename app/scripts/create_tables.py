@@ -14,6 +14,7 @@ from app.models.lesson_block_type import LessonBlockType
 from app.models.enrollment import Enrollment
 from app.models.quizz_response import QuizzResponse
 from app.models.certificate_template import CertificateTemplate
+from app.models.certificate import Certificate
 
 def create_tables():
     print("Creando tablas...")

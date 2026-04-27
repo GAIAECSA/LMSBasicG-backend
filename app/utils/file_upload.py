@@ -6,6 +6,7 @@ UPLOAD_DIR_IMAGE_COURSE = "uploads/courses"
 UPLOAD_DIR_IMAGE_COURSE_VOUCHER = "uploads/course_vouchers"
 UPLOAD_DIR_LESSON_BLOCK_FILE = "uploads/lesson_blocks"
 UPLOAD_DIR_CERTIFICATE_TEMPLATES = "uploads/certificate_templates"
+UPLOAD_DIR_CERTIFICATES = "uploads/certificates"
 
 
 
@@ -54,12 +55,6 @@ def save_course_voucher(file: UploadFile) -> str | None:
 
     return f"/{filepath}"
 
-import os
-from uuid import uuid4
-from fastapi import UploadFile
-
-UPLOAD_DIR_LESSON_BLOCK_FILE = "uploads/lesson_blocks"
-
 
 def save_lesson_file(file: UploadFile) -> dict | None:
     if not file:
@@ -104,6 +99,26 @@ def save_certificate_template_image(file: UploadFile) -> str | None:
     filename = f"{uuid4()}.{extension}"
 
     filepath = os.path.join(UPLOAD_DIR_IMAGE_COURSE, filename)
+
+    with open(filepath, "wb") as buffer:
+        buffer.write(file.file.read())
+
+    return f"/{filepath}"
+
+def save_certificate(file: UploadFile) -> str | None:
+    if not file:
+        return None
+
+    if file.content_type != "application/pdf":
+        raise ValueError("El archivo debe ser un PDF")
+
+    if not file.filename.lower().endswith(".pdf"):
+        raise ValueError("El archivo debe tener extensión .pdf")
+
+    os.makedirs(UPLOAD_DIR_CERTIFICATES, exist_ok=True)
+
+    filename = f"{uuid4()}.pdf"
+    filepath = os.path.join(UPLOAD_DIR_CERTIFICATES, filename)
 
     with open(filepath, "wb") as buffer:
         buffer.write(file.file.read())
