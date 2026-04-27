@@ -13,14 +13,15 @@ class CertificateTemplateCreate(BaseModel):
     @classmethod
     def as_form(
         cls,
-        course_id: int = Form(...),
-        fields: Optional[str] = Form(None),
-        qr_config: Optional[str] = Form(None),
+        data: str = Form(...)
     ):
+        payload = json.loads(data)
+
         return cls(
-            course_id=course_id,
-            fields=json.loads(fields) if fields else None,
-            qr_config=json.loads(qr_config) if qr_config else None,
+            course_id=payload.get("course_id"),
+            fields=payload.get("fields"),
+            qr_config=payload.get("qr_config"),
+            background_image_url=None
         )
 
     @field_validator("fields")
