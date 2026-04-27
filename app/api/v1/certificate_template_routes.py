@@ -1,6 +1,6 @@
-from fastapi import APIRouter, Depends, HTTPException, UploadFile, File, Request
+from fastapi import APIRouter, Depends, HTTPException, UploadFile, File, Request, Form
 from sqlalchemy.orm import Session
-
+import json
 from app.db.session import get_db
 from app.schemas.certificate_template import (
     CertificateTemplateCreate,
@@ -55,6 +55,7 @@ async def update_template(
         background_image=background_image,
         request=request
     )
+    
 
 
 @router.delete("/{template_id}")
