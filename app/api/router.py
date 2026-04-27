@@ -89,14 +89,14 @@ router.include_router(
 
 router.include_router(
     certificate_template.router,
-    prefix="/certificate_template",
-    tags=["certificate_template"]
+    prefix="/certificate_templates",
+    tags=["certificate_templates"]
 )
 
 router.include_router(
     certificate.router,
-    prefix="/certificate",
-    tags=["certificate"]
+    prefix="/certificates",
+    tags=["certificates"]
 )
 
 
