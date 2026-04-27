@@ -11,11 +11,6 @@ class CertificateCreate(BaseModel):
     course_id: int = Field(..., gt=0)
     template_id: Optional[int] = Field(None, gt=0)
 
-    @field_validator("certificate_code")
-    @classmethod
-    def normalize_code(cls, v):
-        return v.strip().upper()
-
     @classmethod
     def as_form(
         cls,
