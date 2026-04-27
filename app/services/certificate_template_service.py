@@ -41,7 +41,8 @@ async def create_certificate_template(
 
         print(f"🔑 file_key: {file_key} -> {file}")
 
-        if isinstance(file, UploadFile) and file.filename:
+        # ✅ FIX: Evaluamos si existe el archivo y si tiene un nombre válido
+        if file is not None and getattr(file, "filename", ""):
             field["signatureImage"] = save_certificate_template_image(file)
             print("🆕 IMAGE SAVED")
         else:
@@ -95,7 +96,8 @@ async def update_certificate_template(
 
         print(f"🔑 file_key: {file_key} -> {file}")
 
-        if isinstance(file, UploadFile) and file.filename:
+        # ✅ FIX: Evaluamos de la misma forma
+        if file is not None and getattr(file, "filename", ""):
             field["signatureImage"] = save_certificate_template_image(file)
             print("🆕 NEW IMAGE")
         else:
