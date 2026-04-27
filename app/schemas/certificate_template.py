@@ -32,13 +32,22 @@ class CertificateTemplateCreate(BaseModel):
 
 
 class CertificateTemplateUpdate(BaseModel):
-    data: Optional[str] = Form(None)
+    course_id: Optional[int] = None
+    fields: Optional[List[Dict[str, Any]]] = None
+    qr_config: Optional[Dict[str, Any]] = None
 
     @classmethod
-    def as_form(cls, data: str = Form(...)):
+    def as_form(
+        cls,
+        data: str = Form(...)
+    ):
         payload = json.loads(data)
 
-        return cls(**payload)
+        return cls(
+            course_id=payload.get("course_id"),
+            fields=payload.get("fields"),
+            qr_config=payload.get("qr_config")
+        )
 
 
 class CertificateTemplateResponse(BaseModel):
