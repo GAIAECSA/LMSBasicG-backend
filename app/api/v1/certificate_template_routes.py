@@ -40,14 +40,14 @@ async def create_template(
 
 
 @router.put("/{template_id}", response_model=CertificateTemplateResponse)
-def update_template(
+async def update_template(
     template_id: int,
     data: CertificateTemplateUpdate = Depends(CertificateTemplateUpdate.as_form),
     background_image: UploadFile = File(None),
     db: Session = Depends(get_db)
 ):
     try:
-        return certificate_template_service.update_certificate_template(
+        return await certificate_template_service.update_certificate_template(
             db=db,
             template_id=template_id,
             data=data,
