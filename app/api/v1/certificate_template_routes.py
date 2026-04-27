@@ -1,5 +1,5 @@
-from fastapi import APIRouter, Depends, HTTPException, UploadFile, File
-from sqlalchemy.orm import Session, Request
+from fastapi import APIRouter, Depends, HTTPException, UploadFile, File, Request
+from sqlalchemy.orm import Session
 
 from app.db.session import get_db
 from app.schemas.certificate_template import (
