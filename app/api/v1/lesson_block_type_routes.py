@@ -13,27 +13,27 @@ def get_db():
     finally:
         db.close()
 
-@router.post("/lesson-block-types", response_model=LessonBlockTypeResponse)
-def create_lesson_block_type(data: LessonBlockTypeCreate, db: Session = Depends(get_db)):
-    try:
-        return lesson_block_type_service.create_lesson_block_type(db, data)
-    except Exception as e:
-        raise HTTPException(status_code=400, detail=str(e))
+#@router.post("/lesson-block-types", response_model=LessonBlockTypeResponse)
+#def create_lesson_block_type(data: LessonBlockTypeCreate, db: Session = Depends(get_db)):
+    #try:
+        #return lesson_block_type_service.create_lesson_block_type(db, data)
+    #except Exception as e:
+        #raise HTTPException(status_code=400, detail=str(e))
     
-@router.put("/lesson-block-types/{lesson_block_type_id}", response_model=LessonBlockTypeResponse)
-def update_lesson_block_type(lesson_block_type_id: int, data: LessonBlockTypeUpdate, db: Session = Depends(get_db)):
-    try:
-        return lesson_block_type_service.update_lesson_block_type(db, lesson_block_type_id, data)
-    except Exception as e:
-        raise HTTPException(status_code=400, detail=str(e))
+#@router.put("/lesson-block-types/{lesson_block_type_id}", response_model=LessonBlockTypeResponse)
+#def update_lesson_block_type(lesson_block_type_id: int, data: LessonBlockTypeUpdate, db: Session = Depends(get_db)):
+    #try:
+        #return lesson_block_type_service.update_lesson_block_type(db, lesson_block_type_id, data)
+    #except Exception as e:
+        #raise HTTPException(status_code=400, detail=str(e))
     
-@router.delete("/lesson-block-types/{lesson_block_type_id}")
-def delete_lesson_block_type(lesson_block_type_id: int, db: Session = Depends(get_db)):
-    try:
-        lesson_block_type_service.delete_lesson_block_type(db, lesson_block_type_id)
-        return {"detail": "Tipo de bloque de lección eliminado"}
-    except Exception as e:
-        raise HTTPException(status_code=400, detail=str(e))
+#@router.delete("/lesson-block-types/{lesson_block_type_id}")
+#def delete_lesson_block_type(lesson_block_type_id: int, db: Session = Depends(get_db)):
+    #try:
+        #lesson_block_type_service.delete_lesson_block_type(db, lesson_block_type_id)
+        #return {"detail": "Tipo de bloque de lección eliminado"}
+    #except Exception as e:
+        #raise HTTPException(status_code=400, detail=str(e))
     
 @router.get("/lesson-block-types/{lesson_block_type_id}", response_model=LessonBlockTypeResponse)
 def get_lesson_block_type(lesson_block_type_id: int, db: Session = Depends(get_db)):
