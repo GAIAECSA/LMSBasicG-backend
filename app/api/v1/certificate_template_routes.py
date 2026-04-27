@@ -24,39 +24,37 @@ def get_db():
 @router.post("/", response_model=CertificateTemplateResponse)
 async def create_template(
     request: Request,
-    data: CertificateTemplateCreate = Depends(CertificateTemplateCreate.as_form),
+    data: str = Form(...),
     background_image: UploadFile = File(None),
     db: Session = Depends(get_db)
 ):
-    try:
-        return await certificate_template_service.create_certificate_template(
-            db=db,
-            data=data,
-            background_image=background_image,
-            request=request
-        )
-    except Exception as e:
-        raise HTTPException(status_code=400, detail=str(e))
+    payload = json.loads(data)
+
+    return await certificate_template_service.create_certificate_template(
+        db=db,
+        data=payload,
+        background_image=background_image,
+        request=request
+    )
 
 
 @router.put("/{template_id}", response_model=CertificateTemplateResponse)
 async def update_template(
     template_id: int,
     request: Request,
-    data: CertificateTemplateUpdate = Depends(CertificateTemplateUpdate.as_form),
+    data: str = Form(...),
     background_image: UploadFile = File(None),
     db: Session = Depends(get_db)
 ):
-    try:
-        return await certificate_template_service.update_certificate_template(
-            db=db,
-            template_id=template_id,
-            data=data,
-            background_image=background_image,
-            request=request   # 🔥 IMPORTANTE
-        )
-    except Exception as e:
-        raise HTTPException(status_code=400, detail=str(e))
+    payload = json.loads(data)
+
+    return await certificate_template_service.update_certificate_template(
+        db=db,
+        template_id=template_id,
+        data=payload,
+        background_image=background_image,
+        request=request
+    )
 
 
 @router.delete("/{template_id}")
