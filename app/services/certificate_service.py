@@ -4,6 +4,8 @@ from app.models.certificate import Certificate
 from app.repositories import certificate_repo
 from app.schemas.certificate import CertificateCreate, CertificateUpdate
 from app.utils.file_upload import save_certificate
+from app.services.enrollment_service import get_enrollment_by_user_and_course
+from app.services.quizz_response_service import get_by_enrollment
 import uuid
 import os
 
@@ -34,6 +36,11 @@ def update_certificate(db: Session, certificate_id: int, data: CertificateUpdate
         raise Exception("Certificado no encontrado")
 
     update_data = data.model_dump(exclude_unset=True)
+
+    if "final_grade" not in update_data:
+        avg = calculate_final_grade_average(db, certificate.user_id, certificate.course_id)
+        if avg is not None:
+            update_data["final_grade"] = avg
 
     old_file_path = None
 
@@ -96,5 +103,18 @@ def verify_certificate(db: Session, code: str):
 
     return certificate
 
-def calculate_final_grade_average():
-    pass
+def calculate_final_grade_average(db: Session, user_id: int, course_id: int) -> float | None:
+    enrollment = get_enrollment_by_user_and_course(db, user_id, course_id)
+    if not enrollment:
+        return None
+
+    result = get_by_enrollment(db, enrollment.id)
+    if not result or not result.score:
+        return None
+
+    grades = [r.grade for r in result.score if r.grade is not None]
+
+    if not grades:
+        return None
+
+    return sum(grades) / len(grades)

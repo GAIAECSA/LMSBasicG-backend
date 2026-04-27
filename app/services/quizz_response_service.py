@@ -40,3 +40,9 @@ def get_by_enrollment(db: Session, enrollment_id: int):
 
 def get_by_block(db: Session, lesson_block_id: int):
     return quizz_response_repo.get_all_by_lesson_block(db, lesson_block_id)
+
+def get_by_enrollment(db: Session, enrollment_id: int):
+    quizz_response = quizz_response_repo.get_by_enrollment(db, enrollment_id)
+    if not quizz_response:
+        raise Exception("Respuestas no encontradas")
+    return quizz_response

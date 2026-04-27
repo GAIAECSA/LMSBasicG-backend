@@ -42,3 +42,7 @@ def get_all_by_lesson_block(db: Session, lesson_block_id: int):
         )
         .all()
     )
+
+def get_by_enrollment(db: Session, enrollment_id: int):
+    quizz_response = db.query(QuizzResponse).filter(QuizzResponse.deleted == False, QuizzResponse.enrollment_id == enrollment_id).first()
+    return quizz_response

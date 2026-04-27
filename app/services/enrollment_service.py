@@ -86,3 +86,9 @@ def get_enrollments_by_user(db:Session, user_id: int):
 
 def get_enrollments_by_role(db:Session, role_id: int):
     return enrollment_repo.get_all_by_role(db, role_id)
+
+def get_enrollment_by_user_and_course(db: Session, user_id: int, course_id: int):
+    enrollment = enrollment_repo.get_existing_enrollment(db, course_id, user_id)
+    if not enrollment:
+        raise Exception("Inscripción no encontrada")
+    return enrollment
