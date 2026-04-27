@@ -78,6 +78,10 @@ def get_certificate_by_code(db: Session, code: str):
         raise Exception("Certificado no encontrado")
     return certificate
 
+def get_certificates_by_user(db: Session, user_id: int):
+    certificates = certificate_repo.get_all_by_user(db, user_id)
+    return certificates
+
 def get_all_certificates(db: Session):
     return certificate_repo.get_all(db)
 

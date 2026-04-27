@@ -73,6 +73,22 @@ def get_certificate(
 def get_all_certificates(db: Session = Depends(get_db)):
     return certificate_service.get_all_certificates(db)
 
+@router.get("/user/{user_id}", response_model=List[CertificateResponse])
+def get_certificates_by_user(
+    user_id: int,
+    db: Session = Depends(get_db)
+):
+    return certificate_service.get_certificates_by_user(db, user_id)
+
+@router.get("/verify/{code}", response_model=CertificateResponse)
+def verify_certificate(
+    code: str,
+    db: Session = Depends(get_db)
+):
+    try:
+        return certificate_service.verify_certificate(db, code)
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))
 
 @router.get("/code/{code}", response_model=CertificateResponse)
 def get_certificate_by_code(
@@ -94,3 +110,4 @@ def verify_certificate(
         return certificate_service.verify_certificate(db, code)
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
+    
