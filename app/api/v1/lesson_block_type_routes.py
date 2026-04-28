@@ -4,6 +4,8 @@ from app.db.session import SessionLocal
 from app.schemas.lesson_block_type import LessonBlockTypeCreate, LessonBlockTypeUpdate, LessonBlockTypeResponse
 from app.services import lesson_block_type_service
 
+from app.utils.jwt import get_current_user
+
 router = APIRouter()
 
 def get_db():
@@ -36,14 +38,14 @@ def get_db():
         #raise HTTPException(status_code=400, detail=str(e))
     
 @router.get("/lesson-block-types/{lesson_block_type_id}", response_model=LessonBlockTypeResponse)
-def get_lesson_block_type(lesson_block_type_id: int, db: Session = Depends(get_db)):
+def get_lesson_block_type(lesson_block_type_id: int, db: Session = Depends(get_db), user=Depends(get_current_user)):
     try:
         return lesson_block_type_service.get_lesson_block_type(db, lesson_block_type_id)
     except Exception as e:
         raise HTTPException(status_code=404, detail=str(e))
     
 @router.get("/lesson-block-types", response_model=list[LessonBlockTypeResponse])
-def get_all_lesson_block_types(db: Session = Depends(get_db)):
+def get_all_lesson_block_types(db: Session = Depends(get_db), user=Depends(get_current_user)):
     try:
         return lesson_block_type_service.get_all_lesson_block_types(db)
     except Exception as e:

@@ -11,7 +11,7 @@ from app.services import certificate_template_service
 
 from sqlalchemy.orm import Session
 from app.db.session import SessionLocal
-from app.utils.jwt import require_admin
+from app.utils.jwt import require_admin, get_current_user
 
 router = APIRouter()
 
@@ -75,14 +75,15 @@ def delete_template(
         raise HTTPException(status_code=400, detail=str(e))
 
 @router.get("/", response_model=list[CertificateTemplateResponse])
-def get_all_templates(db: Session = Depends(get_db)):
+def get_all_templates(db: Session = Depends(get_db), user=Depends(get_current_user)):
     return certificate_template_service.get_all_certificate_templates(db)
 
 
 @router.get("/course/{course_id}", response_model=CertificateTemplateResponse)
 def get_template_by_course(
     course_id: int,
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    user=Depends(get_current_user)
 ):
     return certificate_template_service.get_certificate_template_by_course(
         db, course_id
@@ -91,7 +92,8 @@ def get_template_by_course(
 @router.get("/{template_id}", response_model=CertificateTemplateResponse)
 def get_template(
     template_id: int,
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    user=Depends(get_current_user)
 ):
     try:
         return certificate_template_service.get_certificate_template(

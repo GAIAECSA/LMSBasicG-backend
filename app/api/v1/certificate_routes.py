@@ -11,7 +11,7 @@ from app.schemas.certificate import (
 from app.services import certificate_service
 from sqlalchemy.orm import Session
 from app.db.session import SessionLocal
-from app.utils.jwt import require_admin
+from app.utils.jwt import require_admin, get_current_user
 
 router = APIRouter()
 
@@ -27,7 +27,8 @@ def get_db():
 def create_certificate(
     data: CertificateCreate = Depends(CertificateCreate.as_form),
     file: UploadFile | None = File(None),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db), 
+    user=Depends(get_current_user)
 ):
     try:
         return certificate_service.create_certificate(db, data, file)
@@ -40,7 +41,8 @@ def update_certificate(
     certificate_id: int,
     data: CertificateUpdate = Depends(CertificateUpdate.as_form),
     file: UploadFile | None = File(None),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db), 
+    user=Depends(get_current_user)
 ):
     try:
         return certificate_service.update_certificate(db, certificate_id, data, file)
@@ -63,7 +65,8 @@ def delete_certificate(
 @router.get("/{certificate_id}", response_model=CertificateResponse)
 def get_certificate(
     certificate_id: int,
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    user=Depends(get_current_user)
 ):
     try:
         return certificate_service.get_certificate(db, certificate_id)
@@ -72,13 +75,14 @@ def get_certificate(
 
 
 @router.get("/", response_model=List[CertificateResponse])
-def get_all_certificates(db: Session = Depends(get_db)):
+def get_all_certificates(db: Session = Depends(get_db), user=Depends(get_current_user)):
     return certificate_service.get_all_certificates(db)
 
 @router.get("/user/{user_id}", response_model=List[CertificateResponse])
 def get_certificates_by_user(
     user_id: int,
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    user=Depends(get_current_user)
 ):
     return certificate_service.get_certificates_by_user(db, user_id)
 
