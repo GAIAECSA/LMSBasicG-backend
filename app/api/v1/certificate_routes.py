@@ -11,6 +11,7 @@ from app.schemas.certificate import (
 from app.services import certificate_service
 from sqlalchemy.orm import Session
 from app.db.session import SessionLocal
+from app.utils.jwt import require_admin
 
 router = APIRouter()
 
@@ -50,7 +51,8 @@ def update_certificate(
 @router.delete("/{certificate_id}")
 def delete_certificate(
     certificate_id: int,
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    user=Depends(require_admin)
 ):
     try:
         return certificate_service.delete_certificate(db, certificate_id)

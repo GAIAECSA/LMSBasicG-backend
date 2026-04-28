@@ -19,16 +19,24 @@ def decode_access_token(token: str):
     except JWTError:
         return None
 
-def get_current_user_id(token: str = Depends(oauth2_scheme)):
+def get_current_user(token: str = Depends(oauth2_scheme)):
     payload = decode_access_token(token)
 
     if payload is None:
         raise HTTPException(status_code=401, detail="Token inválido")
 
     user_id = payload.get("sub")
-    user_id = int(user_id)
+    role = payload.get("role")
 
-    if user_id is None:
+    if user_id is None or role is None:
         raise HTTPException(status_code=401, detail="Token inválido")
 
-    return int(user_id)
+    return {
+        "user_id": int(user_id),
+        "role_id": int(role)
+    }
+
+def require_admin(user=Depends(get_current_user)):
+    if user["role_id"] != 1:
+        raise HTTPException(status_code=403, detail="No autorizado")
+    return user

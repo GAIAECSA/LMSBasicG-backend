@@ -6,6 +6,7 @@ from app.db.session import SessionLocal
 from app.schemas.enrollment import EnrollmentCreate, EnrollmentUpdate, EnrollmentResponse
 from app.services import enrollment_service
 from app.websockets import manager
+from app.utils.jwt import require_admin
 
 router = APIRouter()
 
@@ -43,7 +44,7 @@ def update_enrollment(enrollment_id: int, data: EnrollmentUpdate = Depends(Enrol
         raise HTTPException(status_code=400, detail=str(e))
     
 @router.delete("/enrollments/{enrollment_id}")
-def delete_enrollment(enrollment_id: int, db: Session = Depends(get_db)):
+def delete_enrollment(enrollment_id: int, db: Session = Depends(get_db), user=Depends(require_admin)):
     try:
         enrollment_service.delete_enrollment(db, enrollment_id)
         return {"detail": "Inscripción eliminada"}

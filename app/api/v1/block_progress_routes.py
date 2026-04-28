@@ -8,6 +8,7 @@ from app.schemas.block_progress import (
     BlockProgressResponse
 )
 from app.services import block_progress_service
+from app.utils.jwt import require_admin
 
 router = APIRouter()
 
@@ -60,7 +61,7 @@ def complete_block(enrollment_id: int, lesson_block_id: int, db: Session = Depen
 
 
 @router.delete("/progress/{progress_id}")
-def delete_block_progress(progress_id: int, db: Session = Depends(get_db)):
+def delete_block_progress(progress_id: int, db: Session = Depends(get_db), user=Depends(require_admin)):
     try:
         block_progress_service.delete_block_progress(db, progress_id)
         return {"detail": "Progreso eliminado"}

@@ -4,14 +4,15 @@ from sqlalchemy.orm import Session
 from app.db.session import get_db
 from app.schemas.course import CourseCreate, CourseUpdate,CourseResponse
 from app.services import course_service
-
+from app.utils.jwt import require_admin
 router = APIRouter()
 
 @router.post("/", response_model=CourseResponse)
 def create_course(
     data: CourseCreate = Depends(CourseCreate.as_form),
     image: UploadFile = File(None),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    user=Depends(require_admin)
 ):
     try:
         return course_service.create_course(db, data, image)
@@ -23,7 +24,8 @@ def update_course(
     course_id: int,
     data: CourseUpdate = Depends(CourseUpdate.as_form),
     image: UploadFile = File(None),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    user=Depends(require_admin)
 ):
     try:
         return course_service.update_course(db, course_id, data, image)
@@ -33,7 +35,7 @@ def update_course(
         raise HTTPException(status_code=400, detail=str(e))
     
 @router.delete("/{course_id}")
-def delete_course(course_id: int, db: Session = Depends(get_db)):
+def delete_course(course_id: int, db: Session = Depends(get_db), user=Depends(require_admin)):
     try:
         course_service.delete_course(db, course_id)
         return {"detail": "Course deleted successfully"}

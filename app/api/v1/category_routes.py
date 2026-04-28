@@ -3,6 +3,7 @@ from sqlalchemy.orm import Session
 from app.db.session import SessionLocal
 from app.schemas.category import CategoryCreate, CategoryUpdate, CategoryResponse
 from app.services import category_service
+from app.utils.jwt import require_admin
 
 router = APIRouter()
 
@@ -14,21 +15,21 @@ def get_db():
         db.close()
 
 @router.post("/categories", response_model=CategoryResponse)
-def create_category(data: CategoryCreate, db: Session = Depends(get_db)):
+def create_category(data: CategoryCreate, db: Session = Depends(get_db), user=Depends(require_admin)):
     try:
         return category_service.create_category(db, data)
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
 
 @router.put("/categories/{category_id}", response_model=CategoryResponse)
-def update_category(category_id: int, data: CategoryUpdate, db: Session = Depends(get_db)):
+def update_category(category_id: int, data: CategoryUpdate, db: Session = Depends(get_db), user=Depends(require_admin)):
     try:
         return category_service.update_category(db, category_id, data)
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
     
 @router.delete("/categories/{category_id}")
-def delete_category(category_id: int, db: Session = Depends(get_db)):
+def delete_category(category_id: int, db: Session = Depends(get_db), user=Depends(require_admin)):
     try:
         category_service.delete_category(db, category_id)
         return {"detail": "Categoría eliminada"}

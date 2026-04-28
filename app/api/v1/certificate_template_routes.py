@@ -11,6 +11,7 @@ from app.services import certificate_template_service
 
 from sqlalchemy.orm import Session
 from app.db.session import SessionLocal
+from app.utils.jwt import require_admin
 
 router = APIRouter()
 
@@ -26,7 +27,8 @@ async def create_template(
     request: Request,
     data: str = Form(...),
     background_image: UploadFile = File(None),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    user=Depends(require_admin)
 ):
     payload = json.loads(data)
 
@@ -44,7 +46,8 @@ async def update_template(
     request: Request,
     data: str = Form(...),
     background_image: UploadFile = File(None),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    user=Depends(require_admin)
 ):
     payload = json.loads(data)
 
@@ -61,7 +64,8 @@ async def update_template(
 @router.delete("/{template_id}")
 def delete_template(
     template_id: int,
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    user=Depends(require_admin)
 ):
     try:
         return certificate_template_service.delete_certificate_template(
