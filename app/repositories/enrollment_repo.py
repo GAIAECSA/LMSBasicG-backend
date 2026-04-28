@@ -85,3 +85,14 @@ def get_all_by_role(db: Session, role_id: int):
         .all()
     )
 
+def delete_by_course_id(db: Session, course_id: int):
+    enrollments = db.query(Enrollment).filter(
+        Enrollment.course_id == course_id,
+        Enrollment.deleted == False
+    ).all()
+
+    for enrollment in enrollments:
+        enrollment.deleted = True
+        db.merge(enrollment)
+
+    db.commit()

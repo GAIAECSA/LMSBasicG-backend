@@ -6,6 +6,7 @@ from app.models.course import Course
 from app.repositories import course_repo
 from app.schemas.course import CourseCreate, CourseUpdate
 from app.utils.file_upload import save_course_image
+from app.repositories import enrollment_repo
 
 
 def create_course(db: Session, data: CourseCreate, image: UploadFile | None = None):
@@ -56,8 +57,11 @@ def update_course(db: Session,course_id: int,data: CourseUpdate,image: UploadFil
 
 def delete_course(db: Session, course_id: int):
     course = course_repo.get_by_id(db, course_id)
+    
     if not course:
         raise Exception("Curso no encontrado")
+    
+    enrollment_repo.delete_by_course_id(db, course_id)
     return course_repo.delete(db, course)
 
 def get_course(db: Session, course_id: int):
