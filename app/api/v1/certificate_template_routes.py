@@ -11,7 +11,7 @@ from app.services import certificate_template_service
 
 from sqlalchemy.orm import Session
 from app.db.session import SessionLocal
-from app.utils.jwt import require_admin, get_current_user
+from app.utils.jwt import get_current_user
 
 router = APIRouter()
 
@@ -28,7 +28,7 @@ async def create_template(
     data: str = Form(...),
     background_image: UploadFile = File(None),
     db: Session = Depends(get_db),
-    user=Depends(require_admin)
+    user=Depends(get_current_user)
 ):
     payload = json.loads(data)
 
@@ -47,7 +47,7 @@ async def update_template(
     data: str = Form(...),
     background_image: UploadFile = File(None),
     db: Session = Depends(get_db),
-    user=Depends(require_admin)
+    user=Depends(get_current_user)
 ):
     payload = json.loads(data)
 
