@@ -65,7 +65,7 @@ async def update_template(
 def delete_template(
     template_id: int,
     db: Session = Depends(get_db),
-    user=Depends(require_admin)
+    user=Depends(get_current_user)
 ):
     try:
         return certificate_template_service.delete_certificate_template(
