@@ -150,8 +150,8 @@ def calculate_final_grade_average(
 
     enrollment = get_existing_enrollment(
         db,
-        user_id,
-        course_id
+        course_id,
+        user_id
     )
 
     logger.info(f"[AVG] Enrollment encontrado: {enrollment}")
