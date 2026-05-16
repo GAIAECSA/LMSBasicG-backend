@@ -46,8 +46,6 @@ def update_certificate(
 
     update_data = data.model_dump(exclude_unset=True)
 
-    logger.info(f"Update data recibido: {update_data}")
-
     # Calcular promedio si no viene final_grade
     # o viene como None
     if update_data.get("final_grade") is None:
@@ -57,8 +55,6 @@ def update_certificate(
             certificate.user_id,
             certificate.course_id
         )
-
-        logger.info(f"Promedio calculado: {avg}")
 
         if avg is not None:
             update_data["final_grade"] = avg
@@ -77,13 +73,6 @@ def update_certificate(
     # Aplicar cambios al modelo
     for key, value in update_data.items():
         setattr(certificate, key, value)
-
-    logger.info(
-        f"Datos finales a guardar: "
-        f"is_valid={certificate.is_valid}, "
-        f"final_grade={certificate.final_grade}, "
-        f"file_url={certificate.file_url}"
-    )
 
     updated = certificate_repo.update(db, certificate)
 
@@ -143,69 +132,30 @@ def calculate_final_grade_average(
     course_id: int
 ) -> float | None:
 
-    logger.info(
-        f"[AVG] Iniciando cálculo "
-        f"user_id={user_id}, course_id={course_id}"
-    )
-
     enrollment = get_existing_enrollment(
         db=db,
         course_id=course_id,
         user_id=user_id
     )
 
-    logger.info(f"[AVG] Enrollment encontrado: {enrollment}")
-
     if not enrollment:
-        logger.warning("[AVG] No existe enrollment")
         return None
-
     result = get_by_enrollment(db, enrollment.id)
-
-    logger.info(f"[AVG] Result encontrado: {result}")
-    logger.info(f"[AVG] Tipo de result: {type(result)}")
-
     if not result:
-        logger.warning("[AVG] Result vacío")
         return None
-
     try:
-
-        logger.info(f"[AVG] Cantidad de resultados: {len(result)}")
-
-        for index, item in enumerate(result):
-
-            logger.info(
-                f"[AVG] Item #{index}: "
-                f"type={type(item)}, "
-                f"data={item}"
-            )
-
-            logger.info(
-                f"[AVG] Item #{index} score: "
-                f"{getattr(item, 'score', 'NO SCORE ATTRIBUTE')}"
-            )
-
         grades = [
             r.score
             for r in result
             if r.score is not None
         ]
-
-        logger.info(f"[AVG] Grades extraídos: {grades}")
-
         if not grades:
-            logger.warning("[AVG] No hay grades válidos")
             return None
 
         avg = sum(grades) / len(grades)
 
-        logger.info(f"[AVG] Promedio final: {avg}")
 
         return avg
 
     except Exception as e:
-
-        logger.exception(f"[AVG] Error calculando promedio: {e}")
-
         raise
