@@ -137,18 +137,57 @@ def verify_certificate(db: Session, code: str):
 
     return certificate
 
-def calculate_final_grade_average(db: Session, user_id: int, course_id: int) -> float | None:
-    enrollment = get_existing_enrollment(db, user_id, course_id)
+def calculate_final_grade_average(
+    db: Session,
+    user_id: int,
+    course_id: int
+) -> float | None:
+
+    logger.info(
+        f"[AVG] Iniciando cálculo "
+        f"user_id={user_id}, course_id={course_id}"
+    )
+
+    enrollment = get_existing_enrollment(
+        db,
+        user_id,
+        course_id
+    )
+
+    logger.info(f"[AVG] Enrollment encontrado: {enrollment}")
+
     if not enrollment:
+        logger.warning("[AVG] No existe enrollment")
         return None
 
     result = get_by_enrollment(db, enrollment.id)
-    if not result or not result.score:
+
+    logger.info(f"[AVG] Result encontrado: {result}")
+
+    if not result:
+        logger.warning("[AVG] No existe result")
         return None
 
-    grades = [r.grade for r in result.score if r.grade is not None]
+    logger.info(f"[AVG] Scores raw: {result.score}")
+
+    if not result.score:
+        logger.warning("[AVG] Result no tiene scores")
+        return None
+
+    grades = [
+        r.grade
+        for r in result.score
+        if r.grade is not None
+    ]
+
+    logger.info(f"[AVG] Grades filtrados: {grades}")
 
     if not grades:
+        logger.warning("[AVG] No hay notas válidas")
         return None
 
-    return sum(grades) / len(grades)
+    avg = sum(grades) / len(grades)
+
+    logger.info(f"[AVG] Promedio final calculado: {avg}")
+
+    return avg
