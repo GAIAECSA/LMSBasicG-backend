@@ -149,9 +149,9 @@ def calculate_final_grade_average(
     )
 
     enrollment = get_existing_enrollment(
-        db,
-        course_id,
-        user_id
+        db=db,
+        course_id=course_id,
+        user_id=user_id
     )
 
     logger.info(f"[AVG] Enrollment encontrado: {enrollment}")
@@ -163,31 +163,49 @@ def calculate_final_grade_average(
     result = get_by_enrollment(db, enrollment.id)
 
     logger.info(f"[AVG] Result encontrado: {result}")
+    logger.info(f"[AVG] Tipo de result: {type(result)}")
 
     if not result:
-        logger.warning("[AVG] No existe result")
+        logger.warning("[AVG] Result vacío")
         return None
 
-    logger.info(f"[AVG] Scores raw: {result.score}")
+    try:
 
-    if not result.score:
-        logger.warning("[AVG] Result no tiene scores")
-        return None
+        logger.info(f"[AVG] Cantidad de resultados: {len(result)}")
 
-    grades = [
-        r.grade
-        for r in result.score
-        if r.grade is not None
-    ]
+        for index, item in enumerate(result):
 
-    logger.info(f"[AVG] Grades filtrados: {grades}")
+            logger.info(
+                f"[AVG] Item #{index}: "
+                f"type={type(item)}, "
+                f"data={item}"
+            )
 
-    if not grades:
-        logger.warning("[AVG] No hay notas válidas")
-        return None
+            logger.info(
+                f"[AVG] Item #{index} score: "
+                f"{getattr(item, 'score', 'NO SCORE ATTRIBUTE')}"
+            )
 
-    avg = sum(grades) / len(grades)
+        grades = [
+            r.score
+            for r in result
+            if r.score is not None
+        ]
 
-    logger.info(f"[AVG] Promedio final calculado: {avg}")
+        logger.info(f"[AVG] Grades extraídos: {grades}")
 
-    return avg
+        if not grades:
+            logger.warning("[AVG] No hay grades válidos")
+            return None
+
+        avg = sum(grades) / len(grades)
+
+        logger.info(f"[AVG] Promedio final: {avg}")
+
+        return avg
+
+    except Exception as e:
+
+        logger.exception(f"[AVG] Error calculando promedio: {e}")
+
+        raise
