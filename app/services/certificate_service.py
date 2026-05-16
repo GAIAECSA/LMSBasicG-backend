@@ -36,7 +36,7 @@ def update_certificate(db: Session, certificate_id: int, data: CertificateUpdate
         raise Exception("Certificado no encontrado")
 
     update_data = data.model_dump(exclude_unset=True)
-
+    print(update_data)
     if "final_grade" not in update_data:
         avg = calculate_final_grade_average(db, certificate.user_id, certificate.course_id)
         if avg is not None:
