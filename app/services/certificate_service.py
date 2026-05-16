@@ -32,38 +32,69 @@ def create_certificate(db: Session, data: CertificateCreate, file: UploadFile | 
 
     return certificate_repo.create(db, certificate)
 
-def update_certificate(db: Session, certificate_id: int, data: CertificateUpdate, file: UploadFile | None):
-    
+def update_certificate(
+    db: Session,
+    certificate_id: int,
+    data: CertificateUpdate,
+    file: UploadFile | None
+):
+
     certificate = certificate_repo.get_by_id(db, certificate_id)
+
     if not certificate:
         raise Exception("Certificado no encontrado")
 
     update_data = data.model_dump(exclude_unset=True)
-    logger.info(f"Update data: {update_data}")
-    if "final_grade" not in update_data:
-        avg = calculate_final_grade_average(db, certificate.user_id, certificate.course_id)
+
+    logger.info(f"Update data recibido: {update_data}")
+
+    # Calcular promedio si no viene final_grade
+    # o viene como None
+    if update_data.get("final_grade") is None:
+
+        avg = calculate_final_grade_average(
+            db,
+            certificate.user_id,
+            certificate.course_id
+        )
+
+        logger.info(f"Promedio calculado: {avg}")
+
         if avg is not None:
             update_data["final_grade"] = avg
 
     old_file_path = None
 
     if file:
+
         if certificate.file_url:
             old_file_path = certificate.file_url.lstrip("/")
 
         new_file_url = save_certificate(file)
+
         update_data["file_url"] = new_file_url
 
+    # Aplicar cambios al modelo
     for key, value in update_data.items():
         setattr(certificate, key, value)
 
+    logger.info(
+        f"Datos finales a guardar: "
+        f"is_valid={certificate.is_valid}, "
+        f"final_grade={certificate.final_grade}, "
+        f"file_url={certificate.file_url}"
+    )
+
     updated = certificate_repo.update(db, certificate)
 
+    # Eliminar archivo anterior si hubo reemplazo
     if file and old_file_path and os.path.exists(old_file_path):
+
         try:
             os.remove(old_file_path)
-        except Exception:
-            pass
+
+        except Exception as e:
+            logger.warning(f"No se pudo eliminar archivo viejo: {e}")
 
     return updated
 
