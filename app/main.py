@@ -3,6 +3,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.api.router import router as api_router
 from fastapi.staticfiles import StaticFiles
 import os
+import logging
 
 app = FastAPI()
 
@@ -24,7 +25,7 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
-
+logging.basicConfig(level=logging.INFO)
 os.makedirs("uploads/lesson_blocks", exist_ok=True)
 os.makedirs("uploads/courses", exist_ok=True)
 os.makedirs("uploads/course_vouchers", exist_ok=True)

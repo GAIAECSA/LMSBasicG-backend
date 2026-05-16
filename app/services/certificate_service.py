@@ -8,6 +8,9 @@ from app.repositories.enrollment_repo import get_existing_enrollment
 from app.services.quizz_response_service import get_by_enrollment
 import uuid
 import os
+import logging
+
+logger = logging.getLogger(__name__)
 
 def create_certificate(db: Session, data: CertificateCreate, file: UploadFile | None):
 
@@ -36,7 +39,7 @@ def update_certificate(db: Session, certificate_id: int, data: CertificateUpdate
         raise Exception("Certificado no encontrado")
 
     update_data = data.model_dump(exclude_unset=True)
-    print(update_data)
+    logger.info(f"Update data: {update_data}")
     if "final_grade" not in update_data:
         avg = calculate_final_grade_average(db, certificate.user_id, certificate.course_id)
         if avg is not None:
