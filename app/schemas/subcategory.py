@@ -2,9 +2,8 @@ from pydantic import BaseModel, field_validator
 from typing import Optional
 
 class SubcategoryCreate(BaseModel):
-    
     name: str
-
+    is_mdt: bool
     category_id: int
 
     @field_validator("name")
@@ -21,9 +20,8 @@ class SubcategoryCreate(BaseModel):
         return v
 
 class SubcategoryUpdate(BaseModel):
-
     name: Optional[str] = None
-
+    is_mdt: Optional[bool] = None
     category_id: Optional[int] = None
 
     @field_validator("name")
@@ -43,6 +41,7 @@ class SubcategoryUpdate(BaseModel):
 class SubcategoryResponse(BaseModel):
     id: int
     name: str
+    is_mdt: bool
     category_id: int
 
     class Config:

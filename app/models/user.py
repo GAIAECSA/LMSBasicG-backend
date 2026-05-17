@@ -10,7 +10,8 @@ class User(Base):
     email = Column(String, index=True)
     firstname = Column(String, nullable=False)
     lastname = Column(String, nullable=False)
-    
+
+    idnumber = Column(String,nullable=True)
     phone_number = Column(String, nullable=True)
     departament = Column(String, nullable=True) # Provincia
 

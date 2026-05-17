@@ -3,6 +3,7 @@ from typing import Optional
 
 class CategoryCreate(BaseModel):
     name: str
+    is_mdt: bool
 
     @field_validator("name")
     def validate_name(cls, v):
@@ -13,6 +14,7 @@ class CategoryCreate(BaseModel):
 
 class CategoryUpdate(BaseModel):
     name: Optional[str] = None
+    is_mdt: Optional[bool] = None
 
     @field_validator("name")
     def validate_name(cls, v):
@@ -25,6 +27,7 @@ class CategoryUpdate(BaseModel):
 class CategoryResponse(BaseModel):
     id: int
     name: str
+    is_mdt: bool
 
     class Config:
         from_attributes = True

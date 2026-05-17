@@ -21,6 +21,7 @@ class CourseCreate(BaseModel):
     total_lessons: int = Field(..., ge=0)
     subcategory_id: int
     discount_price: Optional[Decimal] = Field(None, ge=0)
+    is_mdt: bool
 
     @classmethod
     def as_form(
@@ -36,6 +37,7 @@ class CourseCreate(BaseModel):
         total_lessons: int = Form(...),
         subcategory_id: int = Form(...),
         discount_price: Optional[Decimal] = Form(None),
+        is_mdt: bool = Form(...),
     ):
         return cls(
             name=name,
@@ -49,6 +51,7 @@ class CourseCreate(BaseModel):
             total_lessons=total_lessons,
             subcategory_id=subcategory_id,
             discount_price=discount_price,
+            is_mdt=is_mdt,
         )
 
     @field_validator("name")
@@ -83,6 +86,7 @@ class CourseUpdate(BaseModel):
     total_lessons: Optional[int] = None
     subcategory_id: Optional[int] = None
     discount_price: Optional[Decimal] = None
+    is_mdt: Optional[bool] = None
 
     @classmethod
     def as_form(
@@ -98,6 +102,7 @@ class CourseUpdate(BaseModel):
         total_lessons: Optional[int] = Form(None),
         subcategory_id: Optional[int] = Form(None),
         discount_price: Optional[Decimal] = Form(None),
+        is_mdt: Optional[bool] = Form(None),
     ):
         return cls(
             name=name,
@@ -111,6 +116,7 @@ class CourseUpdate(BaseModel):
             total_lessons=total_lessons,
             subcategory_id=subcategory_id,
             discount_price=discount_price,
+            is_mdt=is_mdt
         )
 
     @field_validator("name")
@@ -147,6 +153,7 @@ class CourseResponse(BaseModel):
     duration_hours: int
     total_lessons: int
     subcategory_id: int
+    is_mdt: bool
 
     image_url: Optional[str] = None
     discount_price: Optional[Decimal] = None

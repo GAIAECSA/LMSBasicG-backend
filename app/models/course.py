@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, Boolean, ForeignKey, DateTime, Text, Numeric, func, Enum, CheckConstraint
+from sqlalchemy import Column, Date ,Integer, String, Boolean, ForeignKey, DateTime, Text, Numeric, func, Enum, CheckConstraint
 from app.db.base import Base
 
 class Course(Base):
@@ -15,7 +15,7 @@ class Course(Base):
     open_enrollment = Column(Boolean, nullable=False, default=False)
     duration_hours = Column(Integer, nullable=False, default=0)
     total_lessons = Column(Integer, nullable=False, default=0)
-
+    is_mdt = Column(Boolean, nullable=False, default=False)
 
     image_url = Column(String)
     discount_price = Column(Numeric(10,2))
@@ -23,9 +23,10 @@ class Course(Base):
     published_at = Column(DateTime(timezone=True))
     rating = Column(Numeric(2,1))
     total_students = Column(Integer, default=0)
+    init_date = Column(Date, nullable=True) # En MDT para no permitir matriculas
+    finish_date = Column(Date, nullable=True) # En MDT para no permitir cambios
 
     subcategory_id = Column(Integer, ForeignKey("subcategories.id"), nullable=False)
-
 
     deleted = Column(Boolean, index=True, default=False)
     created_at = Column(DateTime(timezone=True), server_default=func.now())

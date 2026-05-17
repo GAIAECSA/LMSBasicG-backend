@@ -15,6 +15,7 @@ from app.models.enrollment import Enrollment
 from app.models.quizz_response import QuizzResponse
 from app.models.certificate_template import CertificateTemplate
 from app.models.certificate import Certificate
+from app.models.course_attendance import CourseAttendance
 
 def create_tables():
     print("Creando tablas...")

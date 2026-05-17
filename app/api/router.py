@@ -15,6 +15,7 @@ from app.api.v1 import (
     certificate_template_routes as certificate_template,
     certificate_routes as certificate,
 
+    course_attendance_routes as course_attendance,
     quizz_response_routes as quizz_response,
     websocket_routes as websocket
 )
@@ -99,6 +100,11 @@ router.include_router(
     tags=["certificates"]
 )
 
+router.include_router(
+    course_attendance.router,
+    prefix="/course_attendance",
+    tags=["course_attendance"]
+)
 
 # User response
 

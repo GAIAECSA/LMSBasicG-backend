@@ -8,6 +8,7 @@ class Subcategory(Base):
     name = Column(String, unique=True, index=True, nullable=False)
 
     category_id = Column(Integer, ForeignKey("categories.id"), nullable=False)
+    is_mdt = Column(Boolean, nullable=False, default=False)
 
     deleted = Column(Boolean, default=False)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
