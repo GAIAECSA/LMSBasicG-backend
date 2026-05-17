@@ -108,6 +108,12 @@ def get_certificate_by_code(db: Session, code: str):
         raise Exception("Certificado no encontrado")
     return certificate
 
+def get_certificate_by_user_and_course(db: Session, user_id: int, course_id: int):
+    certificate = certificate_repo.get_by_user_and_course(db, user_id, course_id)
+    if not certificate or certificate.deleted:
+        raise Exception("Certificado no encontrado")
+    return certificate
+
 def get_certificates_by_user(db: Session, user_id: int):
     certificates = certificate_repo.get_all_by_user(db, user_id)
     return certificates
@@ -125,6 +131,8 @@ def verify_certificate(db: Session, code: str):
         raise Exception("Certificado inválido")
 
     return certificate
+
+# Auxiliares
 
 def calculate_final_grade_average(
     db: Session,
