@@ -17,6 +17,7 @@ from app.api.v1 import (
 
     course_attendance_routes as course_attendance,
     quizz_response_routes as quizz_response,
+    attendance_routes as attendance,
     websocket_routes as websocket
 )
 
@@ -104,6 +105,12 @@ router.include_router(
     course_attendance.router,
     prefix="/course_attendance",
     tags=["course_attendance"]
+)
+
+router.include_router(
+    attendance.router,
+    prefix="/attendance",
+    tags=["attendance"]
 )
 
 # User response

@@ -2,6 +2,7 @@ from sqlalchemy import Column, Integer, ForeignKey, DateTime, String, Boolean, D
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.sql import func
 from app.db.base import Base
+from sqlalchemy.orm import relationship
 
 class CourseAttendance(Base):
     __tablename__ = "course_attendance"
@@ -16,8 +17,6 @@ class CourseAttendance(Base):
 
     deleted = Column(Boolean, default=False)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
-    updated_at = Column(
-        DateTime(timezone=True),
-        server_default=func.now(),
-        onupdate=func.now()
-    )
+    updated_at = Column(DateTime(timezone=True),server_default=func.now(),onupdate=func.now())
+
+    attendances = relationship("Attendance",back_populates="course_attendance")
