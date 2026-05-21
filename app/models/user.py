@@ -1,5 +1,16 @@
-from sqlalchemy import Column, Integer, String, Boolean, ForeignKey, func, DateTime, CheckConstraint
+from sqlalchemy import (
+    Column,
+    Integer,
+    String,
+    Boolean,
+    ForeignKey,
+    func,
+    DateTime,
+    CheckConstraint,
+)
+from sqlalchemy.orm import relationship
 from app.db.base import Base
+
 
 class User(Base):
     __tablename__ = "users"
@@ -11,15 +22,16 @@ class User(Base):
     firstname = Column(String, nullable=False)
     lastname = Column(String, nullable=False)
 
-    idnumber = Column(String,nullable=True)
+    idnumber = Column(String, nullable=True)
     phone_number = Column(String, nullable=True)
-    departament = Column(String, nullable=True) # Provincia
+    departament = Column(String, nullable=True)  # Provincia
 
     role_id = Column(Integer, ForeignKey("roles.id"))
 
     deleted = Column(Boolean, index=True, default=False)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), onupdate=func.now())
+    privacy_policies = relationship("UserPrivacyPolicy", back_populates="user")
 
     __table_args__ = (
         CheckConstraint("trim(email) <> ''", name="email_not_blank"),

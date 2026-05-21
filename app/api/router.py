@@ -20,6 +20,8 @@ from app.api.v1 import (
     forum_response_routes as forum_response,
     homework_response_routes as homework_response,
     attendance_routes as attendance,
+    privacy_policy_routes as privacy_policy,
+    user_privacy_policy_routes as user_privacy_policy,
     websocket_routes as websocket,
 )
 
@@ -69,6 +71,10 @@ router.include_router(
 
 router.include_router(attendance.router, prefix="/attendance", tags=["attendance"])
 
+router.include_router(
+    privacy_policy.router, prefix="/privacy-policy", tags=["privacy-policy"]
+)
+
 # User response
 
 router.include_router(
@@ -85,6 +91,12 @@ router.include_router(
 
 router.include_router(
     forum_response.router, prefix="/forum-response", tags=["forum-response"]
+)
+
+router.include_router(
+    user_privacy_policy.router,
+    prefix="/user-privacy-policy",
+    tags=["user-privacy-policy"],
 )
 # Websocket
 

@@ -164,3 +164,30 @@ def save_homework_file(file: UploadFile) -> dict | None:
         "filename": file.filename,
         "stored_name": filename
     }
+
+def save_policy_privacy_file(file: UploadFile) -> dict | None:
+    if not file:
+        return None
+
+    allowed_types = [
+        "application/pdf"
+    ]
+
+    if file.content_type not in allowed_types:
+        raise ValueError("Solo se permite PDF")
+
+    os.makedirs(UPLOAD_DIR_LESSON_BLOCK_FILE, exist_ok=True)
+
+    extension = file.filename.split(".")[-1].lower()
+
+    filename = f"{uuid4()}.{extension}"
+    filepath = os.path.join(UPLOAD_DIR_LESSON_BLOCK_FILE, filename)
+
+    with open(filepath, "wb") as buffer:
+        buffer.write(file.file.read())
+
+    return {
+        "file_url": f"/uploads/lesson_blocks/{filename}",
+        "filename": file.filename,
+        "stored_name": filename
+    }
