@@ -20,6 +20,8 @@ from app.models.attendance import Attendance
 from app.models.homework_response import HomeworkResponse
 from app.models.survey_response import SurveyResponse
 from app.models.forum_response import ForumResponse
+from app.models.privacy_policy import PrivacyPolicy
+from app.models.user_privacy_policy import UserPrivacyPolicy
 
 
 def create_tables():
