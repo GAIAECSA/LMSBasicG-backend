@@ -1,15 +1,25 @@
-from sqlalchemy import Column, Integer, String, Boolean, DateTime, func, ForeignKey, Text
+from sqlalchemy import (
+    Column,
+    Integer,
+    String,
+    Boolean,
+    DateTime,
+    func,
+    ForeignKey,
+    Text,
+)
 from sqlalchemy.orm import relationship
 from app.db.base import Base
+
 
 class Enrollment(Base):
     __tablename__ = "enrollments"
 
     id = Column(Integer, primary_key=True, index=True)
-    
+
     accepted = Column(Boolean)
     comment = Column(Text)
-    
+
     voucher_url = Column(String, nullable=True)
     reference_code = Column(String, nullable=True)
 
@@ -25,10 +35,7 @@ class Enrollment(Base):
     course = relationship("Course")
     role = relationship("Role")
 
-    attendance = relationship("Attendance",back_populates="enrollment")
-    survey_responses = relationship("SurveyResponse",back_populates="enrollment")
-    homework_responses = relationship("HomeworkResponse",back_populates="enrollment")
-forum_responses = relationship(
-    "ForumResponse",
-    back_populates="enrollment"
-)
+    attendance = relationship("Attendance", back_populates="enrollment")
+    survey_responses = relationship("SurveyResponse", back_populates="enrollment")
+    homework_responses = relationship("HomeworkResponse", back_populates="enrollment")
+    forum_responses = relationship("ForumResponse", back_populates="enrollment")
