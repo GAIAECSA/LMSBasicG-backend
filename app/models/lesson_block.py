@@ -25,6 +25,7 @@ class LessonBlock(Base):
     updated_at = Column(DateTime(timezone=True), onupdate=func.now())
 
     lesson_block_type= relationship("LessonBlockType")
+    survey_responses = relationship("SurveyResponse",back_populates="lesson_block")
 
     __table_args__ = (
         CheckConstraint("content <> '{}'::jsonb", name="content_not_empty"),
