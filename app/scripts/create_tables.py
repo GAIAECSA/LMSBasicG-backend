@@ -19,11 +19,14 @@ from app.models.course_attendance import CourseAttendance
 from app.models.attendance import Attendance
 from app.models.homework_response import HomeworkResponse
 from app.models.survey_response import SurveyResponse
+from app.models.forum_response import ForumResponse
+
 
 def create_tables():
     print("Creando tablas...")
     Base.metadata.create_all(bind=engine)
     print("Tablas creadas 🚀")
+
 
 if __name__ == "__main__":
     create_tables()

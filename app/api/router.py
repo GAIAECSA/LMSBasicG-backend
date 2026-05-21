@@ -14,131 +14,78 @@ from app.api.v1 import (
     enrollment_routes as enrollment,
     certificate_template_routes as certificate_template,
     certificate_routes as certificate,
-
     course_attendance_routes as course_attendance,
     quizz_response_routes as quizz_response,
     survey_response_router as survey_response,
+    forum_response_routes as forum_response,
     homework_response_routes as homework_response,
     attendance_routes as attendance,
-    websocket_routes as websocket
+    websocket_routes as websocket,
 )
 
 router = APIRouter()
 
+router.include_router(role.router, prefix="/roles", tags=["roles"])
+
+router.include_router(user.router, prefix="/users", tags=["users"])
+
+router.include_router(category.router, prefix="/categories", tags=["categories"])
+
 router.include_router(
-    role.router,
-    prefix="/roles",
-    tags=["roles"]
+    subcategory.router, prefix="/subcategories", tags=["subcategories"]
+)
+
+router.include_router(course.router, prefix="/courses", tags=["courses"])
+
+router.include_router(module.router, prefix="/modules", tags=["modules"])
+
+router.include_router(lesson.router, prefix="/lessons", tags=["lessons"])
+
+router.include_router(
+    lesson_block.router, prefix="/lesson-blocks", tags=["lesson-blocks"]
 )
 
 router.include_router(
-    user.router,
-    prefix="/users",
-    tags=["users"]
+    block_progress.router, prefix="/blocks-progress", tags=["blocks-progress"]
 )
 
 router.include_router(
-    category.router,
-    prefix="/categories",
-    tags=["categories"]
+    lesson_block_type.router, prefix="/lesson-block-types", tags=["lesson-block-types"]
 )
 
-router.include_router(
-    subcategory.router,
-    prefix="/subcategories",
-    tags=["subcategories"]
-)
-
-router.include_router(
-    course.router,
-    prefix="/courses",
-    tags=["courses"]
-)
-
-router.include_router(
-    module.router,
-    prefix="/modules",
-    tags=["modules"]
-)
-
-router.include_router(
-    lesson.router,
-    prefix="/lessons",
-    tags=["lessons"]
-)
-
-router.include_router(
-    lesson_block.router,
-    prefix="/lesson-blocks",
-    tags=["lesson-blocks"]
-)
-
-router.include_router(
-    block_progress.router,
-    prefix="/blocks-progress",
-    tags=["blocks-progress"]
-)
-
-router.include_router(
-    lesson_block_type.router,
-    prefix="/lesson-block-types",
-    tags=["lesson-block-types"]
-)
-
-router.include_router(
-    enrollment.router,
-    prefix="/enrollments",
-    tags=["enrollments"]
-)
+router.include_router(enrollment.router, prefix="/enrollments", tags=["enrollments"])
 
 router.include_router(
     certificate_template.router,
     prefix="/certificate_templates",
-    tags=["certificate_templates"]
+    tags=["certificate_templates"],
 )
 
-router.include_router(
-    certificate.router,
-    prefix="/certificates",
-    tags=["certificates"]
-)
+router.include_router(certificate.router, prefix="/certificates", tags=["certificates"])
 
 router.include_router(
-    course_attendance.router,
-    prefix="/course_attendance",
-    tags=["course_attendance"]
+    course_attendance.router, prefix="/course_attendance", tags=["course_attendance"]
 )
 
-router.include_router(
-    attendance.router,
-    prefix="/attendance",
-    tags=["attendance"]
-)
+router.include_router(attendance.router, prefix="/attendance", tags=["attendance"])
 
 # User response
 
 router.include_router(
-    quizz_response.router,
-    prefix="/quizz-response",
-    tags=["quizz-response"]
+    quizz_response.router, prefix="/quizz-response", tags=["quizz-response"]
 )
 
 router.include_router(
-    homework_response.router,
-    prefix="/homework-response",
-    tags=["homework-response"]
+    homework_response.router, prefix="/homework-response", tags=["homework-response"]
 )
 
 router.include_router(
-    survey_response.router,
-    prefix="/survey-response",
-    tags=["survey-response"]
+    survey_response.router, prefix="/survey-response", tags=["survey-response"]
 )
 
+router.include_router(
+    forum_response.router, prefix="/forum-response", tags=["forum-response"]
+)
 # Websocket
 
-router.include_router(
-    websocket.router,
-    prefix="/websockets",
-    tags=["websocket"]
-)
+router.include_router(websocket.router, prefix="/websockets", tags=["websocket"])
