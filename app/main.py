@@ -31,6 +31,7 @@ os.makedirs("uploads/courses", exist_ok=True)
 os.makedirs("uploads/course_vouchers", exist_ok=True)
 os.makedirs("uploads/certificate_templates", exist_ok=True)
 os.makedirs("uploads/certificates", exist_ok=True)
+os.makedirs("uploads/homework_responses", exist_ok=True)
 
 app.mount("/uploads", StaticFiles(directory="uploads"), name="uploads")
 

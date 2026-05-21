@@ -14,6 +14,7 @@ class LessonBlock(Base):
     completion_type = Column(String)
     completion_value = Column(Integer)
     order = Column(Integer, default=0)
+    default = Column(Boolean, default=False)
 
     lesson_id = Column(Integer, ForeignKey("lessons.id"), nullable=False)
     block_type_id = Column(Integer, ForeignKey("lesson_block_types.id"), nullable=False)

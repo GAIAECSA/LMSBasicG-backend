@@ -5,7 +5,7 @@ from app.db.base import Base
 from sqlalchemy.orm import relationship
 
 class CourseAttendance(Base):
-    __tablename__ = "course_attendance"
+    __tablename__ = "course_attendances"
 
     id = Column(Integer, primary_key=True, index=True)
 

@@ -7,6 +7,7 @@ UPLOAD_DIR_IMAGE_COURSE_VOUCHER = "uploads/course_vouchers"
 UPLOAD_DIR_LESSON_BLOCK_FILE = "uploads/lesson_blocks"
 UPLOAD_DIR_CERTIFICATE_TEMPLATES = "uploads/certificate_templates"
 UPLOAD_DIR_CERTIFICATES = "uploads/certificates"
+UPLOAD_DIR_HOMEWORK_RESPONSES = "uploads/homework_responses"
 
 
 
@@ -125,3 +126,41 @@ def save_certificate(file: UploadFile) -> str | None:
 
     return f"/{filepath}"
     
+def save_homework_file(file: UploadFile) -> dict | None:
+
+    if not file:
+        return None
+
+    allowed_types = [
+        "application/pdf",
+        "application/zip",
+        "application/x-zip-compressed"
+    ]
+
+    if file.content_type not in allowed_types:
+        raise ValueError("Solo se permiten archivos PDF o ZIP")
+
+    os.makedirs(UPLOAD_DIR_HOMEWORK_RESPONSES, exist_ok=True)
+
+    extension = file.filename.split(".")[-1].lower()
+
+    allowed_extensions = ["pdf", "zip"]
+
+    if extension not in allowed_extensions:
+        raise ValueError("Extensión de archivo no permitida")
+
+    filename = f"{uuid4()}.{extension}"
+
+    filepath = os.path.join(
+        UPLOAD_DIR_HOMEWORK_RESPONSES,
+        filename
+    )
+
+    with open(filepath, "wb") as buffer:
+        buffer.write(file.file.read())
+
+    return {
+        "file_url": f"/uploads/homework_responses/{filename}",
+        "filename": file.filename,
+        "stored_name": filename
+    }
