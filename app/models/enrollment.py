@@ -26,3 +26,4 @@ class Enrollment(Base):
     role = relationship("Role")
 
     attendances = relationship("Attendance",back_populates="enrollment")
+    survey_responses = relationship("SurveyResponse",back_populates="enrollment")
