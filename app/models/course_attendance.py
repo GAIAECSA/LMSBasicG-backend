@@ -19,4 +19,4 @@ class CourseAttendance(Base):
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True),server_default=func.now(),onupdate=func.now())
 
-    attendances = relationship("Attendance",back_populates="course_attendance")
+    attendance = relationship("Attendance",back_populates="course_attendance")
