@@ -18,6 +18,7 @@ class LessonBlockCreate(BaseModel):
     is_required: bool = True
     completion_type: LessonBlockCompletitionType
     completion_value: Optional[int] = None
+
     order: int = 0
     default: bool = False
 
@@ -38,8 +39,8 @@ class LessonBlockCreate(BaseModel):
         order: int = Form(0),
         default: bool = Form(False),
         is_required: bool = Form(True),
-        is_active: bool = Form(True),
         date_available: Optional[datetime] = Form(None),
+        is_active: bool = Form(True),
         content: Optional[str] = Form(None),
     ):
         import json
@@ -54,8 +55,8 @@ class LessonBlockCreate(BaseModel):
             order=order,
             default=default,
             is_required=is_required,
-            is_active=is_active,
             date_available=date_available,
+            is_active=is_active,
             content=parsed_content,
         )
 
@@ -66,6 +67,7 @@ class LessonBlockUpdate(BaseModel):
     is_required: Optional[bool] = None
     completion_type: Optional[LessonBlockCompletitionType] = None
     completion_value: Optional[int] = None
+
     order: Optional[int] = None
     default: Optional[bool] = None
 
@@ -86,8 +88,8 @@ class LessonBlockUpdate(BaseModel):
         order: Optional[int] = Form(None),
         default: Optional[bool] = Form(None),
         is_required: Optional[bool] = Form(None),
-        is_active: Optional[bool] = Form(None),
         date_available: Optional[datetime] = Form(None),
+        is_active: Optional[bool] = Form(None),
         content: Optional[str] = Form(None),
     ):
         import json
@@ -102,8 +104,8 @@ class LessonBlockUpdate(BaseModel):
             order=order,
             default=default,
             is_required=is_required,
-            is_active=is_active,
             date_available=date_available,
+            is_active=is_active,
             content=parsed_content,
         )
 
@@ -114,11 +116,12 @@ class LessonBlockResponse(BaseModel):
     content: Dict[str, Any]
 
     is_required: bool
-    completion_type: LessonBlockCompletitionType
+
+    completion_type: Optional[LessonBlockCompletitionType]
     completion_value: Optional[int]
 
     order: int
-    default: bool
+    default: bool = False
 
     lesson_id: int
     block_type_id: int
@@ -133,5 +136,4 @@ class LessonBlockResponse(BaseModel):
 
     lesson_block_type: LessonBlockTypeBasicResponse
 
-    class Config:
-        from_attributes = True
+    model_config = {"from_attributes": True}
