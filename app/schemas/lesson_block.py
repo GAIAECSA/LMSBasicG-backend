@@ -1,6 +1,7 @@
 from pydantic import BaseModel
 from typing import Optional, Any, Dict
 from enum import Enum
+from datetime import datetime
 from fastapi import Form
 from app.schemas.lesson_block_type import LessonBlockTypeBasicResponse
 
@@ -18,9 +19,12 @@ class LessonBlockCreate(BaseModel):
     completion_type: LessonBlockCompletitionType
     completion_value: Optional[int] = None
     order: int = 0
+    default: bool = False
 
     lesson_id: int
     block_type_id: int
+
+    date_available: Optional[datetime] = None
 
     is_active: bool = True
 
@@ -32,8 +36,10 @@ class LessonBlockCreate(BaseModel):
         completion_type: LessonBlockCompletitionType = Form(...),
         completion_value: Optional[int] = Form(None),
         order: int = Form(0),
+        default: bool = Form(False),
         is_required: bool = Form(True),
         is_active: bool = Form(True),
+        date_available: Optional[datetime] = Form(None),
         content: Optional[str] = Form(None),
     ):
         import json
@@ -46,10 +52,13 @@ class LessonBlockCreate(BaseModel):
             completion_type=completion_type,
             completion_value=completion_value,
             order=order,
+            default=default,
             is_required=is_required,
             is_active=is_active,
+            date_available=date_available,
             content=parsed_content,
         )
+
 
 class LessonBlockUpdate(BaseModel):
     content: Optional[Dict[str, Any]] = None
@@ -58,9 +67,12 @@ class LessonBlockUpdate(BaseModel):
     completion_type: Optional[LessonBlockCompletitionType] = None
     completion_value: Optional[int] = None
     order: Optional[int] = None
+    default: Optional[bool] = None
 
     lesson_id: Optional[int] = None
     block_type_id: Optional[int] = None
+
+    date_available: Optional[datetime] = None
 
     is_active: Optional[bool] = None
 
@@ -72,8 +84,10 @@ class LessonBlockUpdate(BaseModel):
         completion_type: Optional[LessonBlockCompletitionType] = Form(None),
         completion_value: Optional[int] = Form(None),
         order: Optional[int] = Form(None),
+        default: Optional[bool] = Form(None),
         is_required: Optional[bool] = Form(None),
         is_active: Optional[bool] = Form(None),
+        date_available: Optional[datetime] = Form(None),
         content: Optional[str] = Form(None),
     ):
         import json
@@ -86,26 +100,38 @@ class LessonBlockUpdate(BaseModel):
             completion_type=completion_type,
             completion_value=completion_value,
             order=order,
+            default=default,
             is_required=is_required,
             is_active=is_active,
+            date_available=date_available,
             content=parsed_content,
         )
 
+
 class LessonBlockResponse(BaseModel):
     id: int
+
     content: Dict[str, Any]
-    
+
     is_required: bool
     completion_type: LessonBlockCompletitionType
     completion_value: Optional[int]
+
     order: int
+    default: bool
 
     lesson_id: int
+    block_type_id: int
+
+    date_available: Optional[datetime]
 
     is_active: bool
+    deleted: bool
+
+    created_at: Optional[datetime]
+    updated_at: Optional[datetime]
 
     lesson_block_type: LessonBlockTypeBasicResponse
 
     class Config:
         from_attributes = True
-

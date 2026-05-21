@@ -1,7 +1,17 @@
-from sqlalchemy import Column, Integer, String, Boolean, DateTime, ForeignKey, func, CheckConstraint
+from sqlalchemy import (
+    Column,
+    Integer,
+    String,
+    Boolean,
+    DateTime,
+    ForeignKey,
+    func,
+    CheckConstraint,
+)
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import relationship
 from app.db.base import Base
+
 
 class LessonBlock(Base):
     __tablename__ = "lesson_blocks"
@@ -18,18 +28,18 @@ class LessonBlock(Base):
 
     lesson_id = Column(Integer, ForeignKey("lessons.id"), nullable=False)
     block_type_id = Column(Integer, ForeignKey("lesson_block_types.id"), nullable=False)
+    date_available = Column(DateTime(timezone=True))
 
     is_active = Column(Boolean, default=True)
     deleted = Column(Boolean, default=False)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), onupdate=func.now())
 
-    lesson_block_type= relationship("LessonBlockType")
-    survey_responses = relationship("SurveyResponse",back_populates="lesson_block")
-    homework_responses = relationship("HomeworkResponse",back_populates="lesson_block")
-    forum_responses = relationship("ForumResponse",back_populates="lesson_block")
+    lesson_block_type = relationship("LessonBlockType")
+    survey_responses = relationship("SurveyResponse", back_populates="lesson_block")
+    homework_responses = relationship("HomeworkResponse", back_populates="lesson_block")
+    forum_responses = relationship("ForumResponse", back_populates="lesson_block")
 
     __table_args__ = (
         CheckConstraint("content <> '{}'::jsonb", name="content_not_empty"),
-    )   
-
+    )
