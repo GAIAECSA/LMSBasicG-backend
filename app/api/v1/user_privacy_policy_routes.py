@@ -11,7 +11,7 @@ from app.services import user_privacy_policy_service
 
 from app.utils.jwt import get_current_user
 
-router = APIRouter(prefix="/user-privacy-policies", tags=["User Privacy Policies"])
+router = APIRouter()
 
 
 def get_db():
