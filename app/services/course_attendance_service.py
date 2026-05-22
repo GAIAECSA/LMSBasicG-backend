@@ -1,12 +1,37 @@
 from sqlalchemy.orm import Session
+from app.models.attendance import Attendance
 from app.models.course_attendance import CourseAttendance
-from app.repositories import course_attendance_repo
+from app.repositories import attendance_repo, course_attendance_repo, enrollment_repo
 from app.schemas.course_attendance import CourseAttendanceCreate, CourseAttendanceUpdate
 
 
 def create_course_attendance(db: Session, data: CourseAttendanceCreate):
-    course_attendance = CourseAttendance(**data.model_dump())
-    return course_attendance_repo.create(db, course_attendance)
+
+    try:
+
+        with db.begin():
+
+            course_attendance = CourseAttendance(**data.model_dump())
+
+            created = course_attendance_repo.create(db, course_attendance)
+
+            enrollments = enrollment_repo.get_all_by_course_id(db, data.course_id)
+
+            attendances = [
+                Attendance(
+                    enrollment_id=e.id,
+                    course_attendance_id=created.id,
+                    is_present=False,
+                )
+                for e in enrollments
+            ]
+
+            attendance_repo.create_many(db, attendances)
+
+        return created
+
+    except Exception as e:
+        raise e
 
 
 def update_course_attendance(

@@ -1,6 +1,13 @@
 from sqlalchemy.orm import Session
+from app.models.attendance import Attendance
+from app.models.certificate import Certificate
 from app.models.enrollment import Enrollment
-from app.repositories import enrollment_repo
+from app.repositories import (
+    attendance_repo,
+    course_attendance_repo,
+    enrollment_repo,
+    certificate_repo,
+)
 from app.schemas.enrollment import EnrollmentCreate, EnrollmentUpdate
 from fastapi import UploadFile
 from app.utils.file_upload import save_course_voucher
@@ -13,35 +20,47 @@ def create_enrollment(
     db: Session, data: EnrollmentCreate, image: UploadFile | None = None
 ):
 
-    existing = enrollment_repo.get_existing_enrollment(db, data.course_id, data.user_id)
+    with db.begin():
 
-    if existing:
-        if existing.accepted is None:
-            raise Exception("Matrícula en revisión")
-        elif existing.accepted is True:
-            raise Exception("Ya estás matriculado en este curso")
-        elif existing.accepted is False:
-            raise Exception("Tu solicitud de matrícula no fue aprobada.")
-
-    voucher_url = None
-    if image:
-        voucher_url = save_course_voucher(image)
-
-    enrollment = Enrollment(**data.model_dump(), voucher_url=voucher_url)
-
-    enrollment = enrollment_repo.create(db, enrollment)
-
-    role = enrollment.role
-
-    if role.id == 4:
-
-        certificate_data = CertificateCreate(
-            user_id=data.user_id, course_id=data.course_id
+        existing = enrollment_repo.get_existing_enrollment(
+            db, data.course_id, data.user_id
         )
 
-        create_certificate(db=db, data=certificate_data, file=None)
+        if existing:
+            if existing.accepted is None:
+                raise Exception("Matrícula en revisión")
+            elif existing.accepted is True:
+                raise Exception("Ya estás matriculado en este curso")
+            elif existing.accepted is False:
+                raise Exception("Tu solicitud de matrícula no fue aprobada.")
 
-    return enrollment
+        voucher_url = save_course_voucher(image) if image else None
+
+        enrollment = Enrollment(**data.model_dump(), voucher_url=voucher_url)
+        enrollment = enrollment_repo.create_flush(db, enrollment)
+
+        role = enrollment.role
+
+        if role.id == 4:
+            certificate_repo.create(
+                db, Certificate(user_id=data.user_id, course_id=data.course_id)
+            )
+
+        course_attendances = course_attendance_repo.get_by_course(db, data.course_id)
+
+        if course_attendances:
+            attendances = [
+                Attendance(
+                    enrollment_id=enrollment.id,
+                    course_attendance_id=ca.id,
+                    is_present=False,
+                )
+                for ca in course_attendances
+            ]
+
+            attendance_repo.create_many(db, attendances)
+
+        return enrollment
 
 
 def update_enrollment(
