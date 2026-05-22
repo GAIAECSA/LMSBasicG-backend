@@ -28,7 +28,8 @@ def create_privacy_policy(
     file_url = None
 
     if file:
-        file_url = save_policy_privacy_file(file)
+        file_data = save_policy_privacy_file(file)
+        file_url = file_data["file_url"]
     privacy_policy = PrivacyPolicy(
         **data.model_dump(exclude={"file_url"}),
         file_url=file_url,
@@ -58,9 +59,10 @@ def update_privacy_policy(
         if privacy_policy.file_url:
             old_file_path = privacy_policy.file_url.lstrip("/")
 
-        new_file_url = save_policy_privacy_file(file)
+        file_data = save_policy_privacy_file(file)
+        file_url = file_data["file_url"]
 
-        update_data["file_url"] = new_file_url
+        update_data["file_url"] = file_url
 
     for key, value in update_data.items():
         setattr(privacy_policy, key, value)
