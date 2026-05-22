@@ -52,7 +52,7 @@ def get_by_enrollment_and_course_attendance(
             Attendance.course_attendance_id == course_attendance_id,
             Attendance.enrollment_id == enrollment_id,
         )
-        .all()
+        .first()
     )
 
 def get_all_by_enrollment(db: Session, enrollment_id: int):
