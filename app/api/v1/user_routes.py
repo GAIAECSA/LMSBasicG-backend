@@ -53,7 +53,7 @@ def get_all_users(db: Session = Depends(get_db), user = Depends(require_admin)):
         raise HTTPException(status_code=400, detail=str(e))
     
 @router.put("/users/{user_id}", response_model=UserResponse)
-def update_user(user_id: int, data: UserUpdate, db: Session = Depends(get_db), user = Depends(require_admin)):
+def update_user(user_id: int, data: UserUpdate, db: Session = Depends(get_db), user = Depends(get_current_user)):
     try:
         return user_service.update_user(db, user_id, data)
     except Exception as e:
