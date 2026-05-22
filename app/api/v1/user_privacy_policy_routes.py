@@ -31,7 +31,7 @@ def accept_privacy_policy(
 ):
     try:
         return user_privacy_policy_service.accept_privacy_policy(
-            db, current_user.id, privacy_policy_id
+            db, current_user["user_id"], privacy_policy_id
         )
 
     except Exception as e:
