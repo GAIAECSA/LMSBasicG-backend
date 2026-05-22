@@ -14,6 +14,7 @@ from app.utils.file_upload import save_course_voucher
 from app.services.certificate_service import create_certificate
 from app.schemas.certificate import CertificateCreate
 import os
+import uuid
 
 
 def create_enrollment(
@@ -40,10 +41,16 @@ def create_enrollment(
         enrollment = enrollment_repo.create_flush(db, enrollment)
 
         role = enrollment.role
+        code = f"CERT-{uuid.uuid4().hex[:10].upper()}"
 
         if role.id == 4:
             certificate_repo.create(
-                db, Certificate(user_id=data.user_id, course_id=data.course_id)
+                db,
+                Certificate(
+                    user_id=data.user_id,
+                    course_id=data.course_id,
+                    certificate_code=code,
+                ),
             )
 
         course_attendances = course_attendance_repo.get_by_course(db, data.course_id)

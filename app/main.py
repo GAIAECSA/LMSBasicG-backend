@@ -8,8 +8,8 @@ import logging
 app = FastAPI()
 
 app = FastAPI(
-    title="Backend API Basic LMS",
-    description="Backend API para um sistema de gerenciamento de aprendizado (LMS) básico.",
+    title="Backend API MDT LMS",
+    description="Backend API para um sistema de gerenciamento de aprendizado (LMS) empresarial.",
     version="1.0.0",
 )
 

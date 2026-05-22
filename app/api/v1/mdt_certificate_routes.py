@@ -79,23 +79,6 @@ def create_certificates_bulk(
             detail=str(e),
         )
 
-
-@router.get(
-    "/",
-    response_model=list[MdtCertificateResponse],
-)
-def get_all_certificates(
-    skip: int = 0,
-    limit: int = 100,
-    db: Session = Depends(get_db),
-):
-    return mdt_certificate_service.get_all_certificates(
-        db,
-        skip,
-        limit,
-    )
-
-
 @router.get(
     "/{certificate_id}",
     response_model=MdtCertificateResponse,
