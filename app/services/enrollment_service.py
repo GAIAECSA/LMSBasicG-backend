@@ -60,7 +60,7 @@ def create_enrollment(
                 Attendance(
                     enrollment_id=enrollment.id,
                     course_attendance_id=ca.id,
-                    is_present=False,
+                    attendance_state="PENDIENTE",
                 )
                 for ca in course_attendances
             ]
