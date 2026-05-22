@@ -56,3 +56,11 @@ def delete(db: Session, privacy_policy: PrivacyPolicy):
     db.commit()
 
     return privacy_policy
+
+
+def get_by_version(db: Session, version: str) -> PrivacyPolicy | None:
+    return (
+        db.query(PrivacyPolicy)
+        .filter(PrivacyPolicy.version == version, PrivacyPolicy.deleted == False)
+        .first()
+    )

@@ -20,7 +20,7 @@ class PrivacyPolicy(Base):
     title = Column(String, nullable=False)
     version = Column(String, nullable=False, unique=True)
 
-    pdf_url = Column(String, nullable=False)
+    file_url = Column(String, nullable=False)
 
     is_active = Column(Boolean, default=True)
     mandatory = Column(Boolean, default=True)
