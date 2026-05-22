@@ -23,7 +23,7 @@ class PrivacyPolicyCreate(BaseModel):
         is_active: bool = Form(True),
         mandatory: bool = Form(True),
         effective_date: datetime = Form(...),
-    ):
+    ) -> "PrivacyPolicyCreate":
         return cls(
             title=title,
             version=version,
@@ -50,7 +50,7 @@ class PrivacyPolicyUpdate(BaseModel):
         is_active: Optional[bool] = Form(None),
         mandatory: Optional[bool] = Form(None),
         effective_date: Optional[datetime] = Form(None),
-    ):
+    ) -> "PrivacyPolicyUpdate":
         return cls(
             title=title,
             version=version,
