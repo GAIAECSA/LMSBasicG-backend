@@ -2,9 +2,12 @@
 
 from sqlalchemy.orm import Session
 from fastapi import UploadFile
+
 from app.models.privacy_policy import PrivacyPolicy
 from app.repositories import privacy_policy_repo
+
 from app.schemas.privacy_policy import PrivacyPolicyCreate, PrivacyPolicyUpdate
+
 from app.utils.file_upload import save_policy_privacy_file
 
 import os
@@ -27,7 +30,10 @@ def create_privacy_policy(
     if file:
         file_url = save_policy_privacy_file(file)
 
-    privacy_policy = PrivacyPolicy(**data.model_dump(), file_url=file_url)
+    privacy_policy = PrivacyPolicy(
+        **data.model_dump(exclude={"file_url"}),
+        file_url=file_url,
+    )
 
     return privacy_policy_repo.create(db, privacy_policy)
 

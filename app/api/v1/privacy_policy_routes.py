@@ -1,7 +1,7 @@
 # app/api/v1/privacy_policy_routes.py
 
 from fastapi import APIRouter, Depends, UploadFile, File, HTTPException
-from typing import Annotated
+
 from sqlalchemy.orm import Session
 from typing import List
 
@@ -32,7 +32,7 @@ def get_db():
 
 @router.post("/", response_model=PrivacyPolicyResponse)
 def create_privacy_policy(
-    data: Annotated[PrivacyPolicyCreate, Depends(PrivacyPolicyCreate.as_form)],
+    data: PrivacyPolicyCreate = Depends(PrivacyPolicyCreate.as_form),
     file: UploadFile | None = File(None),
     db: Session = Depends(get_db),
     user=Depends(require_admin),
@@ -49,7 +49,7 @@ def create_privacy_policy(
 @router.put("/{privacy_policy_id}", response_model=PrivacyPolicyResponse)
 def update_privacy_policy(
     privacy_policy_id: int,
-    data: Annotated[PrivacyPolicyUpdate, Depends(PrivacyPolicyUpdate.as_form)],
+    data: PrivacyPolicyUpdate = Depends(PrivacyPolicyUpdate.as_form),
     file: UploadFile | None = File(None),
     db: Session = Depends(get_db),
     user=Depends(require_admin),

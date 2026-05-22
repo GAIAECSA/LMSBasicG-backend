@@ -1,14 +1,14 @@
 # app/schemas/privacy_policy.py
 
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, Field
 from typing import Optional
 from datetime import datetime
 from fastapi import Form
 
 
 class PrivacyPolicyCreate(BaseModel):
-    title: str
-    version: str
+    title: str = Field(..., min_length=1)
+    version: str = Field(..., min_length=1)
 
     is_active: bool = True
     mandatory: bool = True
@@ -23,7 +23,7 @@ class PrivacyPolicyCreate(BaseModel):
         is_active: bool = Form(True),
         mandatory: bool = Form(True),
         effective_date: datetime = Form(...),
-    ) -> "PrivacyPolicyCreate":
+    ):
         return cls(
             title=title,
             version=version,
@@ -50,7 +50,7 @@ class PrivacyPolicyUpdate(BaseModel):
         is_active: Optional[bool] = Form(None),
         mandatory: Optional[bool] = Form(None),
         effective_date: Optional[datetime] = Form(None),
-    ) -> "PrivacyPolicyUpdate":
+    ):
         return cls(
             title=title,
             version=version,
@@ -66,7 +66,7 @@ class PrivacyPolicyResponse(BaseModel):
     title: str
     version: str
 
-    pdf_url: Optional[str] = None
+    file_url: Optional[str]
 
     is_active: bool
     mandatory: bool
@@ -78,4 +78,4 @@ class PrivacyPolicyResponse(BaseModel):
     created_at: Optional[datetime] = None
     updated_at: Optional[datetime] = None
 
-    model_config = ConfigDict(from_attributes=True)
+    model_config = {"from_attributes": True}
