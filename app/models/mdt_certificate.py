@@ -1,0 +1,72 @@
+from sqlalchemy import (
+    Column,
+    Integer,
+    DateTime,
+    String,
+    Boolean,
+    CheckConstraint,
+    ForeignKey,
+)
+from sqlalchemy.orm import relationship
+from sqlalchemy.sql import func
+
+from app.db.base import Base
+
+
+class MdtCertificate(Base):
+    __tablename__ = "mdt_certificates"
+
+    __table_args__ = (
+        CheckConstraint(
+            "certificate_type IN ('MDT', 'INSTITUTIONAL')",
+            name="ck_mdt_certificate_type",
+        ),
+    )
+
+    id = Column(Integer, primary_key=True, index=True)
+
+    course_id = Column(
+        Integer,
+        ForeignKey("courses.id"),
+        nullable=False,
+        index=True,
+    )
+
+    file_url = Column(String, nullable=False)
+
+    file_name = Column(String, nullable=False)
+
+    id_number = Column(
+        String(100),
+        nullable=False,
+        index=True,
+    )
+
+    certificate_type = Column(
+        String(20),
+        nullable=False,
+    )
+
+    deleted = Column(
+        Boolean,
+        default=False,
+        nullable=False,
+    )
+
+    created_at = Column(
+        DateTime(timezone=True),
+        server_default=func.now(),
+        nullable=False,
+    )
+
+    updated_at = Column(
+        DateTime(timezone=True),
+        server_default=func.now(),
+        onupdate=func.now(),
+        nullable=False,
+    )
+
+    course = relationship(
+        "Course",
+        back_populates="mdt_certificates",
+    )

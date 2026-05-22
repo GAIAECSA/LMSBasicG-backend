@@ -10,7 +10,6 @@ UPLOAD_DIR_CERTIFICATES = "uploads/certificates"
 UPLOAD_DIR_HOMEWORK_RESPONSES = "uploads/homework_responses"
 
 
-
 def save_course_image(file: UploadFile) -> str | None:
     if not file:
         return None
@@ -30,16 +29,12 @@ def save_course_image(file: UploadFile) -> str | None:
 
     return f"/{filepath}"
 
+
 def save_course_voucher(file: UploadFile) -> str | None:
     if not file:
         return None
 
-    allowed_types = [
-        "image/jpeg",
-        "image/png",
-        "image/webp",
-        "application/pdf"
-    ]
+    allowed_types = ["image/jpeg", "image/png", "image/webp", "application/pdf"]
 
     if file.content_type not in allowed_types:
         raise ValueError("Solo se permiten imágenes o PDF")
@@ -61,12 +56,7 @@ def save_lesson_file(file: UploadFile) -> dict | None:
     if not file:
         return None
 
-    allowed_types = [
-        "image/jpeg",
-        "image/png",
-        "image/webp",
-        "application/pdf"
-    ]
+    allowed_types = ["image/jpeg", "image/png", "image/webp", "application/pdf"]
 
     if file.content_type not in allowed_types:
         raise ValueError("Solo se permiten imágenes o PDF")
@@ -84,8 +74,9 @@ def save_lesson_file(file: UploadFile) -> dict | None:
     return {
         "file_url": f"/uploads/lesson_blocks/{filename}",
         "filename": file.filename,
-        "stored_name": filename
+        "stored_name": filename,
     }
+
 
 def save_certificate_template_image(file: UploadFile) -> str | None:
     if not file:
@@ -106,6 +97,7 @@ def save_certificate_template_image(file: UploadFile) -> str | None:
 
     return f"/{filepath}"
 
+
 def save_certificate(file: UploadFile) -> str | None:
     if not file:
         return None
@@ -125,7 +117,8 @@ def save_certificate(file: UploadFile) -> str | None:
         buffer.write(file.file.read())
 
     return f"/{filepath}"
-    
+
+
 def save_homework_file(file: UploadFile) -> dict | None:
 
     if not file:
@@ -134,7 +127,7 @@ def save_homework_file(file: UploadFile) -> dict | None:
     allowed_types = [
         "application/pdf",
         "application/zip",
-        "application/x-zip-compressed"
+        "application/x-zip-compressed",
     ]
 
     if file.content_type not in allowed_types:
@@ -151,10 +144,7 @@ def save_homework_file(file: UploadFile) -> dict | None:
 
     filename = f"{uuid4()}.{extension}"
 
-    filepath = os.path.join(
-        UPLOAD_DIR_HOMEWORK_RESPONSES,
-        filename
-    )
+    filepath = os.path.join(UPLOAD_DIR_HOMEWORK_RESPONSES, filename)
 
     with open(filepath, "wb") as buffer:
         buffer.write(file.file.read())
@@ -162,16 +152,15 @@ def save_homework_file(file: UploadFile) -> dict | None:
     return {
         "file_url": f"/uploads/homework_responses/{filename}",
         "filename": file.filename,
-        "stored_name": filename
+        "stored_name": filename,
     }
+
 
 def save_policy_privacy_file(file: UploadFile) -> dict | None:
     if not file:
         return None
 
-    allowed_types = [
-        "application/pdf"
-    ]
+    allowed_types = ["application/pdf"]
 
     if file.content_type not in allowed_types:
         raise ValueError("Solo se permite PDF")
@@ -189,5 +178,31 @@ def save_policy_privacy_file(file: UploadFile) -> dict | None:
     return {
         "file_url": f"/uploads/lesson_blocks/{filename}",
         "filename": file.filename,
-        "stored_name": filename
+        "stored_name": filename,
+    }
+
+
+def save_certificate_mdt(file: UploadFile) -> dict | None:
+    if not file:
+        return None
+
+    allowed_types = ["application/pdf"]
+
+    if file.content_type not in allowed_types:
+        raise ValueError("Solo se permite PDF")
+
+    os.makedirs(UPLOAD_DIR_LESSON_BLOCK_FILE, exist_ok=True)
+
+    extension = file.filename.split(".")[-1].lower()
+
+    filename = f"{uuid4()}.{extension}"
+    filepath = os.path.join(UPLOAD_DIR_LESSON_BLOCK_FILE, filename)
+
+    with open(filepath, "wb") as buffer:
+        buffer.write(file.file.read())
+
+    return {
+        "file_url": f"/uploads/lesson_blocks/{filename}",
+        "filename": file.filename,
+        "stored_name": filename,
     }

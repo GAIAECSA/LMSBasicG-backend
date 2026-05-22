@@ -1,16 +1,34 @@
-from sqlalchemy import Column, Date ,Integer, String, Boolean, ForeignKey, DateTime, Text, Numeric, func, Enum, CheckConstraint
+from sqlalchemy import (
+    Column,
+    Date,
+    Integer,
+    String,
+    Boolean,
+    ForeignKey,
+    DateTime,
+    Text,
+    Numeric,
+    func,
+    Enum,
+    CheckConstraint,
+)
 from app.db.base import Base
+from sqlalchemy.orm import relationship
+
 
 class Course(Base):
     __tablename__ = "courses"
 
     id = Column(Integer, primary_key=True, index=True)
-    
+
     name = Column(String, nullable=False)
     description = Column(Text, nullable=False)
-    price = Column(Numeric(10,2), nullable=False, default=0)
+    price = Column(Numeric(10, 2), nullable=False, default=0)
     is_free = Column(Boolean, nullable=False, default=False)
-    level = Column(Enum("PRINCIPIANTE", "INTERMEDIO", "AVANZADO", name="course_level"),nullable=False)
+    level = Column(
+        Enum("PRINCIPIANTE", "INTERMEDIO", "AVANZADO", name="course_level"),
+        nullable=False,
+    )
     is_published = Column(Boolean, nullable=False, default=True)
     open_enrollment = Column(Boolean, nullable=False, default=False)
     duration_hours = Column(Integer, nullable=False, default=0)
@@ -18,13 +36,13 @@ class Course(Base):
     is_mdt = Column(Boolean, nullable=False, default=False)
 
     image_url = Column(String)
-    discount_price = Column(Numeric(10,2))
+    discount_price = Column(Numeric(10, 2))
     currency = Column(String, default="USD")
     published_at = Column(DateTime(timezone=True))
-    rating = Column(Numeric(2,1))
+    rating = Column(Numeric(2, 1))
     total_students = Column(Integer, default=0)
-    init_date = Column(Date, nullable=True) # En MDT para no permitir matriculas
-    finish_date = Column(Date, nullable=True) # En MDT para no permitir cambios
+    init_date = Column(Date, nullable=True)  # En MDT para no permitir matriculas
+    finish_date = Column(Date, nullable=True)  # En MDT para no permitir cambios
 
     subcategory_id = Column(Integer, ForeignKey("subcategories.id"), nullable=False)
 
@@ -32,6 +50,10 @@ class Course(Base):
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), onupdate=func.now())
 
+    mdt_certificates = relationship(
+        "MdtCertificate",
+        back_populates="course",
+    )
     __table_args__ = (
         CheckConstraint("trim(name) <> ''", name="name_not_blank"),
         CheckConstraint("trim(description) <> ''", name="description_not_blank"),

@@ -22,6 +22,7 @@ from app.models.survey_response import SurveyResponse
 from app.models.forum_response import ForumResponse
 from app.models.privacy_policy import PrivacyPolicy
 from app.models.user_privacy_policy import UserPrivacyPolicy
+from app.models.mdt_certificate import MdtCertificate
 
 
 def create_tables():

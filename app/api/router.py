@@ -23,6 +23,7 @@ from app.api.v1 import (
     privacy_policy_routes as privacy_policy,
     user_privacy_policy_routes as user_privacy_policy,
     websocket_routes as websocket,
+    mdt_certificate_routes as mdt_certificate,
 )
 
 router = APIRouter()
@@ -75,6 +76,9 @@ router.include_router(
     privacy_policy.router, prefix="/privacy-policy", tags=["privacy-policy"]
 )
 
+router.include_router(
+    mdt_certificate.router, prefix="/mdt-certificates", tags=["mdt-certificates"]
+)
 # User response
 
 router.include_router(
