@@ -60,3 +60,6 @@ def get_attendance(db: Session, attendance_id: int):
 
 def get_all_attendance_by_course_attendance(db: Session, course_attendance_id: int):
     return attendance_repo.get_all_by_course_attendance(db, course_attendance_id)
+
+def get_all_attendance_by_enrollment(db: Session, enrollment_id: int):
+    return attendance_repo.get_all_by_enrollment(db, enrollment_id)
