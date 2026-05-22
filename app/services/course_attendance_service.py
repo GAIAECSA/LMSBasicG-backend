@@ -21,7 +21,7 @@ def create_course_attendance(db: Session, data: CourseAttendanceCreate):
                 Attendance(
                     enrollment_id=e.id,
                     course_attendance_id=created.id,
-                    is_present=False,
+                    attendance_state="PENDIENTE",
                 )
                 for e in enrollments
             ]
