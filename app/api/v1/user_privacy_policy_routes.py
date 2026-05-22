@@ -36,3 +36,19 @@ def accept_privacy_policy(
 
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
+
+
+@router.get("/check-active")
+def check_active_privacy_policy_acceptance(
+    db: Session = Depends(get_db),
+    current_user=Depends(get_current_user),
+):
+    try:
+
+        return user_privacy_policy_service.check_active_privacy_policy_acceptancee(
+            db, current_user["user_id"]
+        )
+
+    except Exception as e:
+
+        raise HTTPException(status_code=400, detail=str(e))
