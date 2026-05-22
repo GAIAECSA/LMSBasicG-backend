@@ -1,6 +1,6 @@
 # app/schemas/privacy_policy.py
 
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict
 from typing import Optional
 from datetime import datetime
 from fastapi import Form
@@ -66,7 +66,7 @@ class PrivacyPolicyResponse(BaseModel):
     title: str
     version: str
 
-    file_url: Optional[str]
+    pdf_url: Optional[str] = None
 
     is_active: bool
     mandatory: bool
@@ -75,7 +75,7 @@ class PrivacyPolicyResponse(BaseModel):
 
     deleted: bool
 
-    created_at: Optional[datetime]
-    updated_at: Optional[datetime]
+    created_at: Optional[datetime] = None
+    updated_at: Optional[datetime] = None
 
-    model_config = {"from_attributes": True}
+    model_config = ConfigDict(from_attributes=True)
