@@ -1,7 +1,9 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict
 from typing import Optional
 from app.schemas.enrollment import EnrollmentBasicResponse
 from decimal import Decimal
+from datetime import datetime
+
 
 class QuizzResponseCreate(BaseModel):
 
@@ -9,16 +11,16 @@ class QuizzResponseCreate(BaseModel):
     lesson_block_id: int
     quizz: str
     response: str
+
     score: Optional[Decimal] = None
     is_passed: Optional[bool] = None
+
 
 class QuizzResponseUpdate(BaseModel):
 
     response: Optional[str] = None
     score: Optional[Decimal] = None
     is_passed: Optional[bool] = None
-
-from datetime import datetime
 
 
 class QuizzResponseResponse(BaseModel):
@@ -29,11 +31,11 @@ class QuizzResponseResponse(BaseModel):
     quizz: str
     response: str
 
-    score: Optional[Decimal]
-    is_passed: Optional[bool]
+    score: Optional[Decimal] = None
+    is_passed: Optional[bool] = None
 
     created_at: datetime
+
     enrollment: EnrollmentBasicResponse
 
-    class Config:
-        orm_mode = True
+    model_config = ConfigDict(from_attributes=True)

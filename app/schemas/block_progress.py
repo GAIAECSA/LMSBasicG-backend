@@ -1,4 +1,4 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict
 from typing import Optional
 from datetime import datetime
 
@@ -27,8 +27,4 @@ class BlockProgressResponse(BaseModel):
     lesson_block_id: int
     is_completed: bool
 
-
-    class Config:
-        orm_mode = True
-
-    
+    model_config = ConfigDict(from_attributes=True)
