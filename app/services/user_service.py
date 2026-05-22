@@ -4,6 +4,7 @@ from app.core.security import hash_password, verify_password
 from app.models.user import User
 from app.schemas.user import UserCreate, UserLogin, UserUpdate
 
+
 def create_user(db: Session, data: UserCreate):
 
     if user_repo.get_by_username(db, data.username):
@@ -14,10 +15,11 @@ def create_user(db: Session, data: UserCreate):
     user = User(
         **data_dict,
         password=hash_password(data.password),
-        role_id=2 # Asigna el rol de visitante por defecto
+        role_id=2  # Asigna el rol de visitante por defecto
     )
 
     return user_repo.create(db, user)
+
 
 def authenticate_user(db: Session, data: UserLogin):
     user = user_repo.get_by_username(db, data.username)
@@ -26,6 +28,7 @@ def authenticate_user(db: Session, data: UserLogin):
     if not verify_password(data.password, user.password):
         return None
     return user
+
 
 def update_user(db: Session, user_id: int, data: UserUpdate):
     user = user_repo.get_by_id(db, user_id)
@@ -49,8 +52,10 @@ def update_user(db: Session, user_id: int, data: UserUpdate):
 
     return user_repo.update(db, user)
 
+
 def get_current_user(db: Session, user_id: int):
     return user_repo.me(db, user_id)
+
 
 def get_all_users(db: Session):
     return user_repo.get_all(db)

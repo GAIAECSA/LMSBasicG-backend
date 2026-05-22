@@ -12,9 +12,10 @@ import logging
 
 logger = logging.getLogger(__name__)
 
+
 def create_certificate(db: Session, data: CertificateCreate, file: UploadFile | None):
 
-    existing = certificate_repo.get_by_user_and_course(db,data.user_id,data.course_id)
+    existing = certificate_repo.get_by_user_and_course(db, data.user_id, data.course_id)
     if existing:
         raise Exception("El registro ya existe")
 
@@ -27,16 +28,14 @@ def create_certificate(db: Session, data: CertificateCreate, file: UploadFile | 
     certificate = Certificate(
         **data.model_dump(exclude={"certificate_code", "file_url"}),
         certificate_code=certificate_code,
-        file_url=file_url
+        file_url=file_url,
     )
 
     return certificate_repo.create(db, certificate)
 
+
 def update_certificate(
-    db: Session,
-    certificate_id: int,
-    data: CertificateUpdate,
-    file: UploadFile | None
+    db: Session, certificate_id: int, data: CertificateUpdate, file: UploadFile | None
 ):
 
     certificate = certificate_repo.get_by_id(db, certificate_id)
@@ -51,9 +50,7 @@ def update_certificate(
     if update_data.get("final_grade") is None:
 
         avg = calculate_final_grade_average(
-            db,
-            certificate.user_id,
-            certificate.course_id
+            db, certificate.user_id, certificate.course_id
         )
 
         if avg is not None:
@@ -87,6 +84,7 @@ def update_certificate(
 
     return updated
 
+
 def delete_certificate(db: Session, certificate_id: int):
     certificate = certificate_repo.get_by_id(db, certificate_id)
     if not certificate:
@@ -102,11 +100,13 @@ def get_certificate(db: Session, certificate_id: int):
         raise Exception("Certificado no encontrado")
     return certificate
 
+
 def get_certificate_by_code(db: Session, code: str):
     certificate = certificate_repo.get_by_code(db, code)
     if not certificate or certificate.deleted:
         raise Exception("Certificado no encontrado")
     return certificate
+
 
 def get_certificate_by_user_and_course(db: Session, user_id: int, course_id: int):
     certificate = certificate_repo.get_by_user_and_course(db, user_id, course_id)
@@ -114,12 +114,15 @@ def get_certificate_by_user_and_course(db: Session, user_id: int, course_id: int
         raise Exception("Certificado no encontrado")
     return certificate
 
+
 def get_certificates_by_user(db: Session, user_id: int):
     certificates = certificate_repo.get_all_by_user(db, user_id)
     return certificates
 
+
 def get_all_certificates(db: Session):
     return certificate_repo.get_all(db)
+
 
 def verify_certificate(db: Session, code: str):
     certificate = certificate_repo.get_by_code(db, code)
@@ -132,19 +135,15 @@ def verify_certificate(db: Session, code: str):
 
     return certificate
 
+
 # Auxiliares
 
+
 def calculate_final_grade_average(
-    db: Session,
-    user_id: int,
-    course_id: int
+    db: Session, user_id: int, course_id: int
 ) -> float | None:
 
-    enrollment = get_existing_enrollment(
-        db=db,
-        course_id=course_id,
-        user_id=user_id
-    )
+    enrollment = get_existing_enrollment(db=db, course_id=course_id, user_id=user_id)
 
     if not enrollment:
         return None
@@ -152,16 +151,11 @@ def calculate_final_grade_average(
     if not result:
         return None
     try:
-        grades = [
-            r.score
-            for r in result
-            if r.score is not None
-        ]
+        grades = [r.score for r in result if r.score is not None]
         if not grades:
             return None
 
         avg = sum(grades) / len(grades)
-
 
         return avg
 

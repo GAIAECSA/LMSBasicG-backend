@@ -8,7 +8,7 @@ from app.repositories import homework_response_repo
 from app.schemas.homework_response import (
     HomeworkResponseCreate,
     HomeworkResponseUpdate,
-    HomeworkResponseGrade
+    HomeworkResponseGrade,
 )
 
 from app.utils.file_upload import save_homework_file
@@ -16,20 +16,15 @@ from app.utils.file_upload import save_homework_file
 import os
 import logging
 
-
 logger = logging.getLogger(__name__)
 
 
 def create_homework_response(
-    db: Session,
-    data: HomeworkResponseCreate,
-    file: UploadFile | None
+    db: Session, data: HomeworkResponseCreate, file: UploadFile | None
 ):
 
     existing = homework_response_repo.get_by_enrollment_and_lesson_block(
-        db,
-        data.enrollment_id,
-        data.lesson_block_id
+        db, data.enrollment_id, data.lesson_block_id
     )
 
     if existing:
@@ -45,7 +40,7 @@ def create_homework_response(
     homework_response = HomeworkResponse(
         **data.model_dump(),
         submitted_file_url=submitted_file_url,
-        submitted_filename=submitted_filename
+        submitted_filename=submitted_filename,
     )
 
     return homework_response_repo.create(db, homework_response)
@@ -55,13 +50,10 @@ def update_homework_response(
     db: Session,
     homework_response_id: int,
     data: HomeworkResponseUpdate,
-    file: UploadFile | None
+    file: UploadFile | None,
 ):
 
-    homework_response = homework_response_repo.get_by_id(
-        db,
-        homework_response_id
-    )
+    homework_response = homework_response_repo.get_by_id(db, homework_response_id)
 
     if not homework_response:
         raise Exception("Entrega no encontrada")
@@ -83,10 +75,7 @@ def update_homework_response(
     for key, value in update_data.items():
         setattr(homework_response, key, value)
 
-    updated = homework_response_repo.update(
-        db,
-        homework_response
-    )
+    updated = homework_response_repo.update(db, homework_response)
 
     if file and old_file_path and os.path.exists(old_file_path):
 
@@ -94,23 +83,16 @@ def update_homework_response(
             os.remove(old_file_path)
 
         except Exception as e:
-            logger.warning(
-                f"No se pudo eliminar archivo viejo: {e}"
-            )
+            logger.warning(f"No se pudo eliminar archivo viejo: {e}")
 
     return updated
 
 
 def grade_homework_response(
-    db: Session,
-    homework_response_id: int,
-    data: HomeworkResponseGrade
+    db: Session, homework_response_id: int, data: HomeworkResponseGrade
 ):
 
-    homework_response = homework_response_repo.get_by_id(
-        db,
-        homework_response_id
-    )
+    homework_response = homework_response_repo.get_by_id(db, homework_response_id)
 
     if not homework_response:
         raise Exception("Entrega no encontrada")
@@ -120,40 +102,22 @@ def grade_homework_response(
     for key, value in update_data.items():
         setattr(homework_response, key, value)
 
-    return homework_response_repo.update(
-        db,
-        homework_response
-    )
+    return homework_response_repo.update(db, homework_response)
 
 
-def delete_homework_response(
-    db: Session,
-    homework_response_id: int
-):
+def delete_homework_response(db: Session, homework_response_id: int):
 
-    homework_response = homework_response_repo.get_by_id(
-        db,
-        homework_response_id
-    )
+    homework_response = homework_response_repo.get_by_id(db, homework_response_id)
 
     if not homework_response:
         raise Exception("Entrega no encontrada")
 
-    return homework_response_repo.delete(
-        db,
-        homework_response
-    )
+    return homework_response_repo.delete(db, homework_response)
 
 
-def get_homework_response(
-    db: Session,
-    homework_response_id: int
-):
+def get_homework_response(db: Session, homework_response_id: int):
 
-    homework_response = homework_response_repo.get_by_id(
-        db,
-        homework_response_id
-    )
+    homework_response = homework_response_repo.get_by_id(db, homework_response_id)
 
     if not homework_response:
         raise Exception("Entrega no encontrada")
@@ -162,17 +126,11 @@ def get_homework_response(
 
 
 def get_homework_response_by_enrollment_and_block(
-    db: Session,
-    enrollment_id: int,
-    lesson_block_id: int
+    db: Session, enrollment_id: int, lesson_block_id: int
 ):
 
-    homework_response = (
-        homework_response_repo.get_by_enrollment_and_lesson_block(
-            db,
-            enrollment_id,
-            lesson_block_id
-        )
+    homework_response = homework_response_repo.get_by_enrollment_and_lesson_block(
+        db, enrollment_id, lesson_block_id
     )
 
     if not homework_response:
@@ -181,23 +139,11 @@ def get_homework_response_by_enrollment_and_block(
     return homework_response
 
 
-def get_homework_responses_by_enrollment(
-    db: Session,
-    enrollment_id: int
-):
+def get_homework_responses_by_enrollment(db: Session, enrollment_id: int):
 
-    return homework_response_repo.get_all_by_enrollment(
-        db,
-        enrollment_id
-    )
+    return homework_response_repo.get_all_by_enrollment(db, enrollment_id)
 
 
-def get_homework_responses_by_lesson_block(
-    db: Session,
-    lesson_block_id: int
-):
+def get_homework_responses_by_lesson_block(db: Session, lesson_block_id: int):
 
-    return homework_response_repo.get_all_by_lesson_block(
-        db,
-        lesson_block_id
-    )
+    return homework_response_repo.get_all_by_lesson_block(db, lesson_block_id)

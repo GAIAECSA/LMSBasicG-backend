@@ -8,7 +8,10 @@ from app.services.certificate_service import create_certificate
 from app.schemas.certificate import CertificateCreate
 import os
 
-def create_enrollment(db: Session, data: EnrollmentCreate, image: UploadFile | None = None):
+
+def create_enrollment(
+    db: Session, data: EnrollmentCreate, image: UploadFile | None = None
+):
 
     existing = enrollment_repo.get_existing_enrollment(db, data.course_id, data.user_id)
 
@@ -23,29 +26,30 @@ def create_enrollment(db: Session, data: EnrollmentCreate, image: UploadFile | N
     voucher_url = None
     if image:
         voucher_url = save_course_voucher(image)
-    
+
     enrollment = Enrollment(**data.model_dump(), voucher_url=voucher_url)
 
     enrollment = enrollment_repo.create(db, enrollment)
 
-    role = enrollment.role 
+    role = enrollment.role
 
     if role.id == 4:
 
         certificate_data = CertificateCreate(
-            user_id=data.user_id,
-            course_id=data.course_id
+            user_id=data.user_id, course_id=data.course_id
         )
 
-        create_certificate(
-            db=db,
-            data=certificate_data,
-            file=None
-        )
+        create_certificate(db=db, data=certificate_data, file=None)
 
     return enrollment
 
-def update_enrollment(db: Session,enrollment_id: int,data: EnrollmentUpdate,image: UploadFile | None = None):
+
+def update_enrollment(
+    db: Session,
+    enrollment_id: int,
+    data: EnrollmentUpdate,
+    image: UploadFile | None = None,
+):
     enrollment = enrollment_repo.get_by_id(db, enrollment_id)
     if not enrollment:
         raise Exception("Inscripción no encontrada")
@@ -65,6 +69,7 @@ def update_enrollment(db: Session,enrollment_id: int,data: EnrollmentUpdate,imag
 
     return enrollment_repo.update(db, enrollment)
 
+
 def delete_enrollment(db: Session, enrollment_id: int):
     enrollment = enrollment_repo.get_by_id(db, enrollment_id)
     if not enrollment:
@@ -72,20 +77,25 @@ def delete_enrollment(db: Session, enrollment_id: int):
 
     return enrollment_repo.delete(db, enrollment)
 
+
 def get_enrollment(db: Session, enrollment_id: int):
     enrollment = enrollment_repo.get_by_id(db, enrollment_id)
     if not enrollment:
         raise Exception("Inscripción no encontrada")
     return enrollment
 
+
 def get_enrollments_by_course_and_role(db: Session, course_id: int, role_id: int):
     return enrollment_repo.get_all_by_course_id_and_role_id(db, course_id, role_id)
 
-def get_enrollments_by_user(db:Session, user_id: int):
+
+def get_enrollments_by_user(db: Session, user_id: int):
     return enrollment_repo.get_all_by_user(db, user_id)
 
-def get_enrollments_by_role(db:Session, role_id: int):
+
+def get_enrollments_by_role(db: Session, role_id: int):
     return enrollment_repo.get_all_by_role(db, role_id)
+
 
 def get_enrollment_by_user_and_course(db: Session, user_id: int, course_id: int):
     enrollment = enrollment_repo.get_existing_enrollment(db, course_id, user_id)

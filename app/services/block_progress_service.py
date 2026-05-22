@@ -72,6 +72,7 @@ def complete_block(db: Session, enrollment_id: int, lesson_block_id: int):
 
     return block_progress_repo.update(db, progress)
 
+
 def delete_block_progress(db: Session, progress_id: int):
     progress = block_progress_repo.get_by_id(db, progress_id)
 

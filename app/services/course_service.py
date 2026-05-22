@@ -20,14 +20,14 @@ def create_course(db: Session, data: CourseCreate, image: UploadFile | None = No
     if image:
         image_url = save_course_image(image)
 
-    course = Course(
-        **data.model_dump(),
-        image_url=image_url
-    )
+    course = Course(**data.model_dump(), image_url=image_url)
 
     return course_repo.create(db, course)
 
-def update_course(db: Session,course_id: int,data: CourseUpdate,image: UploadFile | None = None):
+
+def update_course(
+    db: Session, course_id: int, data: CourseUpdate, image: UploadFile | None = None
+):
     course = course_repo.get_by_id(db, course_id)
 
     if not course:
@@ -55,20 +55,24 @@ def update_course(db: Session,course_id: int,data: CourseUpdate,image: UploadFil
 
     return course_repo.update(db, course)
 
+
 def delete_course(db: Session, course_id: int):
     course = course_repo.get_by_id(db, course_id)
-    
+
     if not course:
         raise Exception("Curso no encontrado")
-    
+
     enrollment_repo.delete_by_course_id(db, course_id)
     return course_repo.delete(db, course)
+
 
 def get_course(db: Session, course_id: int):
     return course_repo.get_by_id(db, course_id)
 
+
 def get_courses_by_subcategory(db: Session, subcategory_id: int):
     return course_repo.get_by_subcategory_id(db, subcategory_id)
+
 
 def get_all_courses(db: Session):
     return course_repo.get_all(db)

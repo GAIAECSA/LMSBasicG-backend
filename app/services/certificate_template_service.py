@@ -3,17 +3,18 @@ from app.models.certificate_template import CertificateTemplate
 from app.repositories import certificate_template_repo
 from app.schemas.certificate_template import (
     CertificateTemplateCreate,
-    CertificateTemplateUpdate
+    CertificateTemplateUpdate,
 )
 from fastapi import UploadFile, Request, Form
 from typing import Optional
 from app.utils.file_upload import save_certificate_template_image
 
+
 async def create_certificate_template(
     db: Session,
     data: dict,
     background_image: UploadFile = None,
-    request: Request = None
+    request: Request = None,
 ):
     print("\n========== CREATE TEMPLATE ==========")
 
@@ -55,7 +56,7 @@ async def create_certificate_template(
         course_id=data["course_id"],
         background_image_url=image_url,
         fields=processed_fields,
-        qr_config=data.get("qr_config")
+        qr_config=data.get("qr_config"),
     )
 
     return certificate_template_repo.create(db, template)
@@ -66,7 +67,7 @@ async def update_certificate_template(
     template_id: int,
     data: dict,
     background_image: UploadFile = None,
-    request: Request = None
+    request: Request = None,
 ):
     print("\n========== UPDATE TEMPLATE ==========")
 
@@ -78,7 +79,9 @@ async def update_certificate_template(
     print("📦 FORM KEYS:", list(form.keys()))
 
     if background_image:
-        template.background_image_url = save_certificate_template_image(background_image)
+        template.background_image_url = save_certificate_template_image(
+            background_image
+        )
 
     existing_fields = template.fields or []
     incoming_fields = data.get("fields", existing_fields)
