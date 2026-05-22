@@ -40,3 +40,11 @@ def get_all_attendance_by_course_attendance(course_attendance_id: int, db: Sessi
 
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
+    
+@router.get("/attendance/enrollment/{enrollment_id}", response_model=list[AttendanceWithEnrollmentResponse])
+def get_all_attendance_by_enrollment(enrollment_id: int, db: Session = Depends(get_db), user=Depends(get_current_user)):
+    try:
+        return attendance_service.get_all_attendance_by_enrollment(db, enrollment_id)
+
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))

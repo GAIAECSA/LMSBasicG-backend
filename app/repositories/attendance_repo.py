@@ -55,6 +55,15 @@ def get_by_enrollment_and_course_attendance(
         .all()
     )
 
+def get_all_by_enrollment(db: Session, enrollment_id: int):
+    return (
+        db.query(Attendance)
+        .filter(
+            Attendance.deleted == False,
+            Attendance.enrollment_id == enrollment_id,
+        )
+        .all()
+    )
 
 # Metodos compuestos
 
