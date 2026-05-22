@@ -156,5 +156,6 @@ class UserBasicResponse(BaseModel):
     firstname: str
     lastname: str
     role_id: int
+    idnumber: Optional[str] = None
 
     model_config = ConfigDict(from_attributes=True)
