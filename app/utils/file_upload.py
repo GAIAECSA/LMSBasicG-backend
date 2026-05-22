@@ -8,6 +8,8 @@ UPLOAD_DIR_LESSON_BLOCK_FILE = "uploads/lesson_blocks"
 UPLOAD_DIR_CERTIFICATE_TEMPLATES = "uploads/certificate_templates"
 UPLOAD_DIR_CERTIFICATES = "uploads/certificates"
 UPLOAD_DIR_HOMEWORK_RESPONSES = "uploads/homework_responses"
+UPLOAD_DIR_POLICY_PRIVACY = "uploads/policy_privacy"
+UPLOAD_DIR_CERTIFICATE_MDT = "uploads/certificate_mdt"
 
 
 def save_course_image(file: UploadFile) -> str | None:
@@ -165,18 +167,18 @@ def save_policy_privacy_file(file: UploadFile) -> dict | None:
     if file.content_type not in allowed_types:
         raise ValueError("Solo se permite PDF")
 
-    os.makedirs(UPLOAD_DIR_LESSON_BLOCK_FILE, exist_ok=True)
+    os.makedirs(UPLOAD_DIR_POLICY_PRIVACY, exist_ok=True)
 
     extension = file.filename.split(".")[-1].lower()
 
     filename = f"{uuid4()}.{extension}"
-    filepath = os.path.join(UPLOAD_DIR_LESSON_BLOCK_FILE, filename)
+    filepath = os.path.join(UPLOAD_DIR_POLICY_PRIVACY, filename)
 
     with open(filepath, "wb") as buffer:
         buffer.write(file.file.read())
 
     return {
-        "file_url": f"/uploads/lesson_blocks/{filename}",
+        "file_url": f"/uploads/policy_privacy/{filename}",
         "filename": file.filename,
         "stored_name": filename,
     }
@@ -191,18 +193,18 @@ def save_certificate_mdt(file: UploadFile) -> dict | None:
     if file.content_type not in allowed_types:
         raise ValueError("Solo se permite PDF")
 
-    os.makedirs(UPLOAD_DIR_LESSON_BLOCK_FILE, exist_ok=True)
+    os.makedirs(UPLOAD_DIR_CERTIFICATE_MDT, exist_ok=True)
 
     extension = file.filename.split(".")[-1].lower()
 
     filename = f"{uuid4()}.{extension}"
-    filepath = os.path.join(UPLOAD_DIR_LESSON_BLOCK_FILE, filename)
+    filepath = os.path.join(UPLOAD_DIR_CERTIFICATE_MDT, filename)
 
     with open(filepath, "wb") as buffer:
         buffer.write(file.file.read())
 
     return {
-        "file_url": f"/uploads/lesson_blocks/{filename}",
+        "file_url": f"/uploads/certificate_mdt/{filename}",
         "filename": file.filename,
         "stored_name": filename,
     }
