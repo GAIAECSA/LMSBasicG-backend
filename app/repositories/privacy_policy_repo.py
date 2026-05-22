@@ -1,17 +1,14 @@
 from sqlalchemy.orm import Session
 
 from app.models.privacy_policy import PrivacyPolicy
-from app.schemas.privacy_policy import (
-    PrivacyPolicyCreate,
-    PrivacyPolicyUpdate,
-)
 
 
-def create(db: Session, data: PrivacyPolicyCreate):
-    privacy_policy = PrivacyPolicy(**data.model_dump())
+def create(db: Session, privacy_policy: PrivacyPolicy):
 
     db.add(privacy_policy)
+
     db.commit()
+
     db.refresh(privacy_policy)
 
     return privacy_policy
@@ -29,7 +26,7 @@ def get_by_id(db: Session, privacy_policy_id: int):
     )
 
 
-def get_active_policy(db: Session):
+def get_active(db: Session):
     return (
         db.query(PrivacyPolicy)
         .filter(PrivacyPolicy.is_active == True, PrivacyPolicy.deleted == False)
@@ -38,27 +35,28 @@ def get_active_policy(db: Session):
     )
 
 
-def update(db: Session, privacy_policy: PrivacyPolicy, data: PrivacyPolicyUpdate):
-    update_data = data.model_dump(exclude_unset=True)
-
-    for key, value in update_data.items():
-        setattr(privacy_policy, key, value)
+def update(db: Session, privacy_policy: PrivacyPolicy):
 
     db.commit()
+
     db.refresh(privacy_policy)
 
     return privacy_policy
 
 
 def delete(db: Session, privacy_policy: PrivacyPolicy):
+
     privacy_policy.deleted = True
 
     db.commit()
+
+    db.refresh(privacy_policy)
 
     return privacy_policy
 
 
 def get_by_version(db: Session, version: str) -> PrivacyPolicy | None:
+
     return (
         db.query(PrivacyPolicy)
         .filter(PrivacyPolicy.version == version, PrivacyPolicy.deleted == False)

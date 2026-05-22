@@ -29,7 +29,6 @@ def create_privacy_policy(
 
     if file:
         file_url = save_policy_privacy_file(file)
-    print(type(data))
     privacy_policy = PrivacyPolicy(
         **data.model_dump(exclude={"file_url"}),
         file_url=file_url,
