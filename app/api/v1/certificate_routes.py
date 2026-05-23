@@ -84,11 +84,3 @@ def get_certificate_by_code(code: str, db: Session = Depends(get_db)):
         return certificate_service.get_certificate_by_code(db, code)
     except Exception as e:
         raise HTTPException(status_code=404, detail=str(e))
-
-
-@router.get("/verify/{code}", response_model=CertificateResponse)
-def verify_certificate(code: str, db: Session = Depends(get_db)):
-    try:
-        return certificate_service.verify_certificate(db, code)
-    except Exception as e:
-        raise HTTPException(status_code=400, detail=str(e))
