@@ -2,12 +2,6 @@ from sqlalchemy.orm import Session
 from app.models.certificate import Certificate
 
 
-def update(db: Session, certificate: Certificate):
-    db.commit()
-    db.refresh(certificate)
-    return certificate
-
-
 def delete(db: Session, certificate: Certificate):
     certificate.deleted = True
     db.merge(certificate)
@@ -76,4 +70,11 @@ def get_all_by_course(db: Session, course_id: int):
 def create(db: Session, certificate: Certificate):
     db.add(certificate)
     db.flush()
+    return certificate
+
+
+def update(db: Session, certificate: Certificate):
+    db.add(certificate)
+    db.flush()
+    db.refresh(certificate)
     return certificate

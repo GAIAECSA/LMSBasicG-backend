@@ -1,11 +1,13 @@
 from sqlalchemy.orm import Session
+from app.helpers.recalculate_enrollment_certificate import (
+    recalculate_enrollment_certificate,
+)
 from fastapi import UploadFile
 from app.models.certificate import Certificate
 from app.repositories import certificate_repo
 from app.schemas.certificate import CertificateCreate, CertificateUpdate
 from app.utils.file_upload import save_certificate
-from app.repositories.enrollment_repo import get_existing_enrollment
-from app.services.quizz_response_service import get_by_enrollment
+
 import uuid
 import os
 import logging
@@ -35,51 +37,57 @@ def create_certificate(db: Session, data: CertificateCreate, file: UploadFile | 
 
 
 def update_certificate(
-    db: Session, certificate_id: int, data: CertificateUpdate, file: UploadFile | None
+    db: Session,
+    certificate_id: int,
+    data: CertificateUpdate,
+    file: UploadFile | None,
 ):
 
-    certificate = certificate_repo.get_by_id(db, certificate_id)
+    with db.begin():
 
-    if not certificate:
-        raise Exception("Certificado no encontrado")
-
-    update_data = data.model_dump(exclude_unset=True)
-
-    # Calcular promedio si no viene final_grade
-    # o viene como None
-    if update_data.get("final_grade") is None:
-
-        avg = calculate_final_grade_average(
-            db, certificate.user_id, certificate.course_id
+        certificate = certificate_repo.get_by_id(
+            db,
+            certificate_id,
         )
 
-        if avg is not None:
-            update_data["final_grade"] = avg
+        if not certificate:
+            raise Exception("Certificado no encontrado")
 
-    old_file_path = None
+        update_data = data.model_dump(exclude_unset=True)
 
-    if file:
+        update_data["final_grade"] = recalculate_enrollment_certificate(
+            db,
+            certificate.user_id,
+            certificate.course_id,
+        )
 
-        if certificate.file_url:
-            old_file_path = certificate.file_url.lstrip("/")
+        old_file_path = None
 
-        new_file_url = save_certificate(file)
+        if file:
 
-        update_data["file_url"] = new_file_url
+            if certificate.file_url:
+                old_file_path = certificate.file_url.lstrip("/")
 
-    # Aplicar cambios al modelo
-    for key, value in update_data.items():
-        setattr(certificate, key, value)
+            saved_file = save_certificate(file)
 
-    updated = certificate_repo.update(db, certificate)
+            update_data["file_url"] = saved_file["file_url"]
 
-    # Eliminar archivo anterior si hubo reemplazo
+        for key, value in update_data.items():
+            setattr(certificate, key, value)
+
+        updated = certificate_repo.update(
+            db,
+            certificate,
+        )
+
     if file and old_file_path and os.path.exists(old_file_path):
 
         try:
+
             os.remove(old_file_path)
 
         except Exception as e:
+
             logger.warning(f"No se pudo eliminar archivo viejo: {e}")
 
     return updated
@@ -134,30 +142,3 @@ def verify_certificate(db: Session, code: str):
         raise Exception("Certificado inválido")
 
     return certificate
-
-
-# Auxiliares
-
-
-def calculate_final_grade_average(
-    db: Session, user_id: int, course_id: int
-) -> float | None:
-
-    enrollment = get_existing_enrollment(db=db, course_id=course_id, user_id=user_id)
-
-    if not enrollment:
-        return None
-    result = get_by_enrollment(db, enrollment.id)
-    if not result:
-        return None
-    try:
-        grades = [r.score for r in result if r.score is not None]
-        if not grades:
-            return None
-
-        avg = sum(grades) / len(grades)
-
-        return avg
-
-    except Exception as e:
-        raise

@@ -25,33 +25,14 @@ class MdtCertificate(Base):
 
     id = Column(Integer, primary_key=True, index=True)
 
-    course_id = Column(
-        Integer,
-        ForeignKey("courses.id"),
-        nullable=False,
-        index=True,
-    )
-
+    course_id = Column(Integer, ForeignKey("courses.id"), nullable=False, index=True)
     file_url = Column(String, nullable=False)
-
     file_name = Column(String, nullable=False)
+    id_number = Column(String(100), nullable=False, index=True)
 
-    id_number = Column(
-        String(100),
-        nullable=False,
-        index=True,
-    )
+    certificate_type = Column(String(20), nullable=False)
 
-    certificate_type = Column(
-        String(20),
-        nullable=False,
-    )
-
-    deleted = Column(
-        Boolean,
-        default=False,
-        nullable=False,
-    )
+    deleted = Column(Boolean, default=False, nullable=False)
 
     created_at = Column(
         DateTime(timezone=True),

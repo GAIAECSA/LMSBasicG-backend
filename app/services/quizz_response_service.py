@@ -1,4 +1,8 @@
 from sqlalchemy.orm import Session
+from app.helpers import recalculate_enrollment_certificate
+from app.helpers.recalculate_enrollment_certificate import (
+    recalculate_enrollment_certificate,
+)
 from app.models.quizz_response import QuizzResponse
 from app.repositories import quizz_response_repo
 from app.schemas.quizz_response import QuizzResponseCreate, QuizzResponseUpdate
@@ -7,42 +11,84 @@ from app.repositories.certificate_repo import (
     get_by_user_and_course as CER_get_by_user_and_course,
     update as CER_update,
 )
+from app.services.certificate_service import calculate_final_grade_average
+from app.repositories.course_repo import get_by_id as COU_get_by_id
 
 
-def create_quizz_response(db: Session, data: QuizzResponseCreate):
-    existing = quizz_response_repo.get_by_enrollment_and_lesson_block(
-        db, data.enrollment_id, data.lesson_block_id
-    )
-    if existing:
-        raise Exception("Registro existente")
-    quizz_response = QuizzResponse(**data.model_dump())
-    return quizz_response_repo.create(db, quizz_response)
+def create_quizz_response(
+    db: Session,
+    data: QuizzResponseCreate,
+):
+
+    with db.begin():
+
+        existing = quizz_response_repo.get_by_enrollment_and_lesson_block(
+            db,
+            data.enrollment_id,
+            data.lesson_block_id,
+        )
+
+        if existing:
+            raise Exception("Registro existente")
+
+        quizz_response = QuizzResponse(**data.model_dump())
+
+        response = quizz_response_repo.create(
+            db,
+            quizz_response,
+        )
+
+        if response.score is not None or response.is_passed is not None:
+
+            recalculate_enrollment_certificate(
+                db=db,
+                enrollment=response.enrollment,
+            )
+
+    return response
 
 
 def update_quizz_response(
-    db: Session, quizz_response_id: int, data: QuizzResponseUpdate
+    db: Session,
+    quizz_response_id: int,
+    data: QuizzResponseUpdate,
 ):
-    quizz_response = quizz_response_repo.get_by_id(db, quizz_response_id)
-    if not quizz_response:
-        raise Exception("Respuestas no encontradas")
 
-    update_data = data.model_dump(exclude_unset=True)
+    with db.begin():
 
-    for key, value in update_data.items():
-        setattr(quizz_response, key, value)
-
-    response = quizz_response_repo.update(db, quizz_response)
-
-    if update_data.get("score") is not None or update_data.get("is_passed") is not None:
-        enrollment_id = quizz_response.enrollment_id
-        quizzes = get_by_enrollment(db, enrollment_id)
-        final_grade = calculate_final_grade_average(quizzes)
-        certificate = CER_get_by_user_and_course(
-            db, quizz_response.enrollment.user_id, quizz_response.enrollment.course_id
+        quizz_response = quizz_response_repo.get_by_id(
+            db,
+            quizz_response_id,
         )
-        if certificate:
-            certificate.final_grade = final_grade
-            CER_update(db, certificate)
+
+        if not quizz_response:
+            raise Exception("Respuestas no encontradas")
+
+        for key, value in data.model_dump(exclude_unset=True).items():
+            setattr(quizz_response, key, value)
+
+        response = quizz_response_repo.update(
+            db,
+            quizz_response,
+        )
+
+        course = COU_get_by_id(
+            db,
+            response.enrollment.course_id,
+        )
+
+        should_recalculate = (
+            course
+            and not course.is_mdt
+            and (data.score is not None or data.is_passed is not None)
+        )
+
+        if should_recalculate:
+
+            recalculate_enrollment_certificate(
+                db=db,
+                enrollment=response.enrollment,
+            )
 
     return response
 
@@ -83,25 +129,3 @@ def get_one_by_enrollment(db: Session, enrollment_id: int):
         raise Exception("Respuestas no encontradas")
 
     return quizz_response
-
-
-# Auxiliares
-
-
-def calculate_final_grade_average(quizz_responses: list[QuizzResponse]) -> float | None:
-    if not quizz_responses:
-        return None
-
-    total_score = sum(
-        quizz_response.score
-        for quizz_response in quizz_responses
-        if quizz_response.score is not None
-    )
-    count = sum(
-        1 for quizz_response in quizz_responses if quizz_response.score is not None
-    )
-
-    if count == 0:
-        return None
-
-    return total_score / count
