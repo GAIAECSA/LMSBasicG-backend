@@ -101,7 +101,7 @@ def update_homework_response(
             homework_response,
         )
 
-        if data.score is not None:
+        if update_data.get("score") is not None:
 
             recalculate_enrollment_certificate(
                 db=db,
