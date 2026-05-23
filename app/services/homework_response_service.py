@@ -57,14 +57,6 @@ def create_homework_response(
             db,
             homework_response,
         )
-
-        if response.score is not None:
-
-            recalculate_enrollment_certificate(
-                db=db,
-                enrollment=response.enrollment,
-            )
-
     return response
 
 
