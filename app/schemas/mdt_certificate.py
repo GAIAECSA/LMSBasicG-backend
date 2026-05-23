@@ -32,6 +32,22 @@ class MdtCertificateCreate(BaseModel):
         )
 
 
+class MdtBulkCertificateCreate(BaseModel):
+    course_id: int = Field(..., gt=0)
+    certificate_type: Literal["MDT", "INSTITUTIONAL"]
+
+    @classmethod
+    def as_form(
+        cls,
+        course_id: int = Form(...),
+        certificate_type: Literal["MDT", "INSTITUTIONAL"] = Form(...),
+    ):
+        return cls(
+            course_id=course_id,
+            certificate_type=certificate_type,
+        )
+
+
 class MdtCertificateUpdate(BaseModel):
     deleted: Optional[bool] = None
 

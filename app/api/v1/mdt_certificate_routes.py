@@ -13,6 +13,7 @@ from sqlalchemy.orm import Session
 from app.db.session import SessionLocal
 
 from app.schemas.mdt_certificate import (
+    MdtBulkCertificateCreate,
     MdtCertificateCreate,
     MdtCertificateUpdate,
     MdtCertificateResponse,
@@ -24,6 +25,7 @@ router = APIRouter()
 
 
 def get_db():
+
     db = SessionLocal()
 
     try:
@@ -42,12 +44,13 @@ def create_certificate(
     file: UploadFile = File(...),
     db: Session = Depends(get_db),
 ):
+
     try:
 
         return mdt_certificate_service.create_certificate(
-            db,
-            data,
-            file,
+            db=db,
+            data=data,
+            file=file,
         )
 
     except Exception as e:
@@ -60,16 +63,17 @@ def create_certificate(
 
 @router.post("/bulk")
 def create_certificates_bulk(
-    data: MdtCertificateCreate = Depends(MdtCertificateCreate.as_form),
+    data: MdtBulkCertificateCreate = Depends(MdtBulkCertificateCreate.as_form),
     files: list[UploadFile] = File(...),
     db: Session = Depends(get_db),
 ):
+
     try:
 
         return mdt_certificate_service.create_certificates_bulk(
-            db,
-            data,
-            files,
+            db=db,
+            data=data,
+            files=files,
         )
 
     except Exception as e:
@@ -79,6 +83,7 @@ def create_certificates_bulk(
             detail=str(e),
         )
 
+
 @router.get(
     "/{certificate_id}",
     response_model=MdtCertificateResponse,
@@ -87,11 +92,12 @@ def get_certificate_by_id(
     certificate_id: int,
     db: Session = Depends(get_db),
 ):
+
     try:
 
         return mdt_certificate_service.get_certificate_by_id(
-            db,
-            certificate_id,
+            db=db,
+            certificate_id=certificate_id,
         )
 
     except Exception as e:
@@ -110,10 +116,20 @@ def get_certificates_by_course_id(
     course_id: int,
     db: Session = Depends(get_db),
 ):
-    return mdt_certificate_service.get_certificates_by_course_id(
-        db,
-        course_id,
-    )
+
+    try:
+
+        return mdt_certificate_service.get_certificates_by_course_id(
+            db=db,
+            course_id=course_id,
+        )
+
+    except Exception as e:
+
+        raise HTTPException(
+            status_code=400,
+            detail=str(e),
+        )
 
 
 @router.get(
@@ -124,10 +140,20 @@ def get_certificates_by_id_number(
     id_number: str,
     db: Session = Depends(get_db),
 ):
-    return mdt_certificate_service.get_certificates_by_id_number(
-        db,
-        id_number,
-    )
+
+    try:
+
+        return mdt_certificate_service.get_certificates_by_id_number(
+            db=db,
+            id_number=id_number,
+        )
+
+    except Exception as e:
+
+        raise HTTPException(
+            status_code=400,
+            detail=str(e),
+        )
 
 
 @router.put(
@@ -139,12 +165,13 @@ def update_certificate(
     data: MdtCertificateUpdate = Depends(MdtCertificateUpdate.as_form),
     db: Session = Depends(get_db),
 ):
+
     try:
 
         return mdt_certificate_service.update_certificate(
-            db,
-            certificate_id,
-            data,
+            db=db,
+            certificate_id=certificate_id,
+            data=data,
         )
 
     except Exception as e:
@@ -160,16 +187,17 @@ def delete_certificate(
     certificate_id: int,
     db: Session = Depends(get_db),
 ):
+
     try:
 
-        (
-            mdt_certificate_service.delete_certificate(
-                db,
-                certificate_id,
-            )
+        mdt_certificate_service.delete_certificate(
+            db=db,
+            certificate_id=certificate_id,
         )
 
-        return {"message": ("Certificado eliminado")}
+        return {
+            "message": "Certificado eliminado",
+        }
 
     except Exception as e:
 
