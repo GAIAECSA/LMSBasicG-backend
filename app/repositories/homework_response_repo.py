@@ -6,20 +6,6 @@ from app.models.lesson_block import LessonBlock
 from app.models.lesson_block import LessonBlock
 
 
-def create(db: Session, homework_response: HomeworkResponse):
-    db.add(homework_response)
-    db.commit()
-    db.refresh(homework_response)
-    return homework_response
-
-
-def update(db: Session, homework_response: HomeworkResponse):
-    db.merge(homework_response)
-    db.commit()
-    db.refresh(homework_response)
-    return homework_response
-
-
 def delete(db: Session, homework_response: HomeworkResponse):
     homework_response.deleted = True
     db.merge(homework_response)
@@ -96,3 +82,29 @@ def get_by_course_id_default(
         )
         .all()
     )
+
+
+#
+
+
+def create(
+    db: Session,
+    homework_response: HomeworkResponse,
+):
+    db.add(homework_response)
+    db.flush()
+    db.refresh(homework_response)
+
+    return homework_response
+
+
+def update(
+    db: Session,
+    homework_response: HomeworkResponse,
+):
+    homework_response = db.merge(homework_response)
+
+    db.flush()
+    db.refresh(homework_response)
+
+    return homework_response
