@@ -1,6 +1,5 @@
 from sqlalchemy.orm import Session
 from app.models.enrollment import Enrollment
-from app.services.certificate_service import calculate_final_grade_average
 from app.repositories.certificate_repo import (
     get_by_user_and_course as CER_get_by_user_and_course,
     update as CER_update,
@@ -38,3 +37,32 @@ def recalculate_enrollment_certificate(
         db=db,
         certificate=certificate,
     )
+
+
+def calculate_final_grade_average(
+    db: Session,
+    user_id: int,
+    course_id: int,
+) -> float:
+
+    responses = (
+        db.query(HomeworkResponse)
+        .join(
+            LessonBlock,
+            LessonBlock.id == HomeworkResponse.lesson_block_id,
+        )
+        .filter(
+            HomeworkResponse.user_id == user_id,
+            HomeworkResponse.course_id == course_id,
+            LessonBlock.is_required == True,
+            HomeworkResponse.grade.isnot(None),
+        )
+        .all()
+    )
+
+    if not responses:
+        return 0
+
+    total = sum(r.grade for r in responses)
+
+    return round(total / len(responses), 2)
