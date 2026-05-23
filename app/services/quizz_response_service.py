@@ -7,11 +7,6 @@ from app.models.quizz_response import QuizzResponse
 from app.repositories import quizz_response_repo
 from app.schemas.quizz_response import QuizzResponseCreate, QuizzResponseUpdate
 from app.repositories.lesson_block_repo import get_by_id as LES_BLO_get_by_id
-from app.repositories.certificate_repo import (
-    get_by_user_and_course as CER_get_by_user_and_course,
-    update as CER_update,
-)
-from app.services.certificate_service import calculate_final_grade_average
 from app.repositories.course_repo import get_by_id as COU_get_by_id
 
 
