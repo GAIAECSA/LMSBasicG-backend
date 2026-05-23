@@ -10,12 +10,12 @@ class BlockProgress(Base):
     enrollment_id = Column(Integer, ForeignKey("enrollments.id"), nullable=False)
     lesson_block_id = Column(Integer, ForeignKey("lesson_blocks.id"), nullable=False)
 
-    is_completed = Column(Boolean, default=False)
+    is_completed = Column(Boolean, default=False, nullable=False)
 
     started_at = Column(DateTime(timezone=True))
     completed_at = Column(DateTime(timezone=True))
 
-    deleted = Column(Boolean, index=True, default=False)
+    deleted = Column(Boolean, index=True, default=False, nullable=False)
 
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), onupdate=func.now())

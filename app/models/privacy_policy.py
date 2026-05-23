@@ -22,8 +22,8 @@ class PrivacyPolicy(Base):
 
     file_url = Column(String, nullable=False)
 
-    is_active = Column(Boolean, default=True)
-    mandatory = Column(Boolean, default=True)
+    is_active = Column(Boolean, default=True, nullable=False)
+    mandatory = Column(Boolean, default=True, nullable=False)
 
     effective_date = Column(DateTime(timezone=True), nullable=False)
 

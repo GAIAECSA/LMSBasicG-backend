@@ -28,7 +28,7 @@ class User(Base):
 
     role_id = Column(Integer, ForeignKey("roles.id"))
 
-    deleted = Column(Boolean, index=True, default=False)
+    deleted = Column(Boolean, index=True, default=False, nullable=False)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), onupdate=func.now())
     privacy_policies = relationship("UserPrivacyPolicy", back_populates="user")

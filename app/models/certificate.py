@@ -17,6 +17,6 @@ class Certificate(Base):
     user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
     course_id = Column(Integer, ForeignKey("courses.id"), nullable=False)
 
-    is_valid = Column(Boolean, default=True)
+    is_valid = Column(Boolean, default=True, nullable=False)
     deleted = Column(Boolean, index=True, default=False)
     created_at = Column(DateTime(timezone=True), server_default=func.now())

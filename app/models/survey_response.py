@@ -15,7 +15,7 @@ class SurveyResponse(Base):
     response = Column(JSONB)
     score = Column(Numeric)
 
-    deleted = Column(Boolean, default=False)
+    deleted = Column(Boolean, default=False, nullable=False)
     created_at = Column(DateTime, server_default=func.now())
 
     enrollment = relationship("Enrollment", back_populates="survey_responses")

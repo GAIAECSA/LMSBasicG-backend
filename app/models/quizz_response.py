@@ -33,9 +33,9 @@ class QuizzResponse(Base):
     response = Column(JSONB, nullable=False)
 
     score = Column(Numeric(4, 2), nullable=False)
-    is_passed = Column(Boolean)
+    is_passed = Column(Boolean, nullable=False)
 
-    deleted = Column(Boolean, default=False)
+    deleted = Column(Boolean, default=False, nullable=False)
     created_at = Column(DateTime, server_default=func.now())
 
     enrollment = relationship(

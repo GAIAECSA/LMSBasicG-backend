@@ -16,7 +16,7 @@ class ForumResponse(Base):
 
     forum_response_id = Column(Integer, ForeignKey("forum_responses.id"), nullable=True)
 
-    deleted = Column(Boolean, default=False)
+    deleted = Column(Boolean, default=False, nullable=False)
     created_at = Column(DateTime, server_default=func.now())
 
     enrollment = relationship("Enrollment", back_populates="forum_responses")

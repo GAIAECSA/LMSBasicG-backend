@@ -19,7 +19,7 @@ class HomeworkResponse(Base):
 
     status = Column(String, default="submitted")
 
-    deleted = Column(Boolean, default=False)
+    deleted = Column(Boolean, default=False, nullable=False)
 
     created_at = Column(DateTime(timezone=True), server_default=func.now())
 

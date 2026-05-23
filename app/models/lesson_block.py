@@ -20,7 +20,7 @@ class LessonBlock(Base):
 
     content = Column(JSONB, nullable=False)
 
-    counts_toward_grade = Column(Boolean, default=True)
+    counts_toward_grade = Column(Boolean, default=True, nullable=False)
     completion_type = Column(String)
     completion_value = Column(Integer)
     order = Column(Integer, default=0)
@@ -30,8 +30,8 @@ class LessonBlock(Base):
     block_type_id = Column(Integer, ForeignKey("lesson_block_types.id"), nullable=False)
     date_available = Column(DateTime(timezone=True))
 
-    is_active = Column(Boolean, default=True)
-    deleted = Column(Boolean, default=False)
+    is_active = Column(Boolean, default=True, nullable=False)
+    deleted = Column(Boolean, default=False, nullable=False)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), onupdate=func.now())
 

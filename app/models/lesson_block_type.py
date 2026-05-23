@@ -15,8 +15,8 @@ class LessonBlockType(Base):
 
     config = Column(JSON)
 
-    is_active = Column(Boolean, default=True)
-    deleted = Column(Boolean, default=False)
+    is_active = Column(Boolean, default=True, nullable=False)
+    deleted = Column(Boolean, default=False, nullable=False)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), onupdate=func.now())
 
