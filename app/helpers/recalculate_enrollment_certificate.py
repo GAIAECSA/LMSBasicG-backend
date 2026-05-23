@@ -1,4 +1,4 @@
-from requests import Session
+from sqlalchemy.orm import Session
 from app.models.enrollment import Enrollment
 from app.services.certificate_service import calculate_final_grade_average
 from app.repositories.certificate_repo import (
