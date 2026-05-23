@@ -15,7 +15,7 @@ class LessonBlockCompletitionType(str, Enum):
 class LessonBlockCreate(BaseModel):
     content: Optional[Dict[str, Any]] = None
 
-    is_required: bool = True
+    counts_toward_grade: bool = True
     completion_type: LessonBlockCompletitionType
     completion_value: Optional[int] = None
 
@@ -38,7 +38,7 @@ class LessonBlockCreate(BaseModel):
         completion_value: Optional[int] = Form(None),
         order: int = Form(0),
         default: bool = Form(False),
-        is_required: bool = Form(True),
+        counts_toward_grade: bool = Form(True),
         date_available: Optional[datetime] = Form(None),
         is_active: bool = Form(True),
         content: Optional[str] = Form(None),
@@ -54,7 +54,7 @@ class LessonBlockCreate(BaseModel):
             completion_value=completion_value,
             order=order,
             default=default,
-            is_required=is_required,
+            counts_toward_grade=counts_toward_grade,
             date_available=date_available,
             is_active=is_active,
             content=parsed_content,
@@ -64,7 +64,7 @@ class LessonBlockCreate(BaseModel):
 class LessonBlockUpdate(BaseModel):
     content: Optional[Dict[str, Any]] = None
 
-    is_required: Optional[bool] = None
+    counts_toward_grade: Optional[bool] = None
     completion_type: Optional[LessonBlockCompletitionType] = None
     completion_value: Optional[int] = None
 
@@ -87,7 +87,7 @@ class LessonBlockUpdate(BaseModel):
         completion_value: Optional[int] = Form(None),
         order: Optional[int] = Form(None),
         default: Optional[bool] = Form(None),
-        is_required: Optional[bool] = Form(None),
+        counts_toward_grade: Optional[bool] = Form(None),
         date_available: Optional[datetime] = Form(None),
         is_active: Optional[bool] = Form(None),
         content: Optional[str] = Form(None),
@@ -103,7 +103,7 @@ class LessonBlockUpdate(BaseModel):
             completion_value=completion_value,
             order=order,
             default=default,
-            is_required=is_required,
+            counts_toward_grade=counts_toward_grade,
             date_available=date_available,
             is_active=is_active,
             content=parsed_content,
@@ -115,7 +115,7 @@ class LessonBlockResponse(BaseModel):
 
     content: Dict[str, Any]
 
-    is_required: bool
+    counts_toward_grade: bool
 
     completion_type: Optional[LessonBlockCompletitionType]
     completion_value: Optional[int]

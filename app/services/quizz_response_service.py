@@ -109,7 +109,7 @@ def get_by_enrollment(db: Session, enrollment_id: int):
         quizz
         for quizz in quizzes
         if (lesson_block := LES_BLO_get_by_id(db, quizz.lesson_block_id))
-        and lesson_block.is_required
+        and lesson_block.counts_toward_grade
     ]
 
 

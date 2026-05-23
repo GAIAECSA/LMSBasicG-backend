@@ -39,3 +39,4 @@ class Enrollment(Base):
     survey_responses = relationship("SurveyResponse", back_populates="enrollment")
     homework_responses = relationship("HomeworkResponse", back_populates="enrollment")
     forum_responses = relationship("ForumResponse", back_populates="enrollment")
+    quizz_responses = relationship("QuizzResponse", back_populates="enrollment")

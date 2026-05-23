@@ -20,7 +20,7 @@ class LessonBlock(Base):
 
     content = Column(JSONB, nullable=False)
 
-    is_required = Column(Boolean, default=True)
+    counts_toward_grade = Column(Boolean, default=True)
     completion_type = Column(String)
     completion_value = Column(Integer)
     order = Column(Integer, default=0)
@@ -39,6 +39,7 @@ class LessonBlock(Base):
     survey_responses = relationship("SurveyResponse", back_populates="lesson_block")
     homework_responses = relationship("HomeworkResponse", back_populates="lesson_block")
     forum_responses = relationship("ForumResponse", back_populates="lesson_block")
+    quizz_responses = relationship("QuizzResponse", back_populates="lesson_block")
 
     __table_args__ = (
         CheckConstraint("content <> '{}'::jsonb", name="content_not_empty"),

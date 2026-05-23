@@ -92,7 +92,7 @@ def get_by_course_id_default(
         .filter(
             Enrollment.course_id == course_id,
             HomeworkResponse.deleted.is_(False),
-            LessonBlock.is_required.is_(True),
+            LessonBlock.counts_toward_grade.is_(True),
         )
         .all()
     )
