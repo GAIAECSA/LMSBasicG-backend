@@ -26,7 +26,7 @@ class LessonBlock(Base):
     order = Column(Integer, default=0)
     default = Column(Boolean, default=False, nullable=False)
 
-    lesson_id = Column(Integer, ForeignKey("lessons.id"), nullable=False)
+    lesson_id = Column(Integer, ForeignKey("lessons.id"))
     block_type_id = Column(Integer, ForeignKey("lesson_block_types.id"), nullable=False)
     date_available = Column(DateTime(timezone=True))
 

@@ -35,3 +35,8 @@ def get_all_by_lesson_id(db: Session, lesson_id: int):
         .filter(LessonBlock.deleted == False, LessonBlock.lesson_id == lesson_id)
         .all()
     )
+
+def create_all(db: Session, lesson_blocks: list[LessonBlock]):
+    db.add_all(lesson_blocks)
+    db.flush()
+    return lesson_blocks

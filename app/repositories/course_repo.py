@@ -1,12 +1,6 @@
 from sqlalchemy.orm import Session
 from app.models.course import Course
 
-def create(db: Session, course: Course):
-    db.add(course)
-    db.commit()
-    db.refresh(course)
-    return course
-
 def update(db: Session, course: Course):
     db.merge(course)
     db.commit()
@@ -30,3 +24,11 @@ def get_all(db: Session):
 
 def get_by_name_and_subcategory(db: Session, name: str, subcategory_id: int):
     return db.query(Course).filter(Course.name == name, Course.subcategory_id == subcategory_id, Course.deleted == False).first()
+
+
+# Metodos compuestos
+
+def create(db: Session, course: Course):
+    db.add(course)
+    db.flush()
+    return course
