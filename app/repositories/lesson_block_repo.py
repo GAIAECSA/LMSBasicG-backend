@@ -74,3 +74,15 @@ def delete_default_by_course_id(
     )
 
     db.flush()
+
+
+def get_all_default_blocks_by_block_type(db: Session, block_type_id: int):
+    return (
+        db.query(LessonBlock)
+        .filter(
+            LessonBlock.deleted == False,
+            LessonBlock.block_type_id == block_type_id,
+            LessonBlock.default == True,
+        )
+        .all()
+    )
