@@ -52,3 +52,15 @@ def check_active_privacy_policy_acceptance(
     except Exception as e:
 
         raise HTTPException(status_code=400, detail=str(e))
+
+@router.get("/accepted/{privacy_policy_id}", response_model=list[UserPrivacyPolicyResponse])
+def get_accepted_privacy_policies(
+    privacy_policy_id: int,
+    db: Session = Depends(get_db),
+):
+    try:
+        return user_privacy_policy_service.get_accepted_privacy_policies(
+            db, privacy_policy_id
+        )
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))
