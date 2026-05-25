@@ -26,9 +26,13 @@ def get_user_acceptance(db: Session, user_id: int, privacy_policy_id: int):
     )
 
 
+from sqlalchemy.orm import joinedload
+
+
 def get_by_privacy_policy_id(db: Session, privacy_policy_id: int):
     return (
         db.query(UserPrivacyPolicy)
+        .options(joinedload(UserPrivacyPolicy.user))
         .filter(UserPrivacyPolicy.privacy_policy_id == privacy_policy_id)
         .all()
     )

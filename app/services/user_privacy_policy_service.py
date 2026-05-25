@@ -42,14 +42,29 @@ def check_active_privacy_policy_acceptance(db: Session, user_id: int):
     }
 
 
-def get_accepted_privacy_policies(db: Session, privacy_policy_id: int):
+def get_accepted_privacy_policies(
+    db: Session,
+    privacy_policy_id: int,
+):
 
     users_privacy_policy = user_privacy_policy_repo.get_by_privacy_policy_id(
-        db, privacy_policy_id
+        db,
+        privacy_policy_id,
     )
 
     if not users_privacy_policy:
+        raise HTTPException(
+            status_code=404,
+            detail="Privacy policy not found",
+        )
 
-        raise HTTPException(status_code=404, detail="Privacy policy not found")
-
-    return users_privacy_policy
+    return [
+        {
+            "id": item.id,
+            "user_id": item.user_id,
+            "fullname": (f"{item.user.firstname} " f"{item.user.lastname}"),
+            "accepted": item.accepted,
+            "accepted_at": item.accepted_at,
+        }
+        for item in users_privacy_policy
+    ]
