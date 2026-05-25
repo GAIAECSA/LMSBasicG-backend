@@ -1,11 +1,6 @@
 from sqlalchemy.orm import Session
 from app.models.course import Course
 
-def update(db: Session, course: Course):
-    db.merge(course)
-    db.commit()
-    db.refresh(course)
-    return course
 
 def delete(db: Session, course: Course):
     course.deleted = True
@@ -13,22 +8,51 @@ def delete(db: Session, course: Course):
     db.commit()
     return course
 
+
 def get_by_id(db: Session, course_id: int):
-    return db.query(Course).filter(Course.id == course_id, Course.deleted == False).first()
+    return (
+        db.query(Course).filter(Course.id == course_id, Course.deleted == False).first()
+    )
+
 
 def get_by_subcategory_id(db: Session, subcategory_id: int):
-    return db.query(Course).filter(Course.subcategory_id == subcategory_id, Course.deleted == False).all()
+    return (
+        db.query(Course)
+        .filter(Course.subcategory_id == subcategory_id, Course.deleted == False)
+        .all()
+    )
+
 
 def get_all(db: Session):
     return db.query(Course).filter(Course.deleted == False).all()
 
+
 def get_by_name_and_subcategory(db: Session, name: str, subcategory_id: int):
-    return db.query(Course).filter(Course.name == name, Course.subcategory_id == subcategory_id, Course.deleted == False).first()
+    return (
+        db.query(Course)
+        .filter(
+            Course.name == name,
+            Course.subcategory_id == subcategory_id,
+            Course.deleted == False,
+        )
+        .first()
+    )
 
 
 # Metodos compuestos
 
+
 def create(db: Session, course: Course):
     db.add(course)
     db.flush()
+    return course
+
+
+def update(db: Session, course: Course):
+
+    course = db.merge(course)
+
+    db.flush()
+    db.refresh(course)
+
     return course
