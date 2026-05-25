@@ -39,7 +39,7 @@ def create_course(
 
         lesson_block_repo.create_all(
             db,
-            create_default_blocks(),
+            create_default_blocks(course.id),
         )
 
         return course
@@ -184,7 +184,7 @@ DEFAULT_MDT_BLOCKS = [
 ]
 
 
-def create_default_blocks():
+def create_default_blocks(course_id: int):
 
     return [
         build_lesson_block(
@@ -192,6 +192,7 @@ def create_default_blocks():
             order=block["order"],
             completion_type=block["completion_type"],
             is_active=block["is_active"],
+            course_id=course_id,
         )
         for block in DEFAULT_MDT_BLOCKS
     ]
@@ -202,7 +203,7 @@ def build_lesson_block(
     order: int,
     completion_type: str,
     is_active: bool,
-    course_id: int | None = None,
+    course_id: int,
 ):
     return LessonBlock(
         content=content,
