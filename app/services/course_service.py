@@ -1,5 +1,3 @@
-from sympy import true
-
 from app.models.lesson_block import LessonBlock
 from sqlalchemy.orm import Session
 from fastapi import UploadFile
