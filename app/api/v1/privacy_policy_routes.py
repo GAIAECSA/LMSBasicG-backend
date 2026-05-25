@@ -46,19 +46,6 @@ def create_privacy_policy(
         raise HTTPException(status_code=400, detail=str(e))
 
 
-@router.delete("/{privacy_policy_id}")
-def delete_privacy_policy(
-    privacy_policy_id: int, db: Session = Depends(get_db), user=Depends(require_admin)
-):
-    try:
-
-        return privacy_policy_service.delete_privacy_policy(db, privacy_policy_id)
-
-    except Exception as e:
-
-        raise HTTPException(status_code=404, detail=str(e))
-
-
 @router.get("/{privacy_policy_id}", response_model=PrivacyPolicyResponse)
 def get_privacy_policy(
     privacy_policy_id: int,
