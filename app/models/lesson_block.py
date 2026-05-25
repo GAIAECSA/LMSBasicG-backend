@@ -27,6 +27,7 @@ class LessonBlock(Base):
     default = Column(Boolean, default=False, nullable=False)
 
     lesson_id = Column(Integer, ForeignKey("lessons.id"))
+    course_id = Column(Integer, ForeignKey("courses.id"), default=None)
     block_type_id = Column(Integer, ForeignKey("lesson_block_types.id"), nullable=False)
     date_available = Column(DateTime(timezone=True))
 

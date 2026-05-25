@@ -46,34 +46,55 @@ def create_course(
 
 
 def update_course(
-    db: Session, course_id: int, data: CourseUpdate, image: UploadFile | None = None
+    db: Session,
+    course_id: int,
+    data: CourseUpdate,
+    image: UploadFile | None = None,
 ):
-    course = course_repo.get_by_id(db, course_id)
 
-    if not course:
-        raise Exception("Curso no encontrado")
+    with db.begin():
 
-    update_data = data.model_dump(exclude_unset=True)
+        course = course_repo.get_by_id(db, course_id)
 
-    if "name" in update_data and update_data["name"] != course.name:
-        existing = course_repo.get_by_name_and_subcategory(
-            db, update_data["name"], course.subcategory_id
+        if not course:
+            raise Exception("Curso no encontrado")
+
+        update_data = data.model_dump(exclude_unset=True)
+
+        if "name" in update_data and update_data["name"] != course.name:
+            existing = course_repo.get_by_name_and_subcategory(
+                db,
+                update_data["name"],
+                course.subcategory_id,
+            )
+
+            if existing:
+                raise Exception("El curso ya existe en esta subcategoría")
+
+        old_is_mdt = course.is_mdt
+        new_is_mdt = update_data.get("is_mdt", old_is_mdt)
+
+        for key, value in update_data.items():
+            setattr(course, key, value)
+
+        if image:
+
+            if course.image_url:
+                old_path = course.image_url.lstrip("/")
+
+                if os.path.exists(old_path):
+                    os.remove(old_path)
+
+            course.image_url = save_course_image(image)
+
+        handle_mdt_blocks_transition(
+            db=db,
+            course=course,
+            old_is_mdt=old_is_mdt,
+            new_is_mdt=new_is_mdt,
         )
-        if existing:
-            raise Exception("El curso ya existe en esta subcategoría")
 
-    for key, value in update_data.items():
-        setattr(course, key, value)
-
-    if image:
-        if course.image_url:
-            old_path = course.image_url.lstrip("/")
-            if os.path.exists(old_path):
-                os.remove(old_path)
-
-        course.image_url = save_course_image(image)
-
-    return course_repo.update(db, course)
+        return course_repo.update(db, course)
 
 
 def delete_course(db: Session, course_id: int):
@@ -181,6 +202,7 @@ def build_lesson_block(
     order: int,
     completion_type: str,
     is_active: bool,
+    course_id: int | None = None,
 ):
     return LessonBlock(
         content=content,
@@ -190,7 +212,39 @@ def build_lesson_block(
         default=True,
         lesson_id=None,
         block_type_id=1,
+        course_id=course_id,
         date_available=None,
         is_active=is_active,
         deleted=False,
     )
+
+
+def handle_mdt_blocks_transition(
+    db: Session,
+    course: Course,
+    old_is_mdt: bool,
+    new_is_mdt: bool,
+):
+
+    if not old_is_mdt and new_is_mdt:
+
+        existing_blocks = lesson_block_repo.get_default_by_course_id(
+            db,
+            course.id,
+        )
+
+        if not existing_blocks:
+
+            blocks = create_default_blocks(course.id)
+
+            lesson_block_repo.create_all(
+                db,
+                blocks,
+            )
+
+    elif old_is_mdt and not new_is_mdt:
+
+        lesson_block_repo.delete_default_by_course_id(
+            db,
+            course.id,
+        )
