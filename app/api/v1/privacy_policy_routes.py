@@ -46,25 +46,6 @@ def create_privacy_policy(
         raise HTTPException(status_code=400, detail=str(e))
 
 
-@router.put("/{privacy_policy_id}", response_model=PrivacyPolicyResponse)
-def update_privacy_policy(
-    privacy_policy_id: int,
-    data: PrivacyPolicyUpdate = Depends(PrivacyPolicyUpdate.as_form),
-    file: UploadFile | None = File(None),
-    db: Session = Depends(get_db),
-    user=Depends(require_admin),
-):
-    try:
-
-        return privacy_policy_service.update_privacy_policy(
-            db, privacy_policy_id, data, file
-        )
-
-    except Exception as e:
-
-        raise HTTPException(status_code=400, detail=str(e))
-
-
 @router.delete("/{privacy_policy_id}")
 def delete_privacy_policy(
     privacy_policy_id: int, db: Session = Depends(get_db), user=Depends(require_admin)
