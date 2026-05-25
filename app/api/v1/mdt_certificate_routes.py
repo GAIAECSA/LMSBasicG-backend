@@ -180,28 +180,3 @@ def update_certificate(
             status_code=400,
             detail=str(e),
         )
-
-
-@router.delete("/{certificate_id}")
-def delete_certificate(
-    certificate_id: int,
-    db: Session = Depends(get_db),
-):
-
-    try:
-
-        mdt_certificate_service.delete_certificate(
-            db=db,
-            certificate_id=certificate_id,
-        )
-
-        return {
-            "message": "Certificado eliminado",
-        }
-
-    except Exception as e:
-
-        raise HTTPException(
-            status_code=400,
-            detail=str(e),
-        )

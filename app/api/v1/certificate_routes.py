@@ -38,16 +38,6 @@ def update_certificate(
         raise HTTPException(status_code=400, detail=str(e))
 
 
-@router.delete("/{certificate_id}")
-def delete_certificate(
-    certificate_id: int, db: Session = Depends(get_db), user=Depends(require_admin)
-):
-    try:
-        return certificate_service.delete_certificate(db, certificate_id)
-    except Exception as e:
-        raise HTTPException(status_code=404, detail=str(e))
-
-
 @router.get("/{certificate_id}", response_model=CertificateResponse)
 def get_certificate(
     certificate_id: int, db: Session = Depends(get_db), user=Depends(get_current_user)
