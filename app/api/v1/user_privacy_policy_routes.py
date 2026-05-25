@@ -45,7 +45,7 @@ def check_active_privacy_policy_acceptance(
 ):
     try:
 
-        return user_privacy_policy_service.check_active_privacy_policy_acceptancee(
+        return user_privacy_policy_service.check_active_privacy_policy_acceptance(
             db, current_user["user_id"]
         )
 
