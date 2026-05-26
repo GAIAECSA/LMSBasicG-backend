@@ -137,3 +137,7 @@ class LessonBlockResponse(BaseModel):
     lesson_block_type: LessonBlockTypeBasicResponse
 
     model_config = {"from_attributes": True}
+
+class LessonBlockFind():
+    course_id: Optional[int] = None
+    block_type_id: Optional[int] = None

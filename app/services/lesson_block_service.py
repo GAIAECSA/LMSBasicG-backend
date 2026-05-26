@@ -83,5 +83,5 @@ def get_by_lesson(db: Session, lesson_id: int):
     return lesson_block_repo.get_all_by_lesson_id(db, lesson_id)
 
 
-def get_all_default_blocks_by_block_type(db: Session, block_type_id: int):
-    return lesson_block_repo.get_all_default_blocks_by_block_type(db, block_type_id)
+def get_all_default_blocks_by_course_and_block_type(db: Session, course_id: int, block_type_id: int):
+    return lesson_block_repo.get_all_default_blocks_by_course_and_block_type(db, course_id, block_type_id)
