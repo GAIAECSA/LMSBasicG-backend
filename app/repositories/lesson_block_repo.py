@@ -1,5 +1,3 @@
-from operator import or_
-
 from sqlalchemy.orm import Session
 from app.models.lesson_block import LessonBlock
 from sqlalchemy.orm import Session, joinedload
@@ -78,26 +76,14 @@ def delete_default_by_course_id(
     db.flush()
 
 
-def get_all_default_blocks_by_course_and_block_type(
-    db: Session,
-    course_id: int,
-    block_type_id: int
-):
-    print("course_id:", course_id)
-    print("block_type_id:", block_type_id)
-
-    q1 = db.query(LessonBlock).filter(
-        or_(LessonBlock.deleted.is_(False), LessonBlock.deleted.is_(None))
+def get_all_default_blocks_by_course_and_block_type(db: Session, course_id: int, block_type_id: int):
+    return (
+        db.query(LessonBlock)
+        .filter(
+            LessonBlock.deleted == False,
+            LessonBlock.course_id == course_id,
+            LessonBlock.block_type_id == block_type_id,
+            LessonBlock.default == True,
+        )
+        .all()
     )
-    print("Solo no eliminados:", q1.count())
-
-    q2 = q1.filter(LessonBlock.course_id == course_id)
-    print("Por curso:", q2.count())
-
-    q3 = q2.filter(LessonBlock.block_type_id == block_type_id)
-    print("Por curso + tipo bloque:", q3.count())
-
-    q4 = q3.filter(LessonBlock.default.is_(True))
-    print("Por curso + tipo bloque + default:", q4.count())
-
-    return q4.all()

@@ -91,6 +91,7 @@ def get_all_default_blocks_by_course_and_block_type(
     block_type_id: int = Query(...),
     course_id: int = Query(...),
     db: Session = Depends(get_db),
+    user=Depends(get_current_user),
 ):
     try:
         return lesson_block_service.get_all_default_blocks_by_course_and_block_type(
