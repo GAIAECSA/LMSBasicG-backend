@@ -123,7 +123,7 @@ class LessonBlockResponse(BaseModel):
     order: int
     default: bool = False
 
-    lesson_id: int
+    lesson_id: Optional[int] = None
     block_type_id: int
 
     date_available: Optional[datetime]
