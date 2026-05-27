@@ -130,6 +130,7 @@ DEFAULT_MDT_BLOCKS = [
         "order": 0,
         "completion_type": "SUBIR",
         "is_active": True,
+        "type": 6,
     },
     {
         "content": {
@@ -140,6 +141,7 @@ DEFAULT_MDT_BLOCKS = [
         "order": 1,
         "completion_type": "SUBIR",
         "is_active": True,
+        "type": 6,
     },
     {
         "content": {
@@ -150,6 +152,7 @@ DEFAULT_MDT_BLOCKS = [
         "order": 2,
         "completion_type": "SUBIR",
         "is_active": True,
+        "type": 6,
     },
     {
         "content": {
@@ -160,6 +163,7 @@ DEFAULT_MDT_BLOCKS = [
         "order": 3,
         "completion_type": "SUBIR",
         "is_active": True,
+        "type": 6,
     },
     {
         "content": {
@@ -170,6 +174,7 @@ DEFAULT_MDT_BLOCKS = [
         "order": 4,
         "completion_type": "VER",
         "is_active": False,
+        "type": 5,
     },
     {
         "content": {
@@ -180,6 +185,7 @@ DEFAULT_MDT_BLOCKS = [
         "order": 5,
         "completion_type": "VER",
         "is_active": False,
+        "type": 5,
     },
 ]
 
@@ -193,6 +199,7 @@ def create_default_blocks(course_id: int):
             completion_type=block["completion_type"],
             is_active=block["is_active"],
             course_id=course_id,
+            block_type_id=block["type"],
         )
         for block in DEFAULT_MDT_BLOCKS
     ]
@@ -204,6 +211,7 @@ def build_lesson_block(
     completion_type: str,
     is_active: bool,
     course_id: int,
+    block_type_id: int,
 ):
     return LessonBlock(
         content=content,
@@ -212,7 +220,7 @@ def build_lesson_block(
         order=order,
         default=True,
         lesson_id=None,
-        block_type_id=1,
+        block_type_id=block_type_id,
         course_id=course_id,
         date_available=None,
         is_active=is_active,

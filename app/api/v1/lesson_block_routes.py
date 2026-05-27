@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException, UploadFile, File
+from fastapi import APIRouter, Depends, HTTPException, UploadFile, File, Query
 from sqlalchemy.orm import Session
 from app.db.session import SessionLocal
 from app.schemas.lesson_block import (
@@ -80,15 +80,24 @@ def get_by_lesson(
         raise HTTPException(status_code=400, detail=str(e))
 
 
+from fastapi import Depends, HTTPException, Query
+from sqlalchemy.orm import Session
+
 @router.get(
-    "/lesson-blocks/default/{block_type_id}", response_model=list[LessonBlockResponse]
+    "/lesson-blocks/default/",
+    response_model=list[LessonBlockResponse],
 )
-def get_all_default_blocks_by_block_type(
-    block_type_id: int, db: Session = Depends(get_db), user=Depends(get_current_user)
+def get_all_default_blocks_by_course_and_block_type(
+    block_type_id: int = Query(...),
+    course_id: int = Query(...),
+    db: Session = Depends(get_db),
+    user=Depends(get_current_user),
 ):
     try:
-        return lesson_block_service.get_all_default_blocks_by_block_type(
-            db, block_type_id
+        return lesson_block_service.get_all_default_blocks_by_course_and_block_type(
+            db,
+            course_id,
+            block_type_id
         )
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
