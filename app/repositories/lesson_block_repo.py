@@ -11,8 +11,8 @@ def create(db: Session, lesson_block: LessonBlock):
 
 
 def update(db: Session, lesson_block: LessonBlock):
-    db.merge(lesson_block)
-    db.commit()
+    lesson_block = db.merge(lesson_block)
+    db.flush()
     db.refresh(lesson_block)
     return lesson_block
 

@@ -2,6 +2,8 @@ from sqlalchemy.orm import Session
 from app.repositories import lesson_block_repo
 from app.models.lesson_block import LessonBlock
 from app.schemas.lesson_block import LessonBlockCreate, LessonBlockUpdate
+from app.repositories import enrollment_repo
+from app.helpers import recalculate_enrollment_certificate
 from fastapi import UploadFile
 from app.utils.file_upload import save_lesson_file
 import os
@@ -36,20 +38,26 @@ def update_lesson_block(
     file: UploadFile | None = None,
 ):
     lesson_block = lesson_block_repo.get_by_id(db, lesson_block_id)
+
     if not lesson_block:
         raise Exception("Bloque no encontrado")
 
-    update_data = data.model_dump(exclude_unset=True, exclude={"content"})
+    old_counts_toward_grade = lesson_block.counts_toward_grade
+
+    update_data = data.model_dump(
+        exclude_unset=True,
+        exclude={"content"},
+    )
 
     for key, value in update_data.items():
         setattr(lesson_block, key, value)
 
     if file:
-        old_content = lesson_block.content or {}
-        old_file_url = old_content.get("file_url")
+        old_file_url = (lesson_block.content or {}).get("file_url")
 
         if old_file_url:
             old_path = old_file_url.lstrip("/")
+
             if os.path.exists(old_path):
                 os.remove(old_path)
 
@@ -62,10 +70,23 @@ def update_lesson_block(
 
     elif data.content is not None:
         lesson_block.content = data.content
-    else:
-        pass
 
-    return lesson_block_repo.update(db, lesson_block)
+    lesson_block = lesson_block_repo.update(db, lesson_block)
+
+    if old_counts_toward_grade != lesson_block.counts_toward_grade:
+
+        enrollments = enrollment_repo.get_all_by_course_id(
+            db,
+            lesson_block.lesson.module.course_id,
+        )
+
+        for enrollment in enrollments:
+            recalculate_enrollment_certificate(
+                db=db,
+                enrollment=enrollment,
+            )
+
+    return lesson_block
 
 
 def delete_lesson_block(db: Session, lesson_block_id: int):
