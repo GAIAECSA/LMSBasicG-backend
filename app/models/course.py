@@ -50,6 +50,12 @@ class Course(Base):
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), onupdate=func.now())
 
+    modules = relationship(
+        "Module",
+        back_populates="course",
+        cascade="all, delete-orphan",
+    )
+
     mdt_certificates = relationship(
         "MdtCertificate",
         back_populates="course",

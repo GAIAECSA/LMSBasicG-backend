@@ -36,7 +36,13 @@ class LessonBlock(Base):
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), onupdate=func.now())
 
+    lesson = relationship(
+        "Lesson",
+        back_populates="lesson_blocks",
+    )
+
     lesson_block_type = relationship("LessonBlockType")
+
     survey_responses = relationship("SurveyResponse", back_populates="lesson_block")
     homework_responses = relationship("HomeworkResponse", back_populates="lesson_block")
     forum_responses = relationship("ForumResponse", back_populates="lesson_block")

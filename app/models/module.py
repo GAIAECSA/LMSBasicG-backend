@@ -1,5 +1,16 @@
-from sqlalchemy import Column, Integer, String, Boolean, ForeignKey, DateTime, func, CheckConstraint
+from sqlalchemy import (
+    Column,
+    Integer,
+    String,
+    Boolean,
+    ForeignKey,
+    DateTime,
+    func,
+    CheckConstraint,
+)
+from sqlalchemy.orm import relationship
 from app.db.base import Base
+
 
 class Module(Base):
     __tablename__ = "modules"
@@ -13,6 +24,17 @@ class Module(Base):
     deleted = Column(Boolean, index=True, default=False, nullable=False)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), onupdate=func.now())
+
+    course = relationship(
+        "Course",
+        back_populates="modules",
+    )
+
+    lessons = relationship(
+        "Lesson",
+        back_populates="module",
+        cascade="all, delete-orphan",
+    )
 
     __table_args__ = (
         CheckConstraint("trim(name) <> ''", name="module_name_not_blank"),
