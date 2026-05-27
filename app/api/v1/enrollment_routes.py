@@ -1,4 +1,5 @@
 from app.schemas import enrollment
+from app.schemas.user import UserCreate
 from app.websockets import manager
 from fastapi import APIRouter, Depends, HTTPException, UploadFile, File
 from sqlalchemy.orm import Session
@@ -7,6 +8,8 @@ from app.schemas.enrollment import (
     EnrollmentCreate,
     EnrollmentUpdate,
     EnrollmentResponse,
+    MassiveEnrollmentCreate,
+    MassiveEnrollmentResult,
 )
 from app.services import enrollment_service
 from app.websockets import manager
@@ -112,3 +115,26 @@ def get_enrollment(
         return enrollment_service.get_enrollment(db, enrollment_id)
     except Exception as e:
         raise HTTPException(status_code=404, detail=str(e))
+
+
+@router.post(
+    "/enrollments/massive",
+    response_model=MassiveEnrollmentResult,
+)
+def create_enrollments_massive(
+    payload: MassiveEnrollmentCreate,
+    db: Session = Depends(get_db),
+    user=Depends(require_admin),
+):
+    try:
+        return enrollment_service.create_massive_enrollments(
+            db=db,
+            users=payload.users,
+            course_id=payload.course_id,
+        )
+
+    except Exception as e:
+        raise HTTPException(
+            status_code=400,
+            detail=str(e),
+        )

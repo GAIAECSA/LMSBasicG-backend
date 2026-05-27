@@ -9,10 +9,11 @@ from app.repositories import (
     certificate_repo,
 )
 from app.schemas.enrollment import EnrollmentCreate, EnrollmentUpdate
+from app.schemas.user import UserCreate
 from fastapi import UploadFile
 from app.utils.file_upload import save_course_voucher
-from app.services.certificate_service import create_certificate
 from app.schemas.certificate import CertificateCreate
+from app.repositories import user_repo
 import os
 import uuid
 
@@ -128,3 +129,88 @@ def get_enrollment_by_user_and_course(db: Session, user_id: int, course_id: int)
     if not enrollment:
         raise Exception("Inscripción no encontrada")
     return enrollment
+
+
+def create_massive_enrollments(
+    db: Session,
+    users: list[UserCreate],
+    course_id: int,
+):
+    created = []
+    skipped = []
+    failed = []
+
+    for user_data in users:
+
+        try:
+
+            with db.begin():
+
+                existing_user = user_repo.get_by_email_or_idnumber(
+                    db,
+                    user_data.email,
+                    user_data.idnumber,
+                )
+
+                if not existing_user:
+
+                    existing_user = user_repo.create_flush(
+                        db,
+                        user_data.model_dump(),
+                    )
+
+                existing_enrollment = enrollment_repo.get_existing_enrollment(
+                    db,
+                    existing_user.id,
+                    course_id,
+                )
+
+                if existing_enrollment:
+
+                    skipped.append(
+                        {
+                            "email": user_data.email,
+                            "reason": "El usuario ya está matriculado",
+                        }
+                    )
+
+                    continue
+
+                enrollment = enrollment_repo.create_flush(
+                    db,
+                    EnrollmentCreate(
+                        accepted=True,
+                        user_id=existing_user.id,
+                        course_id=course_id,
+                        role_id=4,
+                    ),
+                )
+
+                created.append(
+                    {
+                        "email": user_data.email,
+                        "enrollment_id": enrollment.id,
+                        "user_id": existing_user.id,
+                    }
+                )
+
+        except Exception as e:
+
+            failed.append(
+                {
+                    "email": user_data.email,
+                    "error": str(e),
+                }
+            )
+
+    return {
+        "created": created,
+        "skipped": skipped,
+        "failed": failed,
+        "summary": {
+            "created": len(created),
+            "skipped": len(skipped),
+            "failed": len(failed),
+            "total": len(users),
+        },
+    }
