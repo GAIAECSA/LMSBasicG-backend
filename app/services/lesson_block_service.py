@@ -1,12 +1,15 @@
-from sqlalchemy.orm import Session
-from app.repositories import lesson_block_repo
-from app.models.lesson_block import LessonBlock
-from app.schemas.lesson_block import LessonBlockCreate, LessonBlockUpdate
-from app.repositories import enrollment_repo
-from app.helpers import recalculate_enrollment_certificate
-from fastapi import UploadFile
-from app.utils.file_upload import save_lesson_file
 import os
+
+from fastapi import UploadFile
+from sqlalchemy.orm import Session
+
+from app.helpers.recalculate_enrollment_certificate import (
+    recalculate_enrollment_certificate,
+)
+from app.models.lesson_block import LessonBlock
+from app.repositories import enrollment_repo, lesson_block_repo
+from app.schemas.lesson_block import LessonBlockCreate, LessonBlockUpdate
+from app.utils.file_upload import save_lesson_file
 
 
 def create_lesson_block(
@@ -104,5 +107,9 @@ def get_by_lesson(db: Session, lesson_id: int):
     return lesson_block_repo.get_all_by_lesson_id(db, lesson_id)
 
 
-def get_all_default_blocks_by_course_and_block_type(db: Session, course_id: int, block_type_id: int):
-    return lesson_block_repo.get_all_default_blocks_by_course_and_block_type(db, course_id, block_type_id)
+def get_all_default_blocks_by_course_and_block_type(
+    db: Session, course_id: int, block_type_id: int
+):
+    return lesson_block_repo.get_all_default_blocks_by_course_and_block_type(
+        db, course_id, block_type_id
+    )

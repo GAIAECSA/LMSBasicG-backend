@@ -1,10 +1,9 @@
+from app.reports.attendance import attendance_report_queries, attendance_report_schemas
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
 from app.db.session import SessionLocal
-from app.services.reports.attendance import (
-    attendance_report_queries,
-    attendance_report_schemas,
+from app.reports.attendance import (
     attendance_report_service,
 )
 from app.utils.jwt import get_current_user

@@ -1,7 +1,10 @@
 import os
+
 from dotenv import load_dotenv
+from jinja2 import Environment, FileSystemLoader
 
 load_dotenv()
+
 
 class Settings:
 
@@ -9,6 +12,12 @@ class Settings:
 
     SECRET_KEY = os.getenv("SECRET_KEY")
     ALGORITHM = os.getenv("ALGORITHM")
+
     ACCESS_TOKEN_EXPIRE_MINUTES = int(os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES"))
+
+    TEMPLATE_FOLDER = "app/reports"
+
+    jinja_env = Environment(loader=FileSystemLoader(TEMPLATE_FOLDER))
+
 
 settings = Settings()
