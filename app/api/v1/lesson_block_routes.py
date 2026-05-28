@@ -1,10 +1,11 @@
-from fastapi import APIRouter, Depends, HTTPException, UploadFile, File, Query
+from fastapi import APIRouter, Depends, File, HTTPException, Query, UploadFile
 from sqlalchemy.orm import Session
+
 from app.db.session import SessionLocal
 from app.schemas.lesson_block import (
     LessonBlockCreate,
-    LessonBlockUpdate,
     LessonBlockResponse,
+    LessonBlockUpdate,
 )
 from app.services import lesson_block_service
 from app.utils.jwt import get_current_user
@@ -25,7 +26,6 @@ def create_lesson_block(
     data: LessonBlockCreate = Depends(LessonBlockCreate.as_form),
     file: UploadFile = File(None),
     db: Session = Depends(get_db),
-    user=Depends(get_current_user),
 ):
     try:
         return lesson_block_service.create_lesson_block(db, data, file)
@@ -83,6 +83,7 @@ def get_by_lesson(
 from fastapi import Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 
+
 @router.get(
     "/lesson-blocks/default/",
     response_model=list[LessonBlockResponse],
@@ -95,9 +96,7 @@ def get_all_default_blocks_by_course_and_block_type(
 ):
     try:
         return lesson_block_service.get_all_default_blocks_by_course_and_block_type(
-            db,
-            course_id,
-            block_type_id
+            db, course_id, block_type_id
         )
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
