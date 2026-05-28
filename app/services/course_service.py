@@ -1,14 +1,13 @@
-from app.models.lesson_block import LessonBlock
-from sqlalchemy.orm import Session
-from fastapi import UploadFile
 import os
 
+from fastapi import UploadFile
+from sqlalchemy.orm import Session
+
 from app.models.course import Course
+from app.models.lesson_block import LessonBlock
+from app.repositories import course_repo, enrollment_repo, lesson_block_repo
 from app.schemas.course import CourseCreate, CourseUpdate
 from app.utils.file_upload import save_course_image
-from app.repositories import course_repo
-from app.repositories import enrollment_repo
-from app.repositories import lesson_block_repo
 
 
 def create_course(

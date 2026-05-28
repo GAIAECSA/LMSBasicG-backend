@@ -1,30 +1,29 @@
 from fastapi import APIRouter
 
-from app.api.v1 import (
-    role_routes as role,
-    user_routes as user,
-    category_routes as category,
-    subcategory_routes as subcategory,
-    course_routes as course,
-    module_routes as module,
-    lesson_routes as lesson,
-    lesson_block_routes as lesson_block,
-    block_progress_routes as block_progress,
-    lesson_block_type_routes as lesson_block_type,
-    enrollment_routes as enrollment,
-    certificate_template_routes as certificate_template,
-    certificate_routes as certificate,
-    course_attendance_routes as course_attendance,
-    quizz_response_routes as quizz_response,
-    survey_response_router as survey_response,
-    forum_response_routes as forum_response,
-    homework_response_routes as homework_response,
-    attendance_routes as attendance,
-    privacy_policy_routes as privacy_policy,
-    user_privacy_policy_routes as user_privacy_policy,
-    websocket_routes as websocket,
-    mdt_certificate_routes as mdt_certificate,
-)
+from app.api.v1 import attendance_routes as attendance
+from app.api.v1 import block_progress_routes as block_progress
+from app.api.v1 import category_routes as category
+from app.api.v1 import certificate_routes as certificate
+from app.api.v1 import certificate_template_routes as certificate_template
+from app.api.v1 import course_attendance_routes as course_attendance
+from app.api.v1 import course_routes as course
+from app.api.v1 import enrollment_routes as enrollment
+from app.api.v1 import forum_response_routes as forum_response
+from app.api.v1 import homework_response_routes as homework_response
+from app.api.v1 import lesson_block_routes as lesson_block
+from app.api.v1 import lesson_block_type_routes as lesson_block_type
+from app.api.v1 import lesson_routes as lesson
+from app.api.v1 import mdt_certificate_routes as mdt_certificate
+from app.api.v1 import module_routes as module
+from app.api.v1 import privacy_policy_routes as privacy_policy
+from app.api.v1 import quizz_response_routes as quizz_response
+from app.api.v1 import reports as reports
+from app.api.v1 import role_routes as role
+from app.api.v1 import subcategory_routes as subcategory
+from app.api.v1 import survey_response_router as survey_response
+from app.api.v1 import user_privacy_policy_routes as user_privacy_policy
+from app.api.v1 import user_routes as user
+from app.api.v1 import websocket_routes as websocket
 
 router = APIRouter()
 
@@ -79,6 +78,8 @@ router.include_router(
 router.include_router(
     mdt_certificate.router, prefix="/mdt-certificates", tags=["mdt-certificates"]
 )
+
+router.include_router(reports.router, prefix="/reports", tags=["reports"])
 # User response
 
 router.include_router(
