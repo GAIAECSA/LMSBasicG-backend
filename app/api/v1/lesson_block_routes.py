@@ -26,7 +26,6 @@ def create_lesson_block(
     data: LessonBlockCreate = Depends(LessonBlockCreate.as_form),
     file: UploadFile = File(None),
     db: Session = Depends(get_db),
-    user=Depends(get_current_user),
 ):
     try:
         return lesson_block_service.create_lesson_block(db, data, file)
@@ -40,7 +39,6 @@ def update_lesson_block(
     data: LessonBlockUpdate = Depends(LessonBlockUpdate.as_form),
     file: UploadFile = File(None),
     db: Session = Depends(get_db),
-    user=Depends(get_current_user),
 ):
     try:
         return lesson_block_service.update_lesson_block(db, lesson_block_id, data, file)
