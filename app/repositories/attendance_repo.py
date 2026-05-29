@@ -10,7 +10,7 @@ def create(db: Session, attendance: Attendance):
 
 
 def update(db: Session, attendance: Attendance):
-    db.merge(attendance)
+    db.add(attendance)
     db.commit()
     db.refresh(attendance)
     return attendance
