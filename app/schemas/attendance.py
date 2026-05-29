@@ -1,7 +1,7 @@
 from datetime import datetime
 from typing import Optional
 
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, ConfigDict, Field, AliasPath
 
 from app.schemas.enrollment import EnrollmentBasicResponse
 
@@ -44,7 +44,8 @@ class AttendanceResponse(AttendanceBase):
     attendance_state: str
     created_at: datetime
     updated_at: Optional[datetime] = None
-
+    role_id: int = Field(validation_alias=AliasPath('enrollment', 'role_id'))
+    
     model_config = ConfigDict(from_attributes=True)
 
 
