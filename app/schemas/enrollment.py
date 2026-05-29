@@ -83,7 +83,7 @@ class EnrollmentResponse(BaseModel):
 
 class EnrollmentBasicResponse(BaseModel):
     id: int
-
+    role_id: int
     user: UserBasicResponse
 
     class Config:
