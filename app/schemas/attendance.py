@@ -12,7 +12,7 @@ from app.schemas.enrollment import EnrollmentBasicResponse
 class AttendanceBase(BaseModel):
     enrollment_id: int
     course_attendance_id: int
-    state: str = "PENDIENTE"
+    attendance_state: str = "PENDIENTE"
 
 
 # ======================================
@@ -30,7 +30,7 @@ class AttendanceCreate(AttendanceBase):
 class AttendanceUpdate(BaseModel):
     enrollment_id: Optional[int] = None
     course_attendance_id: Optional[int] = None
-    state: Optional[str] = None
+    attendance_state: Optional[str] = None
     deleted: Optional[bool] = None
 
 
@@ -41,6 +41,7 @@ class AttendanceUpdate(BaseModel):
 class AttendanceResponse(AttendanceBase):
     id: int
     deleted: bool
+    attendance_state: str
     created_at: datetime
     updated_at: Optional[datetime] = None
 
