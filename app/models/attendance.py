@@ -16,7 +16,7 @@ class Attendance(Base):
     id = Column(Integer, primary_key=True, index=True)
     enrollment_id = Column(Integer,ForeignKey("enrollments.id"),nullable=False)
     course_attendance_id = Column(Integer,ForeignKey("course_attendances.id"),nullable=False)
-    attendance_state = Column(Enum("PRESENTE","PENDIENTE","FALTA",name="attendance_state"),nullable=False,default="PENDIENTE")
+    attendance_state = Column(Enum("PRESENTE","PENDIENTE","AUSENTE",name="attendance_state"),nullable=False,default="PENDIENTE")
 
     deleted = Column(Boolean, default=False, nullable=False)
     created_at = Column(DateTime(timezone=True),server_default=func.now())
