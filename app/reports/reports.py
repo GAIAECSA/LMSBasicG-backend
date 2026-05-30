@@ -4,9 +4,9 @@ from sqlalchemy.orm import Session
 
 from app.db.session import SessionLocal
 from app.reports.a_course_structure import course_structure_report_service
-from app.reports.attendance.student import student_attendance_report_service
-from app.reports.attendance.teacher import teacher_attendance_report_service
 from app.reports.b_students_files import homework_students_report_service
+from app.reports.c_attendance.student import student_attendance_report_service
+from app.reports.c_attendance.teacher import teacher_attendance_report_service
 from app.utils.jwt import get_current_user
 
 router = APIRouter()
@@ -164,6 +164,9 @@ def export_payment_students_pdf(
         raise HTTPException(status_code=404, detail=str(ve))
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error interno: {str(e)}")
+
+
+# 6 Reporte de asistencia de estudiantes
 
 
 @router.get(

@@ -20,3 +20,12 @@ app/reports/attendance/student/__init__.py
 app/reports/attendance/teacher/__init__.py
 /app/reports/attendance/teacher/__pycache__
 /app/reports/b_students_files/__pycache__
+/app/reports/c_attendance/teacher/__pycache__
+app/reports/c_attendance/teacher/__init__.py
+/app/reports/c_attendance/student/__pycache__
+/app/reports/c_attendance/__pycache__
+app/reports/c_attendance/__init__.py
+app/reports/c_attendance/student/__init__.py
+app/reports/attendance/__init__.py
+app/reports/attendance/__init__.py
+app/reports/attendance/__init__.py
