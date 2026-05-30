@@ -19,3 +19,4 @@ app/reports/attendance/student/__init__.py
 /app/reports/attendance/student/__pycache__
 app/reports/attendance/teacher/__init__.py
 /app/reports/attendance/teacher/__pycache__
+/app/reports/b_students_files/__pycache__

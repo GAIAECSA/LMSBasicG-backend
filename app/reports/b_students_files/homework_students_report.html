@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Reporte de Entregas de Tareas</title>
+    <style>
+        @page {
+            size: A4;
+            margin: 20mm 15mm 20mm 15mm;
+
+            @bottom-right {
+                content: "Página " counter(page) " de " counter(pages);
+                font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+                font-size: 9px;
+                color: #94a3b8;
+            }
+        }
+
+        body {
+            font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+            color: #1e293b;
+            margin: 0;
+            padding: 0;
+            font-size: 13px;
+            line-height: 1.5;
+        }
+
+        /* Encabezado */
+        .header {
+            border-bottom: 2px solid #e2e8f0;
+            padding-bottom: 15px;
+            margin-bottom: 25px;
+        }
+
+        .header-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .header-table td {
+            padding: 0;
+            vertical-align: middle;
+        }
+
+        .logo {
+            width: 80px;
+            height: auto;
+            display: block;
+        }
+
+        .institution-name {
+            font-size: 18px;
+            font-weight: bold;
+            color: #0f172a;
+            margin-left: 15px;
+        }
+
+        .institution-sub {
+            font-size: 12px;
+            color: #64748b;
+            margin-left: 15px;
+        }
+
+        .meta-info {
+            text-align: right;
+            font-size: 11px;
+            color: #64748b;
+            line-height: 1.4;
+        }
+
+        /* Contenedor de Información de Contexto */
+        .report-summary-box {
+            background-color: #f8fafc;
+            border-left: 4px solid #10b981;
+            padding: 15px;
+            margin-bottom: 25px;
+            border-radius: 0 6px 6px 0;
+        }
+
+        .summary-label {
+            font-size: 10px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: #64748b;
+            font-weight: bold;
+            margin-bottom: 4px;
+        }
+
+        .summary-title {
+            font-size: 20px;
+            color: #0f172a;
+            margin: 0 0 8px 0;
+            font-weight: 700;
+        }
+
+        .summary-subtitle {
+            font-size: 13px;
+            color: #475569;
+            margin: 0;
+        }
+
+        .summary-subtitle strong {
+            color: #0f172a;
+        }
+
+        /* Tabla de Alumnos */
+        .report-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 15px;
+        }
+
+        .report-table th {
+            background-color: #0f172a;
+            color: #ffffff;
+            font-weight: 600;
+            text-align: left;
+            padding: 10px 12px;
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .report-table td {
+            padding: 10px 12px;
+            border-bottom: 1px solid #e2e8f0;
+            font-size: 13px;
+            color: #334155;
+        }
+
+        .report-table tr:nth-child(even) {
+            background-color: #f8fafc;
+        }
+
+        /* Badges de Estado */
+        .badge {
+            font-size: 11px;
+            font-weight: bold;
+            padding: 3px 8px;
+            border-radius: 4px;
+            display: inline-block;
+            text-align: center;
+        }
+
+        .badge-success {
+            background-color: #dcfce7;
+            color: #15803d;
+            border: 1px solid #bbf7d0;
+        }
+
+        .badge-danger {
+            background-color: #fee2e2;
+            color: #b91c1c;
+            border: 1px solid #fca5a5;
+        }
+
+        .text-muted {
+            color: #94a3b8;
+            font-style: italic;
+        }
+
+        .footer-text {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            text-align: center;
+            font-size: 10px;
+            color: #94a3b8;
+            border-top: 1px solid #f1f5f9;
+            padding-top: 8px;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="header">
+        <table class="header-table">
+            <tr>
+                <td style="width: 80px;">
+                    <img src="{{ logo_path }}" class="logo" alt="Logo">
+                </td>
+                <td>
+                    <div class="institution-name">Gaia Academic</div>
+                    <div class="institution-sub">Sistema Académico Institucional</div>
+                </td>
+                <td class="meta-info">
+                    <strong>Reporte de Cumplimiento</strong><br>
+                    Fecha de generación: {{ generated_at }}
+                </td>
+            </tr>
+        </table>
+    </div>
+
+    <div class="report-summary-box">
+        <div class="summary-label">Control de Entregas Académicas</div>
+        <h1 class="summary-title">{{ report.activity_title }}</h1>
+        <p class="summary-subtitle">Curso: <strong>{{ report.course_name }}</strong></p>
+    </div>
+
+    <table class="report-table">
+        <thead>
+            <tr>
+                <th style="width: 8%;">#</th>
+                <th style="width: 52%;">Apellidos y Nombres</th>
+                <th style="width: 15%; text-align: center;">Estado</th>
+                <th style="width: 25%; text-align: right;">Fecha de Entrega</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for student in report.students %}
+            <tr>
+                <td>{{ loop.index }}</td>
+                <td>{{ student.student_name }}</td>
+                <td style="text-align: center;">
+                    {% if student.has_submitted %}
+                    <span class="badge badge-success">{{ student.status_label }}</span>
+                    {% else %}
+                    <span class="badge badge-danger">{{ student.status_label }}</span>
+                    {% endif %}
+                </td>
+                <td style="text-align: right;">
+                    {% if student.submitted_at %}
+                    {{ student.submitted_at }}
+                    {% else %}
+                    <span class="text-muted">—</span>
+                    {% endif %}
+                </td>
+            </tr>
+            {% else %}
+            <tr>
+                <td colspan="4" style="text-align: center; color: #64748b; font-style: italic; padding: 20px;">
+                    No existen estudiantes matriculados activos en este curso.
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <div class="footer-text">
+        Documento de control académico interno generado por la plataforma Gaia Academic.
+    </div>
+
+</body>
+
+</html>
