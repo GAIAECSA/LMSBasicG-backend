@@ -148,7 +148,7 @@
                 <td class="institution-info">
 
                     <div class="institution-name">
-                        Instituto Tecnológico Ejemplo
+                        Gaia Academic
                     </div>
 
                     <div class="institution-subtitle">
@@ -168,11 +168,11 @@
     <div class="report-title">
 
         <h1>
-            Reporte de Asistencia de Estudiantes
+            Reporte de Asistencia de Docentes
         </h1>
 
         <p>
-            {{ course_name }}
+            Consolidado General de Docentes
         </p>
 
     </div>
@@ -198,7 +198,7 @@
             <tr>
 
                 <td class="info-label">
-                    Total estudiantes:
+                    Total cursos dictados por docentes:
                 </td>
 
                 <td>
@@ -219,25 +219,12 @@
 
             <tr>
 
-                <th>
-                    Estudiante
-                </th>
-
-                <th>
-                    Presentes
-                </th>
-
-                <th>
-                    Faltas
-                </th>
-
-                <th>
-                    Pendientes
-                </th>
-
-                <th>
-                    % Asistencia
-                </th>
+                <th>Curso</th>
+                <th>Docente</th>
+                <th>Presentes</th>
+                <th>Ausentes</th>
+                <th>Pendientes</th>
+                <th>% Asistencia</th>
 
             </tr>
 
@@ -249,8 +236,12 @@
 
             <tr>
 
+                <td>
+                    {{ row.course_name }}
+                </td>
+
                 <td class="student-name">
-                    {{ row.student_name }}
+                    {{ row.teacher_name }}
                 </td>
 
                 <td>

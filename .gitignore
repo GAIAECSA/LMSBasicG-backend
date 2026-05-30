@@ -10,3 +10,12 @@
 /app/scripts/__pycache__
 /app/services/__pycache__
 /app/utils/__pycache__
+/app/helpers/__pycache__
+/app/reports/__pycache__
+/app/reports/attendance/__pycache__
+/app/reports/a_course_structure/__pycache__
+app/reports/a_course_structure/__init__.py
+app/reports/attendance/student/__init__.py
+/app/reports/attendance/student/__pycache__
+app/reports/attendance/teacher/__init__.py
+/app/reports/attendance/teacher/__pycache__

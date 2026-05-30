@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Estructura de Curso - Reporte Oficial</title>
+    <style>
+        /* Configuración de Página para WeasyPrint */
+        @page {
+            size: A4;
+            margin: 20mm 15mm 20mm 15mm;
+
+            @bottom-right {
+                content: "Página " counter(page) " de " counter(pages);
+                font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+                font-size: 9px;
+                color: #94a3b8;
+            }
+        }
+
+        body {
+            font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+            color: #1e293b;
+            margin: 0;
+            padding: 0;
+            font-size: 14px;
+            line-height: 1.5;
+        }
+
+        /* Encabezado Principal */
+        .header {
+            border-bottom: 2px solid #e2e8f0;
+            padding-bottom: 15px;
+            margin-bottom: 25px;
+        }
+
+        .header-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .header-table td {
+            padding: 0;
+            vertical-align: middle;
+        }
+
+        .logo {
+            width: 80px;
+            height: auto;
+            display: block;
+        }
+
+        .institution-name {
+            font-size: 18px;
+            font-weight: bold;
+            color: #0f172a;
+            margin-left: 15px;
+        }
+
+        .institution-sub {
+            font-size: 12px;
+            color: #64748b;
+            margin-left: 15px;
+        }
+
+        .meta-info {
+            text-align: right;
+            font-size: 11px;
+            color: #64748b;
+            line-height: 1.4;
+        }
+
+        /* Contenedor del Título del Curso */
+        .course-title-container {
+            background-color: #f8fafc;
+            border-left: 4px solid #3b82f6;
+            padding: 15px;
+            margin-bottom: 30px;
+            border-radius: 0 6px 6px 0;
+        }
+
+        .label-curso {
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: #3b82f6;
+            font-weight: bold;
+            margin-bottom: 4px;
+        }
+
+        .course-name {
+            font-size: 22px;
+            color: #0f172a;
+            margin: 0;
+            font-weight: 700;
+        }
+
+        /* Secciones Globales */
+        .section-title {
+            font-size: 14px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: #475569;
+            font-weight: bold;
+            border-bottom: 1px solid #cbd5e1;
+            padding-bottom: 6px;
+            margin-top: 25px;
+            margin-bottom: 15px;
+            page-break-after: avoid;
+        }
+
+        /* Lista de Elementos Obligatorios/Globales */
+        .obligatory-list {
+            background-color: #fffbeb;
+            border: 1px solid #fef3c7;
+            border-radius: 6px;
+            padding: 15px 15px 15px 35px;
+            margin-bottom: 25px;
+        }
+
+        .obligatory-item {
+            color: #b45309;
+            margin-bottom: 8px;
+            font-weight: 500;
+        }
+
+        .obligatory-item:last-child {
+            margin-bottom: 0;
+        }
+
+        /* Contenedores de Módulos */
+        .module-container {
+            margin-bottom: 25px;
+            page-break-inside: avoid;
+        }
+
+        .module-header {
+            background-color: #1e293b;
+            color: #ffffff;
+            padding: 10px 14px;
+            font-size: 15px;
+            font-weight: bold;
+            border-radius: 6px;
+            margin-bottom: 12px;
+        }
+
+        /* Contenedores de Lecciones */
+        .lesson-container {
+            margin-left: 15px;
+            margin-bottom: 15px;
+            padding-left: 15px;
+            border-left: 2px solid #e2e8f0;
+        }
+
+        .lesson-title {
+            font-size: 14px;
+            font-weight: 600;
+            color: #334155;
+            margin-bottom: 8px;
+        }
+
+        /* Listado de Bloques / Actividades */
+        .block-list {
+            list-style-type: square;
+            padding-left: 20px;
+            margin: 0;
+        }
+
+        .block-item {
+            margin-bottom: 6px;
+            color: #475569;
+            font-size: 13px;
+        }
+
+        .block-type {
+            color: #94a3b8;
+            font-size: 11px;
+            margin-left: 5px;
+            font-style: italic;
+        }
+
+        /* Badge para marcar Bloques Predeterminados */
+        .badge-default {
+            background-color: #fef3c7;
+            color: #d97706;
+            font-size: 10px;
+            font-weight: bold;
+            padding: 1px 6px;
+            border-radius: 4px;
+            margin-left: 6px;
+            border: 1px solid #fcd34d;
+            display: inline-block;
+            vertical-align: middle;
+        }
+
+        /* Footer Fijo Legal */
+        .footer-text {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            text-align: center;
+            font-size: 10px;
+            color: #94a3b8;
+            border-top: 1px solid #f1f5f9;
+            padding-top: 8px;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="header">
+        <table class="header-table">
+            <tr>
+                <td style="width: 80px;">
+                    <img src="{{ logo_path }}" class="logo" alt="Logo Institución">
+                </td>
+                <td>
+                    <div class="institution-name">Gaia Academic</div>
+                    <div class="institution-sub">Sistema Académico Institucional</div>
+                </td>
+                <td class="meta-info">
+                    <strong>Reporte de Diseño Curricular</strong><br>
+                    Fecha de emisión: {{ generated_at }}
+                </td>
+            </tr>
+        </table>
+    </div>
+
+    <div class="course-title-container">
+        <div class="label-curso">Estructura Académica del Curso</div>
+        <h1 class="course-name">{{ report.course_name }}</h1>
+    </div>
+
+    {% if report.default_blocks %}
+    <div class="section-title">Archivos y Bloques Base Obligatorios</div>
+    <ul class="obligatory-list">
+        {% for block in report.default_blocks %}
+        <li class="obligatory-item">
+            {{ block.block_title }}
+            <span class="block-type">({{ block.block_type }})</span>
+        </li>
+        {% endfor %}
+    </ul>
+    {% endif %}
+
+    <div class="section-title">Estructura de Módulos y Lecciones</div>
+
+    {% for module in report.modules %}
+    <div class="module-container">
+        <div class="module-header">
+            Módulo {{ module.module_order }}: {{ module.module_name }}
+        </div>
+
+        {% for lesson in module.lessons %}
+        <div class="lesson-container">
+            <div class="lesson-title">
+                Lección {{ lesson.lesson_order }}: {{ lesson.lesson_name }}
+            </div>
+
+            <ul class="block-list">
+                {% for block in lesson.blocks %}
+                <li class="block-item">
+                    {{ block.block_title }}<span class="block-type">({{ block.block_type }})</span>
+                </li>
+                {% else %}
+                <li class="block-item" style="color: #94a3b8; list-style: none; font-style: italic;">
+                    Sin actividades asignadas en esta lección.
+                </li>
+                {% endfor %}
+            </ul>
+        </div>
+        {% else %}
+        <div class="lesson-container" style="color: #94a3b8; font-style: italic;">
+            Este módulo no posee lecciones asignadas.
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <p style="color: #64748b; font-style: italic; padding: 15px; background-color: #f8fafc; border-radius: 6px;">
+        Este curso no contiene módulos ni unidades configuradas actualmente.
+    </p>
+    {% endfor %}
+
+    <div class="footer-text">
+        Documento curricular oficial generado de manera automática por la plataforma Gaia Academic.
+    </div>
+
+</body>
+
+</html>

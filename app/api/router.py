@@ -17,7 +17,7 @@ from app.api.v1 import mdt_certificate_routes as mdt_certificate
 from app.api.v1 import module_routes as module
 from app.api.v1 import privacy_policy_routes as privacy_policy
 from app.api.v1 import quizz_response_routes as quizz_response
-from app.reports.attendance import reports as reports
+from app.reports import reports as reports
 from app.api.v1 import role_routes as role
 from app.api.v1 import subcategory_routes as subcategory
 from app.api.v1 import survey_response_router as survey_response
