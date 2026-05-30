@@ -3,19 +3,17 @@ from weasyprint import HTML
 from app.core.config import settings
 
 
-def export_student_attendance_pdf(
+def export_graded_homework_report_pdf(
     report,
-    course_name: str,
     generated_at: str,
 ):
-
+    # Carga específicamente la plantilla de la matriz de calificaciones
     template = settings.jinja_env.get_template(
-        "c_attendance/student/student_attendance_report.html"
+        "d_practice_lesson/homework_graded_report.html"
     )
 
     html_string = template.render(
         report=report,
-        course_name=course_name,
         generated_at=generated_at,
         logo_path="static/reports_resources/logo_empresa.png",
     )

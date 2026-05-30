@@ -29,3 +29,8 @@ app/reports/c_attendance/student/__init__.py
 app/reports/attendance/__init__.py
 app/reports/attendance/__init__.py
 app/reports/attendance/__init__.py
+/app/reports/c_student_attendance/__pycache__
+app/reports/c_student_attendance/__init__.py
+/app/reports/d_practice_lesson/__pycache__
+/app/reports/teacher/__pycache__
+app/reports/teacher/__init__.py

@@ -5,8 +5,9 @@ from sqlalchemy.orm import Session
 from app.db.session import SessionLocal
 from app.reports.a_course_structure import course_structure_report_service
 from app.reports.b_students_files import homework_students_report_service
-from app.reports.c_attendance.student import student_attendance_report_service
-from app.reports.c_attendance.teacher import teacher_attendance_report_service
+from app.reports.c_student_attendance import student_attendance_report_service
+from app.reports.d_practice_lesson import homework_graded_report_service
+from app.reports.teacher import teacher_attendance_report_service
 from app.utils.jwt import get_current_user
 
 router = APIRouter()
@@ -200,19 +201,23 @@ def export_course_student_attendance_pdf(
         )
 
 
-@router.get("/reports/attendance/teachers/pdf")
-def export_teacher_attendance_report(
+# 7 Reporte de prueba práctica por curso
+
+
+@router.get("/reports/practice/lessons/pdf")
+def export_practice_lesson_report(
     db: Session = Depends(get_db),
+    course_id: int = None,
 ):
 
-    pdf = teacher_attendance_report_service.generate_teacher_attendance_pdf(
-        db=db,
+    pdf = homework_graded_report_service.generate_course_graded_pdf(
+        db=db, course_id=course_id
     )
 
     return Response(
         content=pdf,
         media_type="application/pdf",
         headers={
-            "Content-Disposition": 'attachment; filename="teacher_attendance_report.pdf"'
+            "Content-Disposition": 'attachment; filename="practice_lesson_report.pdf"'
         },
     )
