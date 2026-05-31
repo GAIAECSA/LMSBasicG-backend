@@ -11,6 +11,10 @@ from app.reports.e_final_grade import final_grade_report_service
 from app.reports.g_teacher_attendance.teacher_attendance_service import (
     generate_teacher_attendance_pdf,
 )
+from app.reports.i_final_quizz.final_quizz_service import (
+    generate_course_final_quizzes_pdf,
+    generate_course_practice_quizzes_pdf,
+)
 from app.reports.teacher import teacher_attendance_report_service
 from app.utils.jwt import get_current_user
 
@@ -285,6 +289,58 @@ def export_teacher_attendance_pdf(
 
 # 13 Evaluación diagnóstica
 
+
+@router.get("/reports/practice/quizz/pdf")
+def export_practice_quizz_pdf(
+    course_id: int,
+    db: Session = Depends(get_db),
+):
+    try:
+        pdf = generate_course_practice_quizzes_pdf(db=db, course_id=course_id)
+
+        filename = f"reporte_asistencia_docente_curso_{course_id}.pdf"
+
+        return Response(
+            content=pdf,
+            media_type="application/pdf",
+            headers={"Content-Disposition": f'attachment; filename="{filename}"'},
+        )
+
+    except ValueError as e:
+        raise HTTPException(status_code=404, detail=str(e))
+    except Exception as e:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Error interno al generar el reporte de asistencia: {str(e)}",
+        )
+
+
 # 14 Evaluacion final teórica
+
+
+@router.get("/reports/final/quizz/pdf")
+def export_final_quizz_pdf(
+    course_id: int,
+    db: Session = Depends(get_db),
+):
+    try:
+        pdf = generate_course_final_quizzes_pdf(db=db, course_id=course_id)
+
+        filename = f"reporte_asistencia_docente_curso_{course_id}.pdf"
+
+        return Response(
+            content=pdf,
+            media_type="application/pdf",
+            headers={"Content-Disposition": f'attachment; filename="{filename}"'},
+        )
+
+    except ValueError as e:
+        raise HTTPException(status_code=404, detail=str(e))
+    except Exception as e:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Error interno al generar el reporte de asistencia: {str(e)}",
+        )
+
 
 # 15 Reporte de descargas certificado

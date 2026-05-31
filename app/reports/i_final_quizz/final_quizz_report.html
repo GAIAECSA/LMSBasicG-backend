@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Seguimiento de Quizzes de Práctica</title>
+    <style>
+        @page {
+            size: A4 landscape;
+            margin: 15mm 15mm 15mm 15mm;
+
+            @bottom-right {
+                content: "Página " counter(page) " de " counter(pages);
+                font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+                font-size: 9px;
+                color: #94a3b8;
+            }
+        }
+
+        body {
+            font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+            color: #1e293b;
+            margin: 0;
+            padding: 0;
+            font-size: 11px;
+            line-height: 1.4;
+        }
+
+        .header {
+            border-bottom: 2px solid #e2e8f0;
+            padding-bottom: 12px;
+            margin-bottom: 20px;
+        }
+
+        .header-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .logo {
+            width: 75px;
+            height: auto;
+        }
+
+        .institution-title {
+            font-size: 16px;
+            font-weight: bold;
+            color: #0f172a;
+            padding-left: 12px;
+        }
+
+        .institution-sub {
+            font-size: 11px;
+            color: #64748b;
+            padding-left: 12px;
+        }
+
+        .meta-info {
+            text-align: right;
+            font-size: 10px;
+            color: #64748b;
+        }
+
+        .info-box {
+            background-color: #f8fafc;
+            border-left: 4px solid #6366f1;
+            padding: 12px 15px;
+            margin-bottom: 20px;
+            border-radius: 0 4px 4px 0;
+        }
+
+        .info-label {
+            font-size: 9px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: #64748b;
+            font-weight: bold;
+        }
+
+        .info-value {
+            font-size: 15px;
+            color: #0f172a;
+            font-weight: 700;
+        }
+
+        /* Estilos de la tabla de matriz */
+        .matrix-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 5px;
+        }
+
+        .matrix-table th {
+            background-color: #312e81;
+            color: #ffffff;
+            font-weight: 600;
+            text-align: left;
+            padding: 8px 10px;
+            font-size: 10px;
+            text-transform: uppercase;
+            letter-spacing: 0.3px;
+            border: 1px solid #1e1b4b;
+        }
+
+        .matrix-table th.center-th,
+        .matrix-table td.center-td {
+            text-align: center;
+        }
+
+        .matrix-table td {
+            padding: 8px 10px;
+            border: 1px solid #e2e8f0;
+            font-size: 11px;
+            color: #334155;
+            vertical-align: middle;
+        }
+
+        .matrix-table tr:nth-child(even) {
+            background-color: #f8fafc;
+        }
+
+        .not-attempted {
+            color: #94a3b8;
+            font-style: italic;
+            font-size: 10px;
+        }
+
+        .score-container {
+            font-weight: 600;
+        }
+
+        /* Pequeño indicador de si pasó el cuestionario individual */
+        .passed-dot {
+            color: #16a34a;
+            font-size: 12px;
+            margin-left: 2px;
+        }
+
+        .failed-dot {
+            color: #dc2626;
+            font-size: 12px;
+            margin-left: 2px;
+        }
+
+        .avg-highlight {
+            font-weight: bold;
+            color: #4338ca;
+            background-color: #f5f3ff;
+        }
+
+        .footer {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            text-align: center;
+            font-size: 9px;
+            color: #94a3b8;
+            border-top: 1px solid #f1f5f9;
+            padding-top: 6px;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="header">
+        <table class="header-table">
+            <tr>
+                <td style="width: 75px;">
+                    <img src="{{ logo_path }}" class="logo" alt="Logo">
+                </td>
+                <td>
+                    <div class="institution-title">Gaia Academic</div>
+                    <div class="institution-sub">Monitoreo de Evaluaciones Formativas (No Influyen en Nota Final)</div>
+                </td>
+                <td class="meta-info">
+                    <strong>Reporte de Quizzes de Práctica</strong><br>
+                    Fecha de Impresión: {{ generated_at }}
+                </td>
+            </tr>
+        </table>
+    </div>
+
+    <div class="info-box">
+        <div class="info-label">Curso Académico</div>
+        <div class="info-value">{{ report.course_name }}</div>
+    </div>
+
+    <table class="matrix-table">
+        <thead>
+            <tr>
+                <th style="width: 4%; text-align: center;">#</th>
+                <th style="width: 24%;">Estudiante</th>
+                {% for header in report.headers %}
+                <th class="center-th" style="font-size: 9px;">{{ header.title }}</th>
+                {% endfor %}
+                <th class="center-th" style="width: 10%; background-color: #1e1b4b;">Promedio Prácticas</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for row in report.rows %}
+            <tr>
+                <td class="center-td">{{ loop.index }}</td>
+                <td><strong>{{ row.student_name }}</strong></td>
+
+                {% for quizz in row.quizzes %}
+                <td class="center-td">
+                    {% if quizz.score == 'Sin intentar' %}
+                    <span class="not-attempted">—</span>
+                    {% else %}
+                    <span class="score-container">
+                        {{ quizz.score }}
+                        {% if quizz.is_passed == True %}
+                        <span class="passed-dot">✓</span>
+                        {% elif quizz.is_passed == False %}
+                        <span class="failed-dot">✗</span>
+                        {% endif %}
+                    </span>
+                    {% endif %}
+                </td>
+                {% endfor %}
+
+                <td class="center-td avg-highlight">
+                    {{ row.average }}
+                </td>
+            </tr>
+            {% else %}
+            <tr>
+                <td colspan="{{ report.headers|length + 3 }}"
+                    style="text-align: center; padding: 25px; color: #64748b; font-style: italic;">
+                    No se registran cuestionarios de práctica (`count_towards_grade = False`) o alumnos matriculados en
+                    este curso.
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <div class="footer">
+        Este documento es un reporte formativo e interno emitido por Gaia Academic LMS. Las notas expresadas aquí no
+        alteran los promedios ponderados finales del estudiante.
+    </div>
+
+</body>
+
+</html>
