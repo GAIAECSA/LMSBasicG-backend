@@ -34,7 +34,9 @@ def _extract_numeric_score(value) -> float | None:
 
 def generate_course_surveys_pdf(db: Session, course_id: int):
     course = (
-        db.query(Course).filter(Course.id == course_id, Course.deleted == False).first()
+        db.query(Course)
+        .filter(Course.id == course_id, Course.deleted.is_(False))
+        .first()
     )
     course_name = course.name if course else f"Curso ID: {course_id}"
 

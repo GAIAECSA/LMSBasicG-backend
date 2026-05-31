@@ -98,7 +98,6 @@
             text-transform: uppercase;
         }
 
-        /* Estilos de la tabla de matriz */
         .matrix-table {
             width: 100%;
             border-collapse: collapse;
@@ -136,7 +135,6 @@
             background-color: #f0fdfa;
         }
 
-        /* Bloque de Leyenda de Preguntas */
         .legend-box {
             background-color: #f8fafc;
             border: 1px solid #e2e8f0;
@@ -214,35 +212,45 @@
             <thead>
                 <tr>
                     <th style="width: 4%; text-align: center;">#</th>
-                    <th style="width: 25%;">Estudiante</th>
+                    <th>Participante</th>
 
+                    {% if survey.headers %}
                     {% for header in survey.headers %}
                     <th class="center-align" style="min-width: 40px;">{{ header.label }}</th>
                     {% endfor %}
-
                     <th class="center-align" style="width: 12%; background-color: #115e59;">Promedio Escala</th>
+                    {% else %}
+                    <th class="center-align" style="width: 20%; background-color: #115e59;">Estado</th>
+                    {% endif %}
                 </tr>
             </thead>
             <tbody>
                 {% for row in survey.rows %}
                 <tr>
                     <td class="center-align">{{ loop.index }}</td>
-                    <td><strong>{{ row.student_name }}</strong></td>
+                    <td><strong>{{ row.student_name if row.student_name is defined else row.professor_name }}</strong>
+                    </td>
 
+                    {% if survey.headers %}
                     {% for answer in row.answers %}
                     <td class="center-align">
                         {{ answer }}
                     </td>
                     {% endfor %}
-
                     <td class="center-align avg-column">
                         {{ row.average }}
                     </td>
+                    {% else %}
+                    <td class="center-align" style="color: #64748b; font-style: italic;">
+                        Sin respuestas registradas
+                    </td>
+                    {% endif %}
                 </tr>
                 {% endfor %}
             </tbody>
         </table>
 
+        {% if survey.headers %}
         <div class="legend-box">
             <div class="legend-title">Glosario de Preguntas de esta sección:</div>
             {% for header in survey.headers %}
@@ -251,12 +259,13 @@
             </div>
             {% endfor %}
         </div>
+        {% endif %}
     </div>
     {% endfor %}
 
     <div class="footer">
         Este documento es un reporte analítico confidencial procesado por Gaia Academic LMS. Las respuestas corresponden
-        estrictamente a la última actualización del envío del estudiante.
+        estrictamente a la última actualización del envío del usuario.
     </div>
 
 </body>

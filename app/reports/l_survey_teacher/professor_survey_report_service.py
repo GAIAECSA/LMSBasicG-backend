@@ -19,10 +19,6 @@ from .professor_survey_report_schemas import (
 
 
 def _extract_numeric_score(value) -> float | None:
-    """
-    Parsea la respuesta Likert para extraer el valor numérico.
-    Soporta enteros, floats y cadenas formateadas como '5 - Muy de acuerdo'.
-    """
     if value is None:
         return None
     if isinstance(value, (int, float)):
@@ -35,22 +31,17 @@ def _extract_numeric_score(value) -> float | None:
 
 
 def generate_course_professor_surveys_pdf(db: Session, course_id: int):
-    """
-    Genera el PDF del reporte de encuestas de profesores garantizando
-    que aparezcan TODOS los docentes matriculados en el curso.
-    """
-    # 1. Obtener información básica del curso (Fallback elegante si no existe)
     course = (
-        db.query(Course).filter(Course.id == course_id, Course.deleted == False).first()
+        db.query(Course)
+        .filter(Course.id == course_id, Course.deleted.is_(False))
+        .first()
     )
     course_name = course.name if course else f"Curso ID: {course_id}"
 
-    # 2. Obtener la lista de todos los bloques de tipo encuesta (block_type_id = 7)
     survey_blocks = get_professor_survey_blocks_by_course(db=db, course_id=course_id)
     surveys_report_list = []
 
     for block in survey_blocks:
-        # 3. Obtener todos los profesores matriculados (vía LEFT JOIN con sus respuestas)
         enrollments_responses = get_professor_enrollments_with_optional_responses(
             db=db, course_id=course_id, block_id=block.id
         )
@@ -58,7 +49,6 @@ def generate_course_professor_surveys_pdf(db: Session, course_id: int):
         survey_title = f"Encuesta Docente Bloque {block.id}"
         questions_list = []
 
-        # 4. Buscar la estructura base de preguntas del primer registro que tenga la definición válida
         for r in enrollments_responses:
             if r.survey_definition:
                 survey_title = (
@@ -73,7 +63,6 @@ def generate_course_professor_surveys_pdf(db: Session, course_id: int):
                 )
                 break
 
-        # Construir los encabezados de columnas (P1, P2, P3...)
         headers = [
             ProfessorQuestionHeaderSchema(
                 id=q.get("id", idx + 1),
@@ -83,12 +72,10 @@ def generate_course_professor_surveys_pdf(db: Session, course_id: int):
             for idx, q in enumerate(questions_list)
         ]
 
-        # 5. Mapear las filas de forma obligatoria para todos los docentes matriculados
         rows = []
         for res in enrollments_responses:
             professor_answers = []
 
-            # Extraer de manera segura el payload interno de "answers"
             response_json = res.survey_answers or {}
             answers_payload = response_json.get("answers", {})
 
@@ -105,10 +92,8 @@ def generate_course_professor_surveys_pdf(db: Session, course_id: int):
                         total_score_sum += numeric_val
                         answered_questions_count += 1
                 else:
-                    # Relleno visual en la matriz si el docente no ha contestado la encuesta o esa pregunta
                     professor_answers.append("—")
 
-            # Cálculo de promedios individuales
             if answered_questions_count > 0:
                 average_str = f"{(total_score_sum / answered_questions_count):.2f}"
             else:
@@ -128,7 +113,6 @@ def generate_course_professor_surveys_pdf(db: Session, course_id: int):
             )
         )
 
-    # 6. Empaquetar la estructura final para el generador de PDF
     report_data = CourseProfessorSurveyReportSchema(
         course_id=course_id, course_name=course_name, surveys=surveys_report_list
     )
