@@ -17,7 +17,7 @@ def get_practice_quizzes_headers(db: Session, course_id: int):
         db.query(LessonBlock)
         .filter(
             LessonBlock.course_id == course_id,
-            LessonBlock.count_towards_grade.is_(False),
+            LessonBlock.counts_toward_grade.is_(False),
             LessonBlock.is_active.is_(True),
             LessonBlock.deleted.is_(False),
         )
@@ -45,7 +45,7 @@ def get_students_practice_quizzes_matrix(db: Session, course_id: int):
             LessonBlock,
             and_(
                 LessonBlock.course_id == Enrollment.course_id,
-                LessonBlock.count_towards_grade.is_(False),
+                LessonBlock.counts_toward_grade.is_(False),
                 LessonBlock.is_active.is_(True),
                 LessonBlock.deleted.is_(False),
             ),
