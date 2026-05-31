@@ -10,15 +10,12 @@ from app.reports.b_students_files import homework_students_report_service
 from app.reports.c_student_attendance import student_attendance_report_service
 from app.reports.d_practice_lesson import homework_graded_report_service
 from app.reports.e_final_grade import final_grade_report_service
-from app.reports.g_teacher_attendance.teacher_attendance_service import (
-    generate_teacher_attendance_pdf,
-)
-from app.reports.h_diagnostic_quizz.practice_quizz_service import (
-    generate_course_practice_quizzes_pdf,
-)
-from app.reports.i_final_quizz.final_quizz_service import (
-    generate_course_final_quizzes_pdf,
-)
+from app.reports.g_teacher_attendance.teacher_attendance_service import \
+    generate_teacher_attendance_pdf
+from app.reports.h_diagnostic_quizz.practice_quizz_service import \
+    generate_course_practice_quizzes_pdf
+from app.reports.i_final_quizz.final_quizz_service import \
+    generate_course_final_quizzes_pdf
 from app.reports.j_mdt_certificate import mdt_report_service
 from app.reports.k_survey_student import survey_report_service
 from app.reports.l_survey_teacher import professor_survey_report_service
@@ -293,7 +290,7 @@ def export_teacher_attendance_pdf(
 # 11 Encuesta satisfacción estudiante
 
 
-@router.get("/s/students")
+@router.get("/survey/students")
 def get_student_surveys_report(
     course_id: int = Query(
         ..., gt=0, description="ID del curso para el reporte de estudiantes"
@@ -332,7 +329,7 @@ def get_student_surveys_report(
 # 12 Encuesta satisfacción docente
 
 
-@router.get("/professors")
+@router.get("survey/professors")
 def get_professor_surveys_report(
     course_id: int = Query(
         ..., gt=0, description="ID del curso para el reporte de profesores"
