@@ -88,34 +88,19 @@ def generate_course_surveys_pdf(db: Session, course_id: int):
             len(enrollments_responses),
         )
 
-        survey_title = f"Encuesta Bloque {block.id}"
-        questions_list = []
+        survey_definition = block.content or {}
 
-        for r in enrollments_responses:
-            if r.survey_definition:
-                logger.info(
-                    "[SURVEY_REPORT] Definición encontrada para block_id=%s",
-                    block.id,
-                )
+        survey_title = (
+            survey_definition.get("title")
+            or survey_definition.get("name")
+            or f"Encuesta Bloque {block.id}"
+        )
 
-                survey_title = (
-                    r.survey_definition.get("title")
-                    or r.survey_definition.get("name")
-                    or survey_title
-                )
-
-                questions_list = (
-                    r.survey_definition.get("questions")
-                    or r.survey_definition.get("survey_questions")
-                    or []
-                )
-
-                logger.info(
-                    "[SURVEY_REPORT] Preguntas encontradas=%s",
-                    len(questions_list),
-                )
-
-                break
+        questions_list = (
+            survey_definition.get("questions")
+            or survey_definition.get("survey_questions")
+            or []
+        )
 
         headers = [
             QuestionHeaderSchema(
@@ -154,7 +139,6 @@ def generate_course_surveys_pdf(db: Session, course_id: int):
             )
 
             student_answers = []
-
             total_score_sum = 0.0
             answered_questions_count = 0
 
@@ -168,13 +152,14 @@ def generate_course_surveys_pdf(db: Session, course_id: int):
                 )
 
                 if val is not None:
-                    student_answers.append(str(val))
-
                     numeric_val = _extract_numeric_score(val)
 
                     if numeric_val is not None:
+                        student_answers.append(str(int(numeric_val)))
                         total_score_sum += numeric_val
                         answered_questions_count += 1
+                    else:
+                        student_answers.append(str(val))
                 else:
                     student_answers.append("—")
 

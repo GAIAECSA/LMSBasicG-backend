@@ -1,10 +1,13 @@
 import logging
 
-from sqlalchemy import and_, func, or_
+from sqlalchemy import and_, func
 from sqlalchemy.orm import Session
 
 from app.models.enrollment import Enrollment
+from app.models.lesson import Lesson
 from app.models.lesson_block import LessonBlock
+from app.models.lesson_block_type import LessonBlockType
+from app.models.module import Module
 from app.models.survey_response import SurveyResponse
 from app.models.user import User
 
@@ -13,41 +16,50 @@ logger = logging.getLogger(__name__)
 
 def get_survey_blocks_by_course(db: Session, course_id: int):
     logger.info(
-        "[SURVEY_REPORT] Buscando bloques de encuesta para course_id=%s",
+        "[SURVEY_REPORT] Buscando encuestas para curso=%s",
         course_id,
-    )
-
-    responses_subquery = (
-        db.query(SurveyResponse.lesson_block_id)
-        .filter(SurveyResponse.deleted.is_(False))
-        .subquery()
     )
 
     blocks = (
         db.query(LessonBlock)
-        .filter(
-            LessonBlock.course_id == course_id,
-            LessonBlock.deleted.is_(False),
-            or_(
-                LessonBlock.block_type_id == 7,
-                LessonBlock.id.in_(responses_subquery),
-            ),
+        .join(
+            Lesson,
+            Lesson.id == LessonBlock.lesson_id,
         )
-        .order_by(LessonBlock.order.asc())
+        .join(
+            Module,
+            Module.id == Lesson.module_id,
+        )
+        .join(
+            LessonBlockType,
+            LessonBlockType.id == LessonBlock.block_type_id,
+        )
+        .filter(
+            Module.course_id == course_id,
+            Lesson.deleted.is_(False),
+            Module.deleted.is_(False),
+            LessonBlock.deleted.is_(False),
+            LessonBlockType.key == "survey",
+        )
+        .order_by(
+            Module.order.asc(),
+            Lesson.order.asc(),
+            LessonBlock.order.asc(),
+        )
         .all()
     )
 
     logger.info(
-        "[SURVEY_REPORT] Se encontraron %s bloques",
+        "[SURVEY_REPORT] Encuestas encontradas=%s",
         len(blocks),
     )
 
     for block in blocks:
         logger.info(
-            "[SURVEY_REPORT] block_id=%s type_id=%s course_id=%s",
+            "[SURVEY_REPORT] block_id=%s lesson_id=%s type_id=%s",
             block.id,
+            block.lesson_id,
             block.block_type_id,
-            block.course_id,
         )
 
     return blocks
@@ -60,17 +72,19 @@ def get_enrollments_with_optional_survey_responses(
     role_id: int,
 ):
     logger.info(
-        "[SURVEY_REPORT] Consultando estudiantes "
-        "course_id=%s block_id=%s role_id=%s",
+        "[SURVEY_REPORT] Consultando estudiantes curso=%s bloque=%s",
         course_id,
         block_id,
-        role_id,
     )
 
     rows = (
         db.query(
             User.id.label("user_id"),
-            func.concat(User.lastname, " ", User.firstname).label("user_name"),
+            func.concat(
+                User.lastname,
+                " ",
+                User.firstname,
+            ).label("user_name"),
             SurveyResponse.survey.label("survey_definition"),
             SurveyResponse.response.label("survey_answers"),
         )
@@ -95,23 +109,16 @@ def get_enrollments_with_optional_survey_responses(
             Enrollment.role_id == role_id,
             Enrollment.deleted.is_(False),
         )
-        .order_by(User.lastname.asc(), User.firstname.asc())
+        .order_by(
+            User.lastname.asc(),
+            User.firstname.asc(),
+        )
         .all()
     )
 
     logger.info(
-        "[SURVEY_REPORT] Registros encontrados para bloque %s: %s",
-        block_id,
+        "[SURVEY_REPORT] Estudiantes encontrados=%s",
         len(rows),
     )
-
-    for idx, row in enumerate(rows):
-        logger.info(
-            "[SURVEY_REPORT] row=%s user='%s' survey=%s response=%s",
-            idx + 1,
-            row.user_name,
-            row.survey_definition is not None,
-            row.survey_answers is not None,
-        )
 
     return rows
