@@ -15,7 +15,6 @@ from app.reports.g_teacher_attendance.teacher_attendance_service import (
 )
 from app.reports.i_final_quizz.final_quizz_service import (
     generate_course_final_quizzes_pdf,
-    generate_course_practice_quizzes_pdf,
 )
 from app.reports.j_mdt_certificate import mdt_report_service
 from app.reports.teacher import teacher_attendance_report_service
