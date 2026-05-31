@@ -3,8 +3,9 @@
 
 <head>
     <meta charset="UTF-8">
-    <title>Acta de Calificaciones Finales</title>
+    <title>Acta Oficial de Calificaciones Finales</title>
     <style>
+        /* Configuración de Página Horizontal para WeasyPrint */
         @page {
             size: A4 landscape;
             margin: 15mm 15mm 15mm 15mm;
@@ -22,10 +23,11 @@
             color: #1e293b;
             margin: 0;
             padding: 0;
-            font-size: 11px;
+            font-size: 12px;
             line-height: 1.4;
         }
 
+        /* Encabezado Principal Unificado */
         .header {
             border-bottom: 2px solid #e2e8f0;
             padding-bottom: 12px;
@@ -37,31 +39,39 @@
             border-collapse: collapse;
         }
 
+        .header-table td {
+            padding: 0;
+            vertical-align: middle;
+        }
+
         .logo {
             width: 75px;
             height: auto;
+            display: block;
         }
 
-        .institution-title {
-            font-size: 16px;
+        .institution-name {
+            font-size: 18px;
             font-weight: bold;
             color: #0f172a;
-            padding-left: 12px;
+            margin-left: 15px;
         }
 
         .institution-sub {
             font-size: 11px;
             color: #64748b;
-            padding-left: 12px;
+            margin-left: 15px;
         }
 
         .meta-info {
             text-align: right;
             font-size: 10px;
             color: #64748b;
+            line-height: 1.4;
         }
 
-        .course-badge-box {
+        /* Contenedor de Información de Contexto */
+        .course-title-container {
             background-color: #f8fafc;
             border-left: 4px solid #3b82f6;
             padding: 12px 15px;
@@ -69,29 +79,52 @@
             border-radius: 0 4px 4px 0;
         }
 
-        .course-label {
-            font-size: 9px;
+        .label-curso {
+            font-size: 10px;
             text-transform: uppercase;
-            letter-spacing: 0.5px;
-            color: #64748b;
+            letter-spacing: 1px;
+            color: #3b82f6;
             font-weight: bold;
+            margin-bottom: 4px;
         }
 
         .course-name {
-            font-size: 15px;
+            font-size: 20px;
             color: #0f172a;
+            margin: 0;
             font-weight: 700;
         }
 
-        /* Tabla de Matriz de Calificaciones */
+        /* Secciones Globales */
+        .section-title {
+            font-size: 13px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: #475569;
+            font-weight: bold;
+            border-bottom: 1px solid #cbd5e1;
+            padding-bottom: 5px;
+            margin-top: 20px;
+            margin-bottom: 12px;
+            page-break-after: avoid;
+        }
+
+        /* Tabla de Matriz de Calificaciones Extendida */
         .matrix-table {
             width: 100%;
             border-collapse: collapse;
             margin-top: 5px;
+            page-break-inside: auto;
+        }
+
+        .matrix-table tr {
+            page-break-inside: avoid;
+            page-break-after: auto;
         }
 
         .matrix-table th {
-            background-color: #0f172a;
+            background-color: #2563eb;
+            /* Azul Institucional */
             color: #ffffff;
             font-weight: 600;
             text-align: left;
@@ -99,7 +132,7 @@
             font-size: 10px;
             text-transform: uppercase;
             letter-spacing: 0.3px;
-            border: 1px solid #1e293b;
+            border: 1px solid #1d4ed8;
         }
 
         .matrix-table th.center-th,
@@ -130,7 +163,7 @@
             color: #0f172a;
         }
 
-        /* Estado Final Badges */
+        /* Badges de Estado Académico Final */
         .badge {
             font-size: 9px;
             font-weight: bold;
@@ -152,7 +185,8 @@
             border: 1px solid #fca5a5;
         }
 
-        .footer {
+        /* Footer Fijo Transparente */
+        .footer-text {
             position: fixed;
             bottom: 0;
             left: 0;
@@ -163,19 +197,42 @@
             border-top: 1px solid #f1f5f9;
             padding-top: 6px;
         }
+
+        /* Bloque de Cierre Obligatorio */
+        .platform-closure {
+            margin-top: 40px;
+            padding-top: 15px;
+            border-top: 1px dashed #e2e8f0;
+            text-align: center;
+            page-break-inside: avoid;
+        }
+
+        .platform-logo {
+            width: 110px;
+            height: auto;
+            display: inline-block;
+            margin-bottom: 6px;
+        }
+
+        .platform-info {
+            font-size: 10px;
+            color: #94a3b8;
+            letter-spacing: 0.2px;
+        }
     </style>
 </head>
 
 <body>
 
+    <!-- Encabezado Estilo Gaia Academic -->
     <div class="header">
         <table class="header-table">
             <tr>
                 <td style="width: 75px;">
-                    <img src="{{ logo_path }}" class="logo" alt="Logo">
+                    <img src="{{ logo_path }}" class="logo" alt="Logo Institución">
                 </td>
                 <td>
-                    <div class="institution-title">Gaia Academic</div>
+                    <div class="institution-name">Gaia Academic</div>
                     <div class="institution-sub">Sistemas LMS • Reporte Consolidado Final</div>
                 </td>
                 <td class="meta-info">
@@ -186,11 +243,15 @@
         </table>
     </div>
 
-    <div class="course-badge-box">
-        <div class="course-label">Curso Académico</div>
-        <div class="course-name">{{ report.course_name }}</div>
+    <!-- Contenedor del Título del Curso -->
+    <div class="course-title-container">
+        <div class="label-curso">Curso Académico</div>
+        <h1 class="course-name">{{ report.course_name }}</h1>
     </div>
 
+    <div class="section-title">Matriz Consolidada de Evaluaciones y Estados Académicos</div>
+
+    <!-- Tabla Oficial de Estilo Matriz Horizontal -->
     <table class="matrix-table">
         <thead>
             <tr>
@@ -243,9 +304,18 @@
         </tbody>
     </table>
 
-    <div class="footer">
-        Este documento es un reporte consolidado emitido automáticamente por Gaia Academic LMS y es válido para
-        auditorías internas de rendimiento académico.
+    <!-- Bloque de Cierre: Logo de la Plataforma al Final del Contenido -->
+    <div class="platform-closure">
+        <img src="{{ logo_plataform }}" class="platform-logo" alt="Logo Plataforma">
+        <div class="platform-info">
+            Documento de control de rendimiento académico consolidado generado de manera automática por la plataforma
+            Athena LMS.
+        </div>
+    </div>
+
+    <!-- Footer de Confidencialidad -->
+    <div class="footer-text">
+        Gaia Academic &copy; 2026 - Reporte Confidencial de Gestión Curricular
     </div>
 
 </body>

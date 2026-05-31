@@ -3,8 +3,9 @@
 
 <head>
     <meta charset="UTF-8">
-    <title>Reporte de Tareas Calificables</title>
+    <title>Reporte Oficial - Tareas Calificables</title>
     <style>
+        /* Configuración de Página para WeasyPrint */
         @page {
             size: A4;
             margin: 20mm 15mm 20mm 15mm;
@@ -22,11 +23,11 @@
             color: #1e293b;
             margin: 0;
             padding: 0;
-            font-size: 13px;
+            font-size: 14px;
             line-height: 1.5;
         }
 
-        /* Encabezado Institucional */
+        /* Encabezado Principal Unificado */
         .header {
             border-bottom: 2px solid #e2e8f0;
             padding-bottom: 15px;
@@ -69,17 +70,17 @@
             line-height: 1.4;
         }
 
-        /* Contenedor de Resumen */
-        .report-summary-box {
+        /* Contenedor de Información de Contexto */
+        .course-title-container {
             background-color: #f8fafc;
             border-left: 4px solid #3b82f6;
             padding: 15px;
-            margin-bottom: 25px;
+            margin-bottom: 30px;
             border-radius: 0 6px 6px 0;
         }
 
-        .summary-label {
-            font-size: 10px;
+        .label-curso {
+            font-size: 11px;
             text-transform: uppercase;
             letter-spacing: 1px;
             color: #3b82f6;
@@ -87,35 +88,57 @@
             margin-bottom: 4px;
         }
 
-        .summary-title {
-            font-size: 20px;
+        .course-name {
+            font-size: 22px;
             color: #0f172a;
-            margin: 0 0 8px 0;
+            margin: 0;
             font-weight: 700;
         }
 
-        /* Tabla Principal del Reporte */
+        /* Secciones Globales */
+        .section-title {
+            font-size: 14px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: #475569;
+            font-weight: bold;
+            border-bottom: 1px solid #cbd5e1;
+            padding-bottom: 6px;
+            margin-top: 25px;
+            margin-bottom: 15px;
+            page-break-after: avoid;
+        }
+
+        /* Tabla de Reporte Adaptada al Estilo Oficial */
         .report-table {
             width: 100%;
             border-collapse: collapse;
             margin-top: 15px;
+            page-break-inside: auto;
+        }
+
+        .report-table tr {
+            page-break-inside: avoid;
+            page-break-after: auto;
         }
 
         .report-table th {
-            background-color: #0f172a;
+            background-color: #2563eb;
+            /* Azul Institucional */
             color: #ffffff;
             font-weight: 600;
             text-align: left;
             padding: 10px 12px;
-            font-size: 11px;
+            font-size: 12px;
             text-transform: uppercase;
             letter-spacing: 0.5px;
+            border-bottom: 2px solid #1d4ed8;
         }
 
         .report-table td {
             padding: 10px 12px;
             border-bottom: 1px solid #e2e8f0;
-            font-size: 12px;
+            font-size: 13px;
             color: #334155;
             vertical-align: middle;
         }
@@ -156,27 +179,51 @@
             font-style: italic;
         }
 
+        /* Footer Fijo Transparente */
         .footer-text {
             position: fixed;
             bottom: 0;
             left: 0;
             width: 100%;
             text-align: center;
-            font-size: 10px;
+            font-size: 9px;
             color: #94a3b8;
             border-top: 1px solid #f1f5f9;
-            padding-top: 8px;
+            padding-top: 6px;
+        }
+
+        /* Bloque de Cierre Obligatorio */
+        .platform-closure {
+            margin-top: 50px;
+            padding-top: 20px;
+            border-top: 1px dashed #e2e8f0;
+            text-align: center;
+            page-break-inside: avoid;
+        }
+
+        .platform-logo {
+            width: 110px;
+            height: auto;
+            display: inline-block;
+            margin-bottom: 8px;
+        }
+
+        .platform-info {
+            font-size: 10px;
+            color: #94a3b8;
+            letter-spacing: 0.2px;
         }
     </style>
 </head>
 
 <body>
 
+    <!-- Encabezado Estilo Gaia Academic -->
     <div class="header">
         <table class="header-table">
             <tr>
                 <td style="width: 80px;">
-                    <img src="{{ logo_path }}" class="logo" alt="Logo">
+                    <img src="{{ logo_path }}" class="logo" alt="Logo Institución">
                 </td>
                 <td>
                     <div class="institution-name">Gaia Academic</div>
@@ -190,11 +237,15 @@
         </table>
     </div>
 
-    <div class="report-summary-box">
-        <div class="summary-label">Reporte Centralizado de Tareas Calificables</div>
-        <h1 class="summary-title">{{ report.course_name }}</h1>
+    <!-- Contenedor del Título del Curso -->
+    <div class="course-title-container">
+        <div class="label-curso">Reporte Centralizado de Tareas Calificables</div>
+        <h1 class="course-name">{{ report.course_name }}</h1>
     </div>
 
+    <div class="section-title">Sabana de Notas e Historial de Entregas</div>
+
+    <!-- Tabla Oficial de Muestra de Datos -->
     <table class="report-table">
         <thead>
             <tr>
@@ -244,8 +295,17 @@
         </tbody>
     </table>
 
+    <!-- Bloque de Cierre: Logo de la Plataforma al Final del Contenido -->
+    <div class="platform-closure">
+        <img src="{{ logo_plataform }}" class="platform-logo" alt="Logo Plataforma">
+        <div class="platform-info">
+            Documento curricular oficial generado de manera automática por la plataforma Athena LMS.
+        </div>
+    </div>
+
+    <!-- Footer de Confidencialidad -->
     <div class="footer-text">
-        Documento oficial de control de notas internas generado de forma automática por Gaia Academic.
+        Gaia Academic &copy; 2026 - Reporte Confidencial de Gestión Curricular
     </div>
 
 </body>

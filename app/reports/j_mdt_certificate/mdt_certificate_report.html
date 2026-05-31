@@ -5,6 +5,7 @@
     <meta charset="UTF-8">
     <title>Reporte de Visualización de Certificados</title>
     <style>
+        /* Configuración de Página Vertical para WeasyPrint */
         @page {
             size: A4 portrait;
             margin: 20mm 15mm 20mm 15mm;
@@ -26,6 +27,7 @@
             line-height: 1.4;
         }
 
+        /* Encabezado Principal Estilo Gaia Academic */
         .header {
             border-bottom: 2px solid #e2e8f0;
             padding-bottom: 12px;
@@ -37,65 +39,93 @@
             border-collapse: collapse;
         }
 
+        .header-table td {
+            padding: 0;
+            vertical-align: middle;
+        }
+
         .logo {
             width: 75px;
             height: auto;
+            display: block;
         }
 
         .institution-title {
-            font-size: 16px;
+            font-size: 18px;
             font-weight: bold;
             color: #0f172a;
-            padding-left: 12px;
+            margin-left: 15px;
         }
 
         .institution-sub {
             font-size: 11px;
             color: #64748b;
-            padding-left: 12px;
+            margin-left: 15px;
         }
 
         .meta-info {
             text-align: right;
             font-size: 10px;
             color: #64748b;
+            line-height: 1.4;
         }
 
-        .details-container {
-            width: 100%;
-            margin-bottom: 20px;
-        }
-
+        /* Contenedores de Información de Contexto */
         .info-card {
             background-color: #f8fafc;
-            border-left: 4px solid #0284c7;
+            border-left: 4px solid #2563eb;
+            /* Azul Institucional Unificado */
             padding: 10px 14px;
             border-radius: 0 4px 4px 0;
+            height: 100%;
         }
 
         .info-label {
             font-size: 9px;
             text-transform: uppercase;
             letter-spacing: 0.5px;
-            color: #64748b;
+            color: #2563eb;
             font-weight: bold;
+            margin-bottom: 4px;
         }
 
         .info-value {
-            font-size: 14px;
+            font-size: 15px;
             color: #0f172a;
+            margin: 0;
             font-weight: 700;
         }
 
-        /* Tabla de Control de Certificados */
+        /* Secciones Globales */
+        .section-title {
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: #475569;
+            font-weight: bold;
+            border-bottom: 1px solid #cbd5e1;
+            padding-bottom: 5px;
+            margin-top: 25px;
+            margin-bottom: 12px;
+            page-break-after: avoid;
+        }
+
+        /* Tabla de Auditoría de Certificados */
         .report-table {
             width: 100%;
             border-collapse: collapse;
-            margin-top: 10px;
+            margin-top: 5px;
+            page-break-inside: auto;
+        }
+
+        .report-table tr {
+            page-break-inside: avoid;
+            page-break-after: auto;
         }
 
         .report-table th {
-            background-color: #0284c7;
+            background-color: #2563eb;
+            /* Azul Institucional Unificado */
             color: #ffffff;
             font-weight: 600;
             text-align: left;
@@ -103,7 +133,7 @@
             font-size: 10px;
             text-transform: uppercase;
             letter-spacing: 0.3px;
-            border: 1px solid #0369a1;
+            border: 1px solid #1d4ed8;
         }
 
         .report-table th.center-align,
@@ -116,13 +146,14 @@
             border: 1px solid #e2e8f0;
             font-size: 11px;
             color: #334155;
+            vertical-align: middle;
         }
 
         .report-table tr:nth-child(even) {
             background-color: #f8fafc;
         }
 
-        /* Badges de Estado */
+        /* Badges Técnicos de Estado */
         .badge {
             font-size: 9px;
             font-weight: bold;
@@ -155,6 +186,7 @@
             font-style: italic;
         }
 
+        /* Footer Fijo Transparente */
         .footer {
             position: fixed;
             bottom: 0;
@@ -166,16 +198,39 @@
             border-top: 1px solid #f1f5f9;
             padding-top: 6px;
         }
+
+        /* Bloque de Cierre Obligatorio */
+        .platform-closure {
+            margin-top: 40px;
+            padding-top: 15px;
+            border-top: 1px dashed #e2e8f0;
+            text-align: center;
+            page-break-inside: avoid;
+        }
+
+        .platform-logo {
+            width: 110px;
+            height: auto;
+            display: inline-block;
+            margin-bottom: 6px;
+        }
+
+        .platform-info {
+            font-size: 10px;
+            color: #94a3b8;
+            letter-spacing: 0.2px;
+        }
     </style>
 </head>
 
 <body>
 
+    <!-- Encabezado Estilo Gaia Academic -->
     <div class="header">
         <table class="header-table">
             <tr>
                 <td style="width: 75px;">
-                    <img src="{{ logo_path }}" class="logo" alt="Logo">
+                    <img src="{{ logo_path }}" class="logo" alt="Logo Institución">
                 </td>
                 <td>
                     <div class="institution-title">Gaia Academic</div>
@@ -189,23 +244,27 @@
         </table>
     </div>
 
+    <!-- Información de Contexto del Curso -->
     <table style="width: 100%; margin-bottom: 15px; border-collapse: collapse;">
         <tr>
-            <td style="width: 70%; padding-right: 10px;">
+            <td style="width: 65%; padding-right: 15px; vertical-align: top;">
                 <div class="info-card">
                     <div class="info-label">Curso Académico</div>
-                    <div class="info-value">{{ report.course_name }}</div>
+                    <h1 class="info-value">{{ report.course_name }}</h1>
                 </div>
             </td>
-            <td style="width: 30%;">
-                <div class="info-card" style="border-left-color: #0f172a;">
-                    <div class="info-label">Tipo de Certificado</div>
-                    <div class="info-value" style="color: #0f172a;">{{ report.certificate_type }}</div>
+            <td style="width: 35%; vertical-align: top;">
+                <div class="info-card" style="border-left-color: #1e293b;">
+                    <div class="info-label" style="color: #475569;">Tipo de Certificado</div>
+                    <h2 class="info-value" style="color: #1e293b; font-size: 14px;">{{ report.certificate_type }}</h2>
                 </div>
             </td>
         </tr>
     </table>
 
+    <div class="section-title">Registro de Auditoría de Alumnos</div>
+
+    <!-- Tabla de Control de Certificados -->
     <table class="report-table">
         <thead>
             <tr>
@@ -226,7 +285,7 @@
                     {% if row.status == 'Descargado' %}
                     <span class="badge badge-downloaded">{{ row.status }}</span>
                     {% else %}
-                    <span class="badge badge-pending">Nel</span>
+                    <span class="badge badge-pending">Pendiente</span>
                     {% endif %}
                 </td>
                 <td class="center-align date-text">
@@ -248,6 +307,16 @@
         </tbody>
     </table>
 
+    <!-- Bloque de Cierre: Logo de la Plataforma al Final del Contenido -->
+    <div class="platform-closure">
+        <img src="{{ logo_plataform }}" class="platform-logo" alt="Logo Plataforma">
+        <div class="platform-info">
+            Documento institucional de control y auditoría interna generado de manera automática por la plataforma
+            Athena LMS.
+        </div>
+    </div>
+
+    <!-- Footer de Confidencialidad -->
     <div class="footer">
         Este documento es un reporte oficial de control del Gaia Academic LMS. Registra de forma estricta las marcas de
         tiempo basadas en la activación del método de visualización.

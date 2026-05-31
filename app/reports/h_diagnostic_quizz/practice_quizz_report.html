@@ -5,6 +5,7 @@
     <meta charset="UTF-8">
     <title>Seguimiento de Quizzes de Práctica</title>
     <style>
+        /* Configuración de Página Horizontal para WeasyPrint */
         @page {
             size: A4 landscape;
             margin: 15mm 15mm 15mm 15mm;
@@ -22,10 +23,11 @@
             color: #1e293b;
             margin: 0;
             padding: 0;
-            font-size: 11px;
+            font-size: 12px;
             line-height: 1.4;
         }
 
+        /* Encabezado Principal Unificado */
         .header {
             border-bottom: 2px solid #e2e8f0;
             padding-bottom: 12px;
@@ -37,61 +39,92 @@
             border-collapse: collapse;
         }
 
+        .header-table td {
+            padding: 0;
+            vertical-align: middle;
+        }
+
         .logo {
             width: 75px;
             height: auto;
+            display: block;
         }
 
         .institution-title {
-            font-size: 16px;
+            font-size: 18px;
             font-weight: bold;
             color: #0f172a;
-            padding-left: 12px;
+            margin-left: 15px;
         }
 
         .institution-sub {
             font-size: 11px;
             color: #64748b;
-            padding-left: 12px;
+            margin-left: 15px;
         }
 
         .meta-info {
             text-align: right;
             font-size: 10px;
             color: #64748b;
+            line-height: 1.4;
         }
 
+        /* Contenedor de Información de Contexto */
         .info-box {
             background-color: #f8fafc;
-            border-left: 4px solid #6366f1;
+            border-left: 4px solid #2563eb;
             padding: 12px 15px;
             margin-bottom: 20px;
             border-radius: 0 4px 4px 0;
         }
 
         .info-label {
-            font-size: 9px;
+            font-size: 10px;
             text-transform: uppercase;
-            letter-spacing: 0.5px;
-            color: #64748b;
+            letter-spacing: 1px;
+            color: #2563eb;
             font-weight: bold;
+            margin-bottom: 4px;
         }
 
         .info-value {
-            font-size: 15px;
+            font-size: 20px;
             color: #0f172a;
+            margin: 0;
             font-weight: 700;
         }
 
-        /* Estilos de la tabla de matriz */
+        /* Secciones Globales */
+        .section-title {
+            font-size: 13px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: #475569;
+            font-weight: bold;
+            border-bottom: 1px solid #cbd5e1;
+            padding-bottom: 5px;
+            margin-top: 20px;
+            margin-bottom: 12px;
+            page-break-after: avoid;
+        }
+
+        /* Tabla de Matriz de Calificaciones Extendida */
         .matrix-table {
             width: 100%;
             border-collapse: collapse;
             margin-top: 5px;
+            page-break-inside: auto;
+        }
+
+        .matrix-table tr {
+            page-break-inside: avoid;
+            page-break-after: auto;
         }
 
         .matrix-table th {
-            background-color: #312e81;
+            background-color: #2563eb;
+            /* Azul Institucional Unificado */
             color: #ffffff;
             font-weight: 600;
             text-align: left;
@@ -99,7 +132,7 @@
             font-size: 10px;
             text-transform: uppercase;
             letter-spacing: 0.3px;
-            border: 1px solid #1e1b4b;
+            border: 1px solid #1d4ed8;
         }
 
         .matrix-table th.center-th,
@@ -127,27 +160,31 @@
 
         .score-container {
             font-weight: 600;
+            color: #0f172a;
         }
 
-        /* Pequeño indicador de si pasó el cuestionario individual */
+        /* Indicadores de Aprobación Individual */
         .passed-dot {
             color: #16a34a;
             font-size: 12px;
-            margin-left: 2px;
+            margin-left: 3px;
+            font-weight: bold;
         }
 
         .failed-dot {
             color: #dc2626;
             font-size: 12px;
-            margin-left: 2px;
+            margin-left: 3px;
+            font-weight: bold;
         }
 
         .avg-highlight {
             font-weight: bold;
-            color: #4338ca;
-            background-color: #f5f3ff;
+            color: #1e293b;
+            background-color: #f1f5f9;
         }
 
+        /* Footer Fijo Transparente */
         .footer {
             position: fixed;
             bottom: 0;
@@ -159,16 +196,39 @@
             border-top: 1px solid #f1f5f9;
             padding-top: 6px;
         }
+
+        /* Bloque de Cierre Obligatorio */
+        .platform-closure {
+            margin-top: 40px;
+            padding-top: 15px;
+            border-top: 1px dashed #e2e8f0;
+            text-align: center;
+            page-break-inside: avoid;
+        }
+
+        .platform-logo {
+            width: 110px;
+            height: auto;
+            display: inline-block;
+            margin-bottom: 6px;
+        }
+
+        .platform-info {
+            font-size: 10px;
+            color: #94a3b8;
+            letter-spacing: 0.2px;
+        }
     </style>
 </head>
 
 <body>
 
+    <!-- Encabezado Estilo Gaia Academic -->
     <div class="header">
         <table class="header-table">
             <tr>
                 <td style="width: 75px;">
-                    <img src="{{ logo_path }}" class="logo" alt="Logo">
+                    <img src="{{ logo_path }}" class="logo" alt="Logo Institución">
                 </td>
                 <td>
                     <div class="institution-title">Gaia Academic</div>
@@ -182,11 +242,15 @@
         </table>
     </div>
 
+    <!-- Contenedor del Título del Curso -->
     <div class="info-box">
         <div class="info-label">Curso Académico</div>
-        <div class="info-value">{{ report.course_name }}</div>
+        <h1 class="info-value">{{ report.course_name }}</h1>
     </div>
 
+    <div class="section-title">Matriz de Rendimiento Formativo</div>
+
+    <!-- Tabla de Matriz Horizontal -->
     <table class="matrix-table">
         <thead>
             <tr>
@@ -195,7 +259,7 @@
                 {% for header in report.headers %}
                 <th class="center-th" style="font-size: 9px;">{{ header.title }}</th>
                 {% endfor %}
-                <th class="center-th" style="width: 10%; background-color: #1e1b4b;">Promedio Prácticas</th>
+                <th class="center-th" style="width: 12%; background-color: #1e293b;">Promedio Prácticas</th>
             </tr>
         </thead>
         <tbody>
@@ -229,14 +293,23 @@
             <tr>
                 <td colspan="{{ report.headers|length + 3 }}"
                     style="text-align: center; padding: 25px; color: #64748b; font-style: italic;">
-                    No se registran cuestionarios de práctica (`count_towards_grade = False`) o alumnos matriculados en
-                    este curso.
+                    No se registran cuestionarios de práctica o alumnos matriculados en este curso.
                 </td>
             </tr>
             {% endfor %}
         </tbody>
     </table>
 
+    <!-- Bloque de Cierre: Logo de la Plataforma al Final del Contenido -->
+    <div class="platform-closure">
+        <img src="{{ logo_plataform }}" class="platform-logo" alt="Logo Plataforma">
+        <div class="platform-info">
+            Documento de control formativo y rendimiento interno generado de manera automática por la plataforma Athena
+            LMS.
+        </div>
+    </div>
+
+    <!-- Footer de Confidencialidad -->
     <div class="footer">
         Este documento es un reporte formativo e interno emitido por Gaia Academic LMS. Las notas expresadas aquí no
         alteran los promedios ponderados finales del estudiante.

@@ -5,9 +5,10 @@
     <meta charset="UTF-8">
     <title>Reporte de Encuestas - Docentes</title>
     <style>
+        /* Configuración de Página Horizontal para WeasyPrint */
         @page {
             size: A4 landscape;
-            margin: 15mm;
+            margin: 15mm 15mm 15mm 15mm;
 
             @bottom-right {
                 content: "Página " counter(page) " de " counter(pages);
@@ -26,10 +27,11 @@
             line-height: 1.4;
         }
 
+        /* Encabezado Principal Estilo Gaia Academic */
         .header {
             border-bottom: 2px solid #e2e8f0;
             padding-bottom: 12px;
-            margin-bottom: 15px;
+            margin-bottom: 20px;
         }
 
         .header-table {
@@ -37,81 +39,105 @@
             border-collapse: collapse;
         }
 
+        .header-table td {
+            padding: 0;
+            vertical-align: middle;
+        }
+
         .logo {
             width: 75px;
             height: auto;
+            display: block;
         }
 
         .institution-title {
-            font-size: 16px;
+            font-size: 18px;
             font-weight: bold;
             color: #0f172a;
-            padding-left: 12px;
+            margin-left: 15px;
         }
 
         .institution-sub {
             font-size: 11px;
             color: #64748b;
-            padding-left: 12px;
+            margin-left: 15px;
         }
 
         .meta-info {
             text-align: right;
             font-size: 10px;
             color: #64748b;
+            line-height: 1.4;
         }
 
+        /* Contenedor de Información de Contexto */
         .course-badge {
             background-color: #f8fafc;
-            border-left: 4px solid #1e40af;
-            padding: 10px 14px;
+            border-left: 4px solid #2563eb;
+            /* Azul Institucional Unificado */
+            padding: 12px 15px;
             margin-bottom: 25px;
             border-radius: 0 4px 4px 0;
         }
 
         .badge-label {
-            font-size: 9px;
+            font-size: 10px;
             text-transform: uppercase;
-            letter-spacing: 0.5px;
-            color: #64748b;
+            letter-spacing: 1px;
+            color: #2563eb;
             font-weight: bold;
+            margin-bottom: 4px;
         }
 
         .badge-value {
-            font-size: 15px;
+            font-size: 20px;
             color: #0f172a;
+            margin: 0;
             font-weight: 700;
         }
 
+        /* Secciones de Bloques de Encuesta */
         .survey-section {
             margin-bottom: 35px;
             page-break-inside: avoid;
+            /* Evita fracturas de bloques a mitad de sección */
         }
 
         .survey-title {
             font-size: 13px;
             color: #0f172a;
-            font-weight: 600;
-            margin-bottom: 8px;
-            padding-bottom: 4px;
-            border-bottom: 1px dashed #cbd5e1;
+            font-weight: bold;
+            margin-bottom: 10px;
+            padding-bottom: 6px;
+            border-bottom: 2px solid #cbd5e1;
             text-transform: uppercase;
+            letter-spacing: 0.3px;
         }
 
+        /* Tablas de Respuestas en Matriz */
         .matrix-table {
             width: 100%;
             border-collapse: collapse;
             margin-bottom: 12px;
+            page-break-inside: auto;
+        }
+
+        .matrix-table tr {
+            page-break-inside: avoid;
+            page-break-after: auto;
         }
 
         .matrix-table th {
-            background-color: #1e3a8a;
+            background-color: #2563eb;
+            /* Azul Institucional Unificado */
             color: #ffffff;
             font-weight: 600;
             text-align: left;
-            padding: 7px 9px;
+            padding: 8px 10px;
             font-size: 10px;
-            border: 1px solid #172554;
+            text-transform: uppercase;
+            letter-spacing: 0.3px;
+            border: 1px solid #1d4ed8;
         }
 
         .matrix-table th.center-align,
@@ -120,27 +146,32 @@
         }
 
         .matrix-table td {
-            padding: 7px 9px;
+            padding: 8px 10px;
             border: 1px solid #e2e8f0;
-            font-size: 10.5px;
+            font-size: 11px;
+            color: #334155;
+            vertical-align: middle;
         }
 
         .matrix-table tr:nth-child(even) {
             background-color: #f8fafc;
         }
 
+        /* Columna de Destacado de Promedios */
         .avg-column {
             font-weight: bold;
-            color: #1e40af;
-            background-color: #eff6ff;
+            color: #1e293b;
+            background-color: #f1f5f9;
         }
 
+        /* Glosario de Preguntas Contextual */
         .legend-box {
             background-color: #f8fafc;
             border: 1px solid #e2e8f0;
             border-radius: 4px;
-            padding: 8px 12px;
-            margin-top: 5px;
+            padding: 10px 14px;
+            margin-top: 8px;
+            page-break-inside: avoid;
         }
 
         .legend-title {
@@ -148,21 +179,28 @@
             font-weight: bold;
             color: #475569;
             text-transform: uppercase;
-            margin-bottom: 4px;
+            margin-bottom: 6px;
+            letter-spacing: 0.5px;
         }
 
         .legend-grid {
-            display: inline-block;
-            font-size: 9.5px;
-            color: #64748b;
-            margin-right: 15px;
+            display: block;
+            font-size: 10px;
+            color: #475569;
+            margin-bottom: 4px;
+            line-height: 1.3;
+        }
+
+        .legend-grid:last-child {
+            margin-bottom: 0;
         }
 
         .legend-num {
             font-weight: bold;
-            color: #1e40af;
+            color: #2563eb;
         }
 
+        /* Footer Fijo Transparente */
         .footer {
             position: fixed;
             bottom: 0;
@@ -174,20 +212,43 @@
             border-top: 1px solid #f1f5f9;
             padding-top: 6px;
         }
+
+        /* Bloque de Cierre Obligatorio */
+        .platform-closure {
+            margin-top: 40px;
+            padding-top: 15px;
+            border-top: 1px dashed #e2e8f0;
+            text-align: center;
+            page-break-inside: avoid;
+        }
+
+        .platform-logo {
+            width: 110px;
+            height: auto;
+            display: inline-block;
+            margin-bottom: 6px;
+        }
+
+        .platform-info {
+            font-size: 10px;
+            color: #94a3b8;
+            letter-spacing: 0.2px;
+        }
     </style>
 </head>
 
 <body>
 
+    <!-- Encabezado Estilo Gaia Academic -->
     <div class="header">
         <table class="header-table">
             <tr>
                 <td style="width: 75px;">
-                    <img src="{{ logo_path }}" class="logo" alt="Logo">
+                    <img src="{{ logo_path }}" class="logo" alt="Logo Institución">
                 </td>
                 <td>
                     <div class="institution-title">Gaia Academic</div>
-                    <div class="institution-sub">Reporte Analítico de Encuestas - Evaluación y Criterio del Personal
+                    <div class="institution-sub">Reporte Analítico de Encuestas • Evaluación y Criterio del Personal
                         Docente</div>
                 </td>
                 <td class="meta-info">
@@ -198,15 +259,18 @@
         </table>
     </div>
 
+    <!-- Contenedor del Título del Curso Evaluado -->
     <div class="course-badge">
         <div class="badge-label">Curso Evaluado</div>
-        <div class="badge-value">{{ report.course_name }}</div>
+        <h1 class="badge-value">{{ report.course_name }}</h1>
     </div>
 
+    <!-- Iteración de Encuestas -->
     {% for survey in report.surveys %}
     <div class="survey-section">
         <div class="survey-title">
-            {{ survey.survey_title }} (Bloque ID: {{ survey.block_id }})
+            {{ survey.survey_title }} <span style="color: #64748b; font-weight: normal;">(Bloque ID: {{ survey.block_id
+                }})</span>
         </div>
 
         <table class="matrix-table">
@@ -217,11 +281,11 @@
 
                     {% if survey.headers %}
                     {% for header in survey.headers %}
-                    <th class="center-align" style="min-width: 40px;">{{ header.label }}</th>
+                    <th class="center-align" style="min-width: 45px;">{{ header.label }}</th>
                     {% endfor %}
-                    <th class="center-align" style="width: 12%; background-color: #172554;">Promedio General</th>
+                    <th class="center-align" style="width: 12%; background-color: #1e293b;">Promedio General</th>
                     {% else %}
-                    <th class="center-align" style="width: 20%; background-color: #172554;">Estado</th>
+                    <th class="center-align" style="width: 20%; background-color: #1e293b;">Estado</th>
                     {% endif %}
                 </tr>
             </thead>
@@ -237,7 +301,6 @@
                         {{ answer }}
                     </td>
                     {% endfor %}
-
                     <td class="center-align avg-column">
                         {{ row.average }}
                     </td>
@@ -251,6 +314,7 @@
             </tbody>
         </table>
 
+        <!-- Glosario de Cuestiones Respondidas -->
         {% if survey.headers %}
         <div class="legend-box">
             <div class="legend-title">Glosario de Cuestiones Respondidas:</div>
@@ -264,6 +328,16 @@
     </div>
     {% endfor %}
 
+    <!-- Bloque de Cierre: Logo de la Plataforma al Final del Contenido -->
+    <div class="platform-closure">
+        <img src="{{ logo_plataform }}" class="platform-logo" alt="Logo Plataforma">
+        <div class="platform-info">
+            Documento institucional de control analítico interno generado de manera automática por la plataforma Athena
+            LMS.
+        </div>
+    </div>
+
+    <!-- Footer de Confidencialidad -->
     <div class="footer">
         Este documento representa información confidencial interna de Gaia Academic LMS correspondiente a la
         autoevaluación o test completados por el cuerpo docente del curso.

@@ -2,287 +2,296 @@
 <html lang="es">
 
 <head>
-
     <meta charset="UTF-8">
-
+    <title>Reporte Oficial - Asistencia de Estudiantes</title>
     <style>
+        /* Configuración de Página para WeasyPrint */
         @page {
             size: A4;
-            margin: 2cm;
+            margin: 20mm 15mm 20mm 15mm;
+
+            @bottom-right {
+                content: "Página " counter(page) " de " counter(pages);
+                font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+                font-size: 9px;
+                color: #94a3b8;
+            }
         }
 
         body {
-            font-family: Arial, Helvetica, sans-serif;
-            color: #1f2937;
-            font-size: 13px;
+            font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+            color: #1e293b;
+            margin: 0;
+            padding: 0;
+            font-size: 14px;
+            line-height: 1.5;
         }
 
+        /* Encabezado Principal Unificado */
         .header {
-            width: 100%;
-            border-bottom: 3px solid #1e3a8a;
-            padding-bottom: 16px;
-            margin-bottom: 28px;
+            border-bottom: 2px solid #e2e8f0;
+            padding-bottom: 15px;
+            margin-bottom: 25px;
         }
 
         .header-table {
             width: 100%;
+            border-collapse: collapse;
         }
 
-        .logo-cell {
-            width: 120px;
+        .header-table td {
+            padding: 0;
             vertical-align: middle;
         }
 
         .logo {
-            width: 90px;
+            width: 80px;
             height: auto;
-        }
-
-        .institution-info {
-            vertical-align: middle;
+            display: block;
         }
 
         .institution-name {
-            font-size: 24px;
+            font-size: 18px;
             font-weight: bold;
-            color: #1e3a8a;
-            margin-bottom: 6px;
+            color: #0f172a;
+            margin-left: 15px;
         }
 
-        .institution-subtitle {
-            font-size: 14px;
-            color: #4b5563;
+        .institution-sub {
+            font-size: 12px;
+            color: #64748b;
+            margin-left: 15px;
         }
 
-        .report-title {
-            margin-top: 30px;
-            text-align: center;
+        .meta-info {
+            text-align: right;
+            font-size: 11px;
+            color: #64748b;
+            line-height: 1.4;
         }
 
-        .report-title h1 {
-            margin: 0;
+        /* Contenedor de Información de Contexto */
+        .course-title-container {
+            background-color: #f8fafc;
+            border-left: 4px solid #3b82f6;
+            padding: 15px;
+            margin-bottom: 30px;
+            border-radius: 0 6px 6px 0;
+        }
+
+        .label-curso {
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: #3b82f6;
+            font-weight: bold;
+            margin-bottom: 4px;
+        }
+
+        .course-name {
             font-size: 22px;
-            color: #111827;
+            color: #0f172a;
+            margin: 0 0 6px 0;
+            font-weight: 700;
         }
 
-        .report-title p {
-            margin-top: 8px;
-            color: #6b7280;
+        .course-subtitle {
+            font-size: 13px;
+            color: #475569;
+            margin: 0;
+        }
+
+        .course-subtitle strong {
+            color: #0f172a;
+        }
+
+        /* Secciones Globales */
+        .section-title {
             font-size: 14px;
-        }
-
-        .info-section {
-            margin-top: 30px;
-            margin-bottom: 20px;
-        }
-
-        .info-table {
-            width: 100%;
-        }
-
-        .info-label {
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: #475569;
             font-weight: bold;
-            width: 180px;
-            padding: 6px 0;
+            border-bottom: 1px solid #cbd5e1;
+            padding-bottom: 6px;
+            margin-top: 25px;
+            margin-bottom: 15px;
+            page-break-after: avoid;
         }
 
+        /* Tabla de Asistencia Estilo Oficial */
         .attendance-table {
             width: 100%;
             border-collapse: collapse;
-            margin-top: 20px;
+            margin-top: 15px;
+            page-break-inside: auto;
         }
 
-        .attendance-table thead {
-            background-color: #1e3a8a;
-            color: white;
+        .attendance-table tr {
+            page-break-inside: avoid;
+            page-break-after: auto;
         }
 
         .attendance-table th {
-            padding: 12px;
-            border: 1px solid #d1d5db;
-            font-size: 13px;
+            background-color: #2563eb;
+            /* Azul Institucional */
+            color: #ffffff;
+            font-weight: 600;
+            text-align: center;
+            padding: 10px 12px;
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            border-bottom: 2px solid #1d4ed8;
+        }
+
+        .attendance-table th.student-th {
+            text-align: left;
         }
 
         .attendance-table td {
-            padding: 10px;
-            border: 1px solid #d1d5db;
+            padding: 10px 12px;
+            border-bottom: 1px solid #e2e8f0;
+            font-size: 13px;
+            color: #334155;
             text-align: center;
         }
 
-        .attendance-table tbody tr:nth-child(even) {
-            background-color: #f9fafb;
+        .attendance-table .student-name {
+            text-align: left;
+            font-weight: 500;
+            color: #0f172a;
         }
 
-        .student-name {
-            text-align: left !important;
+        .attendance-table tr:nth-child(even) {
+            background-color: #f8fafc;
         }
 
-        .footer {
+        /* Resaltado de porcentaje */
+        .attendance-percentage {
+            font-weight: bold;
+            color: #1e3a8a;
+        }
+
+        /* Footer Fijo Transparente */
+        .footer-text {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            text-align: center;
+            font-size: 9px;
+            color: #94a3b8;
+            border-top: 1px solid #f1f5f9;
+            padding-top: 6px;
+        }
+
+        /* Bloque de Cierre Obligatorio */
+        .platform-closure {
             margin-top: 50px;
-            border-top: 1px solid #d1d5db;
-            padding-top: 12px;
+            padding-top: 20px;
+            border-top: 1px dashed #e2e8f0;
             text-align: center;
-            font-size: 11px;
-            color: #6b7280;
+            page-break-inside: avoid;
+        }
+
+        .platform-logo {
+            width: 110px;
+            height: auto;
+            display: inline-block;
+            margin-bottom: 8px;
+        }
+
+        .platform-info {
+            font-size: 10px;
+            color: #94a3b8;
+            letter-spacing: 0.2px;
         }
     </style>
-
 </head>
 
 <body>
 
-    <!-- HEADER -->
-
+    <!-- Encabezado Estilo Gaia Academic -->
     <div class="header">
-
         <table class="header-table">
-
             <tr>
-
-                <td class="logo-cell">
-
-                    <img src="{{ logo_path }}" class="logo">
-
+                <td style="width: 80px;">
+                    <img src="{{ logo_path }}" class="logo" alt="Logo Institución">
                 </td>
-
-                <td class="institution-info">
-
-                    <div class="institution-name">
-                        Gaia Academic
-                    </div>
-
-                    <div class="institution-subtitle">
-                        Sistema Académico Institucional
-                    </div>
-
-                </td>
-
-            </tr>
-
-        </table>
-
-    </div>
-
-    <!-- TITULO -->
-
-    <div class="report-title">
-
-        <h1>
-            Reporte de Asistencia de Estudiantes
-        </h1>
-
-        <p>
-            {{ course_name }}
-        </p>
-
-    </div>
-
-    <!-- INFORMACION -->
-
-    <div class="info-section">
-
-        <table class="info-table">
-
-            <tr>
-
-                <td class="info-label">
-                    Fecha de emisión:
-                </td>
-
                 <td>
-                    {{ generated_at }}
+                    <div class="institution-name">Gaia Academic</div>
+                    <div class="institution-sub">Sistema Académico Institucional</div>
                 </td>
-
+                <td class="meta-info">
+                    <strong>Reporte de Asistencia</strong><br>
+                    Fecha de emisión: {{ generated_at }}
+                </td>
             </tr>
-
-            <tr>
-
-                <td class="info-label">
-                    Total estudiantes:
-                </td>
-
-                <td>
-                    {{ report|length }}
-                </td>
-
-            </tr>
-
         </table>
-
     </div>
 
-    <!-- TABLA -->
+    <!-- Contenedor del Título del Curso y Metadatos Breves -->
+    <div class="course-title-container">
+        <div class="label-curso">Control de Asistencia Estudiantil</div>
+        <h1 class="course-name">Reporte de Asistencia de Estudiantes</h1>
+        <p class="course-subtitle">Curso: <strong>{{ course_name }}</strong> &nbsp;|&nbsp; Total estudiantes: <strong>{{
+                report|length }}</strong></p>
+    </div>
 
+    <div class="section-title">Registro General y Porcentajes de Cumplimiento</div>
+
+    <!-- Tabla Oficial de Control de Asistencia -->
     <table class="attendance-table">
-
         <thead>
-
             <tr>
-
-                <th>
-                    Estudiante
-                </th>
-
-                <th>
-                    Presentes
-                </th>
-
-                <th>
-                    Faltas
-                </th>
-
-                <th>
-                    Pendientes
-                </th>
-
-                <th>
-                    % Asistencia
-                </th>
-
+                <th class="student-th" style="width: 45%;">Estudiante</th>
+                <th style="width: 13%;">Presentes</th>
+                <th style="width: 13%;">Faltas</th>
+                <th style="width: 14%;">Pendientes</th>
+                <th style="width: 15%;">% Asistencia</th>
             </tr>
-
         </thead>
-
         <tbody>
-
             {% for row in report %}
-
             <tr>
-
                 <td class="student-name">
                     {{ row.student_name }}
                 </td>
-
                 <td>
                     {{ row.present_count }}
                 </td>
-
                 <td>
                     {{ row.absent_count }}
                 </td>
-
                 <td>
                     {{ row.pending_count }}
                 </td>
-
-                <td>
+                <td class="attendance-percentage">
                     {{ row.attendance_percentage }}%
                 </td>
-
             </tr>
-
+            {% else %}
+            <tr>
+                <td colspan="5" style="text-align: center; color: #64748b; font-style: italic; padding: 20px;">
+                    No existen registros de asistencia para este curso.
+                </td>
+            </tr>
             {% endfor %}
-
         </tbody>
-
     </table>
 
-    <!-- FOOTER -->
+    <!-- Bloque de Cierre: Logo de la Plataforma al Final del Contenido -->
+    <div class="platform-closure">
+        <img src="{{ logo_plataform }}" class="platform-logo" alt="Logo Plataforma">
+        <div class="platform-info">
+            Documento de control de asistencia oficial generado de manera automática por la plataforma Athena LMS.
+        </div>
+    </div>
 
-    <div class="footer">
-
-        Documento generado automáticamente por el sistema académico institucional.
-
+    <!-- Footer de Confidencialidad -->
+    <div class="footer-text">
+        Gaia Academic &copy; 2026 - Reporte Confidencial de Gestión Curricular
     </div>
 
 </body>
