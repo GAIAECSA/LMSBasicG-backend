@@ -157,6 +157,7 @@ def create_massive_enrollments(
 
                 if not existing_user:
                     user_model = User(**user_data.model_dump())
+                    user_model.role_id = 2
                     existing_user = user_repo.create_flush(
                         db,
                         user_model,
