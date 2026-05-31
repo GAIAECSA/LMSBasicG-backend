@@ -344,10 +344,8 @@ def get_professor_surveys_report(
     a todas las encuestas del curso especificado.
     """
     try:
-        pdf_bytes = (
-            professor_survey_report_service.generate_course_professor_surveys_pdf(
-                db=db, course_id=course_id
-            )
+        pdf_bytes = professor_survey_report_service.generate_professor_surveys_pdf(
+            db=db, course_id=course_id
         )
 
         filename = f"reporte_encuestas_profesores_curso_{course_id}.pdf"
