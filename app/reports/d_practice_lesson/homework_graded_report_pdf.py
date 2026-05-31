@@ -16,6 +16,7 @@ def export_graded_homework_report_pdf(
         report=report,
         generated_at=generated_at,
         logo_path="static/reports_resources/logo_empresa.png",
+        logo_plataform="static/reports_resources/logo_athena.png",
     )
 
     return HTML(

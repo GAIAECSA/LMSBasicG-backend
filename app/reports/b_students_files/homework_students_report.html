@@ -3,8 +3,9 @@
 
 <head>
     <meta charset="UTF-8">
-    <title>Reporte de Entregas de Tareas</title>
+    <title>Reporte Oficial - Entregas de Tareas</title>
     <style>
+        /* Configuración de Página para WeasyPrint */
         @page {
             size: A4;
             margin: 20mm 15mm 20mm 15mm;
@@ -22,11 +23,11 @@
             color: #1e293b;
             margin: 0;
             padding: 0;
-            font-size: 13px;
+            font-size: 14px;
             line-height: 1.5;
         }
 
-        /* Encabezado */
+        /* Encabezado Principal Unificado */
         .header {
             border-bottom: 2px solid #e2e8f0;
             padding-bottom: 15px;
@@ -70,49 +71,70 @@
         }
 
         /* Contenedor de Información de Contexto */
-        .report-summary-box {
+        .course-title-container {
             background-color: #f8fafc;
-            border-left: 4px solid #10b981;
+            border-left: 4px solid #3b82f6;
             padding: 15px;
-            margin-bottom: 25px;
+            margin-bottom: 30px;
             border-radius: 0 6px 6px 0;
         }
 
-        .summary-label {
-            font-size: 10px;
+        .label-curso {
+            font-size: 11px;
             text-transform: uppercase;
             letter-spacing: 1px;
-            color: #64748b;
+            color: #3b82f6;
             font-weight: bold;
             margin-bottom: 4px;
         }
 
-        .summary-title {
-            font-size: 20px;
+        .course-name {
+            font-size: 22px;
             color: #0f172a;
-            margin: 0 0 8px 0;
+            margin: 0 0 6px 0;
             font-weight: 700;
         }
 
-        .summary-subtitle {
+        .course-subtitle {
             font-size: 13px;
             color: #475569;
             margin: 0;
         }
 
-        .summary-subtitle strong {
+        .course-subtitle strong {
             color: #0f172a;
         }
 
-        /* Tabla de Alumnos */
+        /* Secciones Globales */
+        .section-title {
+            font-size: 14px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: #475569;
+            font-weight: bold;
+            border-bottom: 1px solid #cbd5e1;
+            padding-bottom: 6px;
+            margin-top: 25px;
+            margin-bottom: 15px;
+            page-break-after: avoid;
+        }
+
+        /* Tabla de Alumnos adaptada al estilo oficial */
         .report-table {
             width: 100%;
             border-collapse: collapse;
             margin-top: 15px;
+            page-break-inside: auto;
+        }
+
+        .report-table tr {
+            page-break-inside: avoid;
+            page-break-after: auto;
         }
 
         .report-table th {
-            background-color: #0f172a;
+            background-color: #2563eb;
+            /* Azul Institucional de Cabecera */
             color: #ffffff;
             font-weight: 600;
             text-align: left;
@@ -160,16 +182,39 @@
             font-style: italic;
         }
 
+        /* Footer Fijo Transparente */
         .footer-text {
             position: fixed;
             bottom: 0;
             left: 0;
             width: 100%;
             text-align: center;
-            font-size: 10px;
+            font-size: 9px;
             color: #94a3b8;
             border-top: 1px solid #f1f5f9;
-            padding-top: 8px;
+            padding-top: 6px;
+        }
+
+        /* Bloque de Cierre Obligatorio */
+        .platform-closure {
+            margin-top: 50px;
+            padding-top: 20px;
+            border-top: 1px dashed #e2e8f0;
+            text-align: center;
+            page-break-inside: avoid;
+        }
+
+        .platform-logo {
+            width: 110px;
+            height: auto;
+            display: inline-block;
+            margin-bottom: 8px;
+        }
+
+        .platform-info {
+            font-size: 10px;
+            color: #94a3b8;
+            letter-spacing: 0.2px;
         }
     </style>
 </head>
@@ -180,7 +225,7 @@
         <table class="header-table">
             <tr>
                 <td style="width: 80px;">
-                    <img src="{{ logo_path }}" class="logo" alt="Logo">
+                    <img src="{{ logo_path }}" class="logo" alt="Logo Institución">
                 </td>
                 <td>
                     <div class="institution-name">Gaia Academic</div>
@@ -188,17 +233,19 @@
                 </td>
                 <td class="meta-info">
                     <strong>Reporte de Cumplimiento</strong><br>
-                    Fecha de generación: {{ generated_at }}
+                    Fecha de emisión: {{ generated_at }}
                 </td>
             </tr>
         </table>
     </div>
 
-    <div class="report-summary-box">
-        <div class="summary-label">Control de Entregas Académicas</div>
-        <h1 class="summary-title">{{ report.activity_title }}</h1>
-        <p class="summary-subtitle">Curso: <strong>{{ report.course_name }}</strong></p>
+    <div class="course-title-container">
+        <div class="label-curso">Control de Entregas Académicas</div>
+        <h1 class="course-name">{{ report.activity_title }}</h1>
+        <p class="course-subtitle">Curso: <strong>{{ report.course_name }}</strong></p>
     </div>
+
+    <div class="section-title">Listado de Control y Estado de Entregas</div>
 
     <table class="report-table">
         <thead>
@@ -239,8 +286,15 @@
         </tbody>
     </table>
 
+    <div class="platform-closure">
+        <img src="{{ logo_plataform }}" class="platform-logo" alt="Logo Plataforma">
+        <div class="platform-info">
+            Documento de control de rendimiento oficial generado de manera automática por la plataforma Athena LMS.
+        </div>
+    </div>
+
     <div class="footer-text">
-        Documento de control académico interno generado por la plataforma Gaia Academic.
+        Gaia Academic &copy; 2026 - Reporte Confidencial de Gestión Curricular
     </div>
 
 </body>

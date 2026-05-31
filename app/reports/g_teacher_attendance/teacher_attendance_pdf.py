@@ -13,6 +13,7 @@ def export_teacher_attendance_pdf(report, generated_at: str):
         report=report,
         generated_at=generated_at,
         logo_path="static/reports_resources/logo_empresa.png",
+        logo_plataform="static/reports_resources/logo_athena.png",
     )
 
     return HTML(

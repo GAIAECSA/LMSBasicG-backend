@@ -18,6 +18,7 @@ def export_student_attendance_pdf(
         course_name=course_name,
         generated_at=generated_at,
         logo_path="static/reports_resources/logo_empresa.png",
+        logo_plataform="static/reports_resources/logo_athena.png",
     )
 
     return HTML(
