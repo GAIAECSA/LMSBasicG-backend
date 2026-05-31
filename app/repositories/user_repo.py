@@ -1,4 +1,5 @@
 from sqlalchemy.orm import Session
+
 from app.models.user import User
 
 
@@ -38,7 +39,7 @@ def get_by_email_or_idnumber(db: Session, email: str, id_number: str):
     return (
         db.query(User)
         .filter(
-            (User.email == email) | (User.id_number == id_number), User.deleted == False
+            (User.email == email) | (User.idnumber == id_number), User.deleted == False
         )
         .first()
     )
