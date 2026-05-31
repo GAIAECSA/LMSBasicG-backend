@@ -1,3 +1,4 @@
+import logging
 import re
 from datetime import datetime
 
@@ -17,6 +18,8 @@ from .survey_report_schemas import (
     StudentSurveyRowSchema,
 )
 
+logger = logging.getLogger(__name__)
+
 STUDENT_ROLE_ID = 4
 
 
@@ -33,42 +36,87 @@ def _extract_numeric_score(value) -> float | None:
 
 
 def generate_course_surveys_pdf(db: Session, course_id: int):
+    logger.info(
+        "[SURVEY_REPORT] ===== INICIO REPORTE CURSO %s =====",
+        course_id,
+    )
+
     course = (
         db.query(Course)
-        .filter(Course.id == course_id, Course.deleted.is_(False))
+        .filter(
+            Course.id == course_id,
+            Course.deleted.is_(False),
+        )
         .first()
     )
+
+    logger.info(
+        "[SURVEY_REPORT] Curso encontrado=%s",
+        course is not None,
+    )
+
     course_name = course.name if course else f"Curso ID: {course_id}"
 
-    # 1. Obtener todas las encuestas del curso estructuralmente
-    survey_blocks = get_survey_blocks_by_course(db=db, course_id=course_id)
+    survey_blocks = get_survey_blocks_by_course(
+        db=db,
+        course_id=course_id,
+    )
+
+    logger.info(
+        "[SURVEY_REPORT] Total bloques encuesta=%s",
+        len(survey_blocks),
+    )
+
     surveys_report_list = []
 
     for block in survey_blocks:
-        # 2. Obtener a todos los estudiantes (con o sin respuesta para este bloque)
+        logger.info(
+            "[SURVEY_REPORT] Procesando block_id=%s",
+            block.id,
+        )
+
         enrollments_responses = get_enrollments_with_optional_survey_responses(
-            db=db, course_id=course_id, block_id=block.id, role_id=STUDENT_ROLE_ID
+            db=db,
+            course_id=course_id,
+            block_id=block.id,
+            role_id=STUDENT_ROLE_ID,
+        )
+
+        logger.info(
+            "[SURVEY_REPORT] block_id=%s estudiantes=%s",
+            block.id,
+            len(enrollments_responses),
         )
 
         survey_title = f"Encuesta Bloque {block.id}"
         questions_list = []
 
-        # 3. Buscar el primer registro que contenga la definición de la encuesta para armar los headers
         for r in enrollments_responses:
             if r.survey_definition:
+                logger.info(
+                    "[SURVEY_REPORT] Definición encontrada para block_id=%s",
+                    block.id,
+                )
+
                 survey_title = (
                     r.survey_definition.get("title")
                     or r.survey_definition.get("name")
                     or survey_title
                 )
+
                 questions_list = (
                     r.survey_definition.get("questions")
                     or r.survey_definition.get("survey_questions")
                     or []
                 )
+
+                logger.info(
+                    "[SURVEY_REPORT] Preguntas encontradas=%s",
+                    len(questions_list),
+                )
+
                 break
 
-        # Construir headers dinámicos
         headers = [
             QuestionHeaderSchema(
                 id=q.get("id", idx + 1),
@@ -78,34 +126,63 @@ def generate_course_surveys_pdf(db: Session, course_id: int):
             for idx, q in enumerate(questions_list)
         ]
 
-        # 4. Construir las filas para todos los matriculados
+        logger.info(
+            "[SURVEY_REPORT] Headers generados=%s",
+            len(headers),
+        )
+
         rows = []
+
         for res in enrollments_responses:
-            student_answers = []
+            logger.info(
+                "[SURVEY_REPORT] Alumno=%s",
+                res.user_name,
+            )
 
             response_json = res.survey_answers or {}
+
+            logger.info(
+                "[SURVEY_REPORT] Respuesta=%s",
+                response_json,
+            )
+
             answers_payload = response_json.get("answers", {})
+
+            logger.info(
+                "[SURVEY_REPORT] Keys answers=%s",
+                list(answers_payload.keys()),
+            )
+
+            student_answers = []
 
             total_score_sum = 0.0
             answered_questions_count = 0
 
-            # Si la encuesta tiene preguntas mapeadas, buscamos el valor de cada una
             for h in headers:
                 val = answers_payload.get(str(h.id)) or answers_payload.get(h.id)
 
+                logger.info(
+                    "[SURVEY_REPORT] Pregunta=%s valor=%s",
+                    h.id,
+                    val,
+                )
+
                 if val is not None:
                     student_answers.append(str(val))
+
                     numeric_val = _extract_numeric_score(val)
+
                     if numeric_val is not None:
                         total_score_sum += numeric_val
                         answered_questions_count += 1
                 else:
                     student_answers.append("—")
 
-            if answered_questions_count > 0:
-                average_str = f"{(total_score_sum / answered_questions_count):.2f}"
-            else:
-                average_str = "0.00"
+            average_str = (
+                f"{(total_score_sum / answered_questions_count):.2f}"
+                if answered_questions_count > 0
+                else "0.00"
+            )
 
             rows.append(
                 StudentSurveyRowSchema(
@@ -115,16 +192,34 @@ def generate_course_surveys_pdf(db: Session, course_id: int):
                 )
             )
 
+        logger.info(
+            "[SURVEY_REPORT] Filas generadas=%s",
+            len(rows),
+        )
+
         surveys_report_list.append(
             SingleSurveyMatrixSchema(
-                block_id=block.id, survey_title=survey_title, headers=headers, rows=rows
+                block_id=block.id,
+                survey_title=survey_title,
+                headers=headers,
+                rows=rows,
             )
         )
 
-    report_data = CourseSurveyReportSchema(
-        course_id=course_id, course_name=course_name, surveys=surveys_report_list
+    logger.info(
+        "[SURVEY_REPORT] Encuestas finales=%s",
+        len(surveys_report_list),
     )
 
+    report_data = CourseSurveyReportSchema(
+        course_id=course_id,
+        course_name=course_name,
+        surveys=surveys_report_list,
+    )
+
+    logger.info("[SURVEY_REPORT] ===== FIN REPORTE =====")
+
     return export_survey_report_pdf(
-        report=report_data, generated_at=datetime.now().strftime("%d/%m/%Y %H:%M")
+        report=report_data,
+        generated_at=datetime.now().strftime("%d/%m/%Y %H:%M"),
     )
