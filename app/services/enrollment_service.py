@@ -1,21 +1,24 @@
+import os
+import uuid
+
+from fastapi import UploadFile
 from sqlalchemy.orm import Session
+
 from app.models.attendance import Attendance
 from app.models.certificate import Certificate
 from app.models.enrollment import Enrollment
+from app.models.user import User
 from app.repositories import (
     attendance_repo,
+    certificate_repo,
     course_attendance_repo,
     enrollment_repo,
-    certificate_repo,
+    user_repo,
 )
+from app.schemas.certificate import CertificateCreate
 from app.schemas.enrollment import EnrollmentCreate, EnrollmentUpdate
 from app.schemas.user import UserCreate
-from fastapi import UploadFile
 from app.utils.file_upload import save_course_voucher
-from app.schemas.certificate import CertificateCreate
-from app.repositories import user_repo
-import os
-import uuid
 
 
 def create_enrollment(
@@ -153,16 +156,16 @@ def create_massive_enrollments(
                 )
 
                 if not existing_user:
-
+                    user_model = User(**user_data.model_dump())
                     existing_user = user_repo.create_flush(
                         db,
-                        user_data.model_dump(),
+                        user_model,
                     )
 
                 existing_enrollment = enrollment_repo.get_existing_enrollment(
                     db,
-                    existing_user.id,
                     course_id,
+                    existing_user.id,
                 )
 
                 if existing_enrollment:
