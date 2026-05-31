@@ -9,60 +9,52 @@ from app.models.user import User
 PROFESSOR_ROLE_ID = 3
 
 
-def get_professor_survey_blocks_with_responses(db: Session, course_id: int):
+def get_professor_survey_blocks_by_course(db: Session, course_id: int):
     """
-    Obtiene todos los bloques de tipo encuesta del curso que ya cuentan
-    con al menos una respuesta registrada por un profesor.
+    Obtiene TODOS los bloques de tipo encuesta creados en el curso
+    (block_type_id = 7), sin importar si tienen respuestas o no.
     """
     return (
         db.query(LessonBlock)
-        .join(SurveyResponse, LessonBlock.id == SurveyResponse.lesson_block_id)
-        .join(Enrollment, SurveyResponse.enrollment_id == Enrollment.id)
         .filter(
             LessonBlock.course_id == course_id,
-            LessonBlock.deleted.is_(False),
-            SurveyResponse.deleted.is_(False),
-            Enrollment.role_id == PROFESSOR_ROLE_ID,
+            LessonBlock.block_type_id == 7,
+            LessonBlock.deleted == False,
         )
-        .distinct()
         .order_by(LessonBlock.order.asc())
         .all()
     )
 
 
-def get_course_professor_survey_responses_matrix(db: Session, course_id: int):
+def get_professor_enrollments_with_optional_responses(
+    db: Session, course_id: int, block_id: int
+):
     """
-    Recupera los docentes matriculados en el curso junto con sus respuestas en JSONB.
+    Garantiza traer a TODOS los profesores matriculados en el curso.
+    Hace un LEFT JOIN hacia SurveyResponse para el bloque en cuestión,
+    permitiendo traer al usuario aunque la respuesta sea nula.
     """
     return (
         db.query(
-            User.id.label("professor_id"),
-            func.concat(User.firstname, " ", User.lastname).label("professor_name"),
-            LessonBlock.id.label("block_id"),
+            User.id.label("user_id"),
+            func.concat(User.lastname, " ", User.firstname).label("user_name"),
             SurveyResponse.survey.label("survey_definition"),
             SurveyResponse.response.label("survey_answers"),
         )
         .select_from(Enrollment)
-        .join(User, and_(User.id == Enrollment.user_id, User.deleted.is_(False)))
-        .join(
-            LessonBlock,
-            and_(
-                LessonBlock.course_id == Enrollment.course_id,
-                LessonBlock.deleted.is_(False),
-            ),
-        )
-        .join(
+        .join(User, and_(Enrollment.user_id == User.id, User.deleted == False))
+        .left_join(
             SurveyResponse,
             and_(
                 SurveyResponse.enrollment_id == Enrollment.id,
-                SurveyResponse.lesson_block_id == LessonBlock.id,
-                SurveyResponse.deleted.is_(False),
+                SurveyResponse.lesson_block_id == block_id,
+                SurveyResponse.deleted == False,
             ),
         )
         .filter(
             Enrollment.course_id == course_id,
             Enrollment.role_id == PROFESSOR_ROLE_ID,
-            Enrollment.deleted.is_(False),
+            Enrollment.deleted == False,
         )
         .order_by(User.lastname.asc(), User.firstname.asc())
         .all()

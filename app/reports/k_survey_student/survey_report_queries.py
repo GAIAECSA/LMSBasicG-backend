@@ -6,62 +6,52 @@ from app.models.lesson_block import LessonBlock
 from app.models.survey_response import SurveyResponse
 from app.models.user import User
 
-STUDENT_ROLE_ID = 4
 
-
-def get_survey_blocks_with_responses(db: Session, course_id: int):
+def get_survey_blocks_by_course(db: Session, course_id: int):
     """
-    Obtiene todos los bloques de tipo encuesta del curso que ya cuentan
-    con al menos una respuesta registrada.
+    Obtiene TODOS los bloques de tipo encuesta creados en el curso,
+    hayan sido respondidos o no (filtrado por block_type_id = 7 según tu JSON).
     """
     return (
         db.query(LessonBlock)
-        .join(SurveyResponse, LessonBlock.id == SurveyResponse.lesson_block_id)
         .filter(
             LessonBlock.course_id == course_id,
-            LessonBlock.deleted.is_(False),
-            SurveyResponse.deleted.is_(False),
+            LessonBlock.block_type_id == 7,
+            LessonBlock.deleted == False,
         )
-        .distinct()
         .order_by(LessonBlock.order.asc())
         .all()
     )
 
 
-def get_course_survey_responses_matrix(db: Session, course_id: int):
+def get_enrollments_with_optional_survey_responses(
+    db: Session, course_id: int, block_id: int, role_id: int
+):
     """
-    Recupera los alumnos matriculados y sus respuestas (JSONB) correspondientes
-    a las encuestas del curso.
+    Garantiza traer a TODOS los usuarios matriculados en el curso con un rol específico.
+    Hace un LEFT JOIN con SurveyResponse para el bloque en cuestión.
     """
     return (
         db.query(
-            User.id.label("student_id"),
-            func.concat(User.firstname, " ", User.lastname).label("student_name"),
-            LessonBlock.id.label("block_id"),
+            User.id.label("user_id"),
+            func.concat(User.lastname, " ", User.firstname).label("user_name"),
             SurveyResponse.survey.label("survey_definition"),
             SurveyResponse.response.label("survey_answers"),
         )
         .select_from(Enrollment)
-        .join(User, and_(User.id == Enrollment.user_id, User.deleted.is_(False)))
-        .join(
-            LessonBlock,
-            and_(
-                LessonBlock.course_id == Enrollment.course_id,
-                LessonBlock.deleted.is_(False),
-            ),
-        )
-        .join(
+        .join(User, and_(Enrollment.user_id == User.id, User.deleted == False))
+        .left_join(
             SurveyResponse,
             and_(
                 SurveyResponse.enrollment_id == Enrollment.id,
-                SurveyResponse.lesson_block_id == LessonBlock.id,
-                SurveyResponse.deleted.is_(False),
+                SurveyResponse.lesson_block_id == block_id,
+                SurveyResponse.deleted == False,
             ),
         )
         .filter(
             Enrollment.course_id == course_id,
-            Enrollment.role_id == STUDENT_ROLE_ID,
-            Enrollment.deleted.is_(False),
+            Enrollment.role_id == role_id,
+            Enrollment.deleted == False,
         )
         .order_by(User.lastname.asc(), User.firstname.asc())
         .all()

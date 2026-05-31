@@ -7,8 +7,8 @@ from app.models.course import Course
 
 from .survey_report_pdf import export_survey_report_pdf
 from .survey_report_queries import (
-    get_course_survey_responses_matrix,
-    get_survey_blocks_with_responses,
+    get_enrollments_with_optional_survey_responses,
+    get_survey_blocks_by_course,
 )
 from .survey_report_schemas import (
     CourseSurveyReportSchema,
@@ -17,12 +17,10 @@ from .survey_report_schemas import (
     StudentSurveyRowSchema,
 )
 
+STUDENT_ROLE_ID = 4
+
 
 def _extract_numeric_score(value) -> float | None:
-    """
-    Helper para extraer el valor numérico de una respuesta Likert.
-    Soporta tanto enteros/floats como cadenas del tipo '5 - Muy de acuerdo'.
-    """
     if value is None:
         return None
     if isinstance(value, (int, float)):
@@ -35,45 +33,40 @@ def _extract_numeric_score(value) -> float | None:
 
 
 def generate_course_surveys_pdf(db: Session, course_id: int):
-    # 1. Validar curso
     course = (
-        db.query(Course)
-        .filter(Course.id == course_id, Course.deleted.is_(False))
-        .first()
+        db.query(Course).filter(Course.id == course_id, Course.deleted == False).first()
     )
-    if not course:
-        raise ValueError("Curso no encontrado")
+    course_name = course.name if course else f"Curso ID: {course_id}"
 
-    # 2. Obtener los bloques de tipo encuesta activos
-    survey_blocks = get_survey_blocks_with_responses(db=db, course_id=course_id)
-    if not survey_blocks:
-        raise ValueError("No se encontraron encuestas con respuestas en este curso")
-
-    # 3. Obtener matriz de respuestas de los estudiantes
-    raw_matrix = get_course_survey_responses_matrix(db=db, course_id=course_id)
-
+    # 1. Obtener todas las encuestas del curso estructuralmente
+    survey_blocks = get_survey_blocks_by_course(db=db, course_id=course_id)
     surveys_report_list = []
 
     for block in survey_blocks:
-        block_responses = [r for r in raw_matrix if r.block_id == block.id]
+        # 2. Obtener a todos los estudiantes (con o sin respuesta para este bloque)
+        enrollments_responses = get_enrollments_with_optional_survey_responses(
+            db=db, course_id=course_id, block_id=block.id, role_id=STUDENT_ROLE_ID
+        )
 
-        survey_title = "Encuesta sin título"
+        survey_title = f"Encuesta Bloque {block.id}"
         questions_list = []
 
-        if block_responses and block_responses[0].survey_definition:
-            survey_json = block_responses[0].survey_definition
-            survey_title = (
-                survey_json.get("title")
-                or survey_json.get("name")
-                or f"Encuesta Bloque {block.id}"
-            )
-            questions_list = (
-                survey_json.get("questions")
-                or survey_json.get("survey_questions")
-                or []
-            )
+        # 3. Buscar el primer registro que contenga la definición de la encuesta para armar los headers
+        for r in enrollments_responses:
+            if r.survey_definition:
+                survey_title = (
+                    r.survey_definition.get("title")
+                    or r.survey_definition.get("name")
+                    or survey_title
+                )
+                questions_list = (
+                    r.survey_definition.get("questions")
+                    or r.survey_definition.get("survey_questions")
+                    or []
+                )
+                break
 
-        # Cabeceras dinámicas (P1, P2, P3...)
+        # Construir headers dinámicos
         headers = [
             QuestionHeaderSchema(
                 id=q.get("id", idx + 1),
@@ -83,18 +76,18 @@ def generate_course_surveys_pdf(db: Session, course_id: int):
             for idx, q in enumerate(questions_list)
         ]
 
+        # 4. Construir las filas para todos los matriculados
         rows = []
-        for res in block_responses:
+        for res in enrollments_responses:
             student_answers = []
 
-            # --- CORRECCIÓN AQUÍ: Entrar a la clave "answers" del formato JSON ---
             response_json = res.survey_answers or {}
             answers_payload = response_json.get("answers", {})
-            # ---------------------------------------------------------------------
 
             total_score_sum = 0.0
             answered_questions_count = 0
 
+            # Si la encuesta tiene preguntas mapeadas, buscamos el valor de cada una
             for h in headers:
                 val = answers_payload.get(str(h.id)) or answers_payload.get(h.id)
 
@@ -108,14 +101,13 @@ def generate_course_surveys_pdf(db: Session, course_id: int):
                     student_answers.append("—")
 
             if answered_questions_count > 0:
-                avg_value = total_score_sum / answered_questions_count
-                average_str = f"{avg_value:.2f}"
+                average_str = f"{(total_score_sum / answered_questions_count):.2f}"
             else:
                 average_str = "0.00"
 
             rows.append(
                 StudentSurveyRowSchema(
-                    student_name=res.student_name,
+                    student_name=res.user_name,
                     answers=student_answers,
                     average=average_str,
                 )
@@ -128,7 +120,7 @@ def generate_course_surveys_pdf(db: Session, course_id: int):
         )
 
     report_data = CourseSurveyReportSchema(
-        course_id=course_id, course_name=course.name, surveys=surveys_report_list
+        course_id=course_id, course_name=course_name, surveys=surveys_report_list
     )
 
     return export_survey_report_pdf(
