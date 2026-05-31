@@ -54,67 +54,70 @@ def create_certificates_bulk(
     data: MdtBulkCertificateCreate,
     files: list[UploadFile],
 ):
-
     if not files:
         raise Exception("Debe enviar archivos")
 
-    certificates = []
+    created = []
     errors = []
 
     base_data = data.model_dump()
 
-    for index, file in enumerate(files):
+    with db.begin():
 
-        try:
+        for index, file in enumerate(files):
 
-            match = re.search(
-                ID_NUMBER_REGEX,
-                file.filename,
-            )
+            try:
 
-            if not match:
-                raise Exception(
-                    "No se encontró una cédula válida en el nombre del archivo"
+                with db.begin_nested():
+
+                    match = re.search(
+                        ID_NUMBER_REGEX,
+                        file.filename,
+                    )
+
+                    if not match:
+                        raise Exception(
+                            "No se encontró una cédula válida en el nombre del archivo"
+                        )
+
+                    id_number = match.group()
+
+                    saved_file = save_certificate_mdt(file)
+
+                    certificate = MdtCertificate(
+                        **base_data,
+                        id_number=id_number,
+                        file_url=saved_file["file_url"],
+                        file_name=saved_file["filename"],
+                    )
+
+                    certificate = mdt_certificate_repo.create(
+                        db=db,
+                        certificate=certificate,
+                    )
+
+                    created.append(
+                        {
+                            "id": certificate.id,
+                            "file": file.filename,
+                            "id_number": id_number,
+                        }
+                    )
+
+            except Exception as e:
+
+                errors.append(
+                    {
+                        "file": file.filename,
+                        "index": index,
+                        "error": str(e),
+                    }
                 )
 
-            id_number = match.group()
-
-            saved_file = save_certificate_mdt(file)
-
-            certificate_data = {
-                **base_data,
-                "id_number": id_number,
-                "file_url": saved_file["file_url"],
-                "file_name": saved_file["filename"],
-            }
-
-            certificate = MdtCertificate(**certificate_data)
-
-            certificates.append(certificate)
-
-        except Exception as e:
-
-            errors.append(
-                {
-                    "file": file.filename,
-                    "index": index,
-                    "error": str(e),
-                }
-            )
-
-    if certificates:
-
-        mdt_certificate_repo.create_bulk(
-            db=db,
-            certificates=certificates,
-        )
-
-        db.commit()
-
     return {
-        "success_count": len(certificates),
+        "success_count": len(created),
         "error_count": len(errors),
-        "certificates": certificates,
+        "certificates": created,
         "errors": errors,
     }
 

@@ -6,16 +6,18 @@ from sqlalchemy.orm import Session
 
 from app.models.attendance import Attendance
 from app.models.certificate import Certificate
+from app.models.course import Course
 from app.models.enrollment import Enrollment
 from app.models.user import User
 from app.repositories import (
     attendance_repo,
     certificate_repo,
     course_attendance_repo,
+    course_repo,
     enrollment_repo,
     user_repo,
 )
-from app.schemas.certificate import CertificateCreate
+from app.repositories.course_repo import get_by_id as COU_get_course_by_id
 from app.schemas.enrollment import EnrollmentCreate, EnrollmentUpdate
 from app.schemas.user import UserCreate
 from app.utils.file_upload import save_course_voucher
@@ -45,9 +47,11 @@ def create_enrollment(
         enrollment = enrollment_repo.create_flush(db, enrollment)
 
         role = enrollment.role
-        code = f"CERT-{uuid.uuid4().hex[:10].upper()}"
-
-        if role.id == 4:
+        course = course_repo.get_by_id(db, data.course_id)
+        if not course:
+            raise Exception("Curso no encontrado")
+        if role.id == 4 and not course.is_mdt:
+            code = f"CERT-{uuid.uuid4().hex[:10].upper()}"
             certificate_repo.create(
                 db,
                 Certificate(
@@ -143,69 +147,105 @@ def create_massive_enrollments(
     skipped = []
     failed = []
 
-    for user_data in users:
+    course_attendances = course_attendance_repo.get_by_course(db, course_id)
+    course = course_repo.get_by_id(db, course_id)
 
-        try:
+    if not course:
+        raise Exception("Curso no encontrado")
 
-            with db.begin():
+    with db.begin():
 
-                existing_user = user_repo.get_by_email_or_idnumber(
-                    db,
-                    user_data.email,
-                    user_data.idnumber,
-                )
+        for user_data in users:
 
-                if not existing_user:
-                    user_model = User(**user_data.model_dump())
-                    user_model.role_id = 2
-                    existing_user = user_repo.create_flush(
+            try:
+
+                with db.begin_nested():
+
+                    existing_user = user_repo.get_by_email_or_idnumber(
                         db,
-                        user_model,
+                        user_data.email,
+                        user_data.idnumber,
                     )
 
-                existing_enrollment = enrollment_repo.get_existing_enrollment(
-                    db,
-                    course_id,
-                    existing_user.id,
-                )
+                    if not existing_user:
+                        user_model = User(**user_data.model_dump())
+                        user_model.role_id = 2
 
-                if existing_enrollment:
+                        existing_user = user_repo.create_flush(
+                            db,
+                            user_model,
+                        )
 
-                    skipped.append(
+                    existing_enrollment = enrollment_repo.get_existing_enrollment(
+                        db,
+                        course_id,
+                        existing_user.id,
+                    )
+
+                    if existing_enrollment:
+                        skipped.append(
+                            {
+                                "email": user_data.email,
+                                "reason": "El usuario ya está matriculado",
+                            }
+                        )
+                        continue
+
+                    enrollment = enrollment_repo.create_flush(
+                        db,
+                        Enrollment(
+                            accepted=True,
+                            user_id=existing_user.id,
+                            course_id=course_id,
+                            role_id=4,
+                        ),
+                    )
+
+                    if course_attendances:
+
+                        attendances = [
+                            Attendance(
+                                enrollment_id=enrollment.id,
+                                course_attendance_id=ca.id,
+                                attendance_state="PENDIENTE",
+                            )
+                            for ca in course_attendances
+                        ]
+
+                        attendance_repo.create_many(
+                            db,
+                            attendances,
+                        )
+
+                    if enrollment.role_id == 4 and not course.is_mdt:
+
+                        code = f"CERT-{uuid.uuid4().hex[:10].upper()}"
+
+                        certificate_repo.create(
+                            db,
+                            Certificate(
+                                user_id=existing_user.id,
+                                course_id=course_id,
+                                certificate_code=code,
+                            ),
+                        )
+
+                    created.append(
                         {
                             "email": user_data.email,
-                            "reason": "El usuario ya está matriculado",
+                            "enrollment_id": enrollment.id,
+                            "user_id": existing_user.id,
                         }
                     )
 
-                    continue
+            except Exception as e:
 
-                enrollment = enrollment_repo.create_flush(
-                    db,
-                    Enrollment(
-                        accepted=True,
-                        user_id=existing_user.id,
-                        course_id=course_id,
-                        role_id=4,
-                    ),
-                )
-
-                created.append(
+                failed.append(
                     {
                         "email": user_data.email,
-                        "enrollment_id": enrollment.id,
-                        "user_id": existing_user.id,
+                        "error": str(e),
                     }
                 )
-
-        except Exception as e:
-
-            failed.append(
-                {
-                    "email": user_data.email,
-                    "error": str(e),
-                }
-            )
 
     return {
         "created": created,
