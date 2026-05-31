@@ -1,4 +1,6 @@
-from fastapi import APIRouter, Depends, HTTPException
+from typing import Literal
+
+from fastapi import APIRouter, Depends, HTTPException, Query
 from fastapi.responses import Response
 from sqlalchemy.orm import Session
 
@@ -15,6 +17,7 @@ from app.reports.i_final_quizz.final_quizz_service import (
     generate_course_final_quizzes_pdf,
     generate_course_practice_quizzes_pdf,
 )
+from app.reports.j_mdt_certificate import mdt_report_service
 from app.reports.teacher import teacher_attendance_report_service
 from app.utils.jwt import get_current_user
 
@@ -344,3 +347,44 @@ def export_final_quizz_pdf(
 
 
 # 15 Reporte de descargas certificado
+
+
+@router.get("/mdt-certificates")
+def get_mdt_certificates_report(
+    course_id: int = Query(..., gt=0, description="ID del curso a auditar"),
+    certificate_type: Literal["MDT", "INSTITUTIONAL"] = Query(
+        ..., description="Tipo de certificado a filtrar"
+    ),
+    db: Session = Depends(get_db),
+):
+
+    try:
+        # 1. Invocar al servicio para generar el binario del PDF
+        pdf_bytes = mdt_report_service.generate_mdt_certificates_report_pdf(
+            db=db,
+            course_id=course_id,
+            certificate_type=certificate_type,
+        )
+
+        # 2. Sanitizar y estructurar el nombre del archivo de salida
+        filename = f"reporte_descargas_{certificate_type.lower()}_curso_{course_id}.pdf"
+
+        # 3. Retornar el archivo binario directamente al cliente
+        return Response(
+            content=pdf_bytes,
+            media_type="application/pdf",
+            headers={
+                "Content-Disposition": f'attachment; filename="{filename}"',
+                "Access-Control-Expose-Headers": "Content-Disposition",
+            },
+        )
+
+    except ValueError as e:
+        # Captura el error si el curso no existe
+        raise HTTPException(status_code=404, detail=str(e))
+
+    except Exception as e:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Error al procesar la exportación del PDF: {str(e)}",
+        )

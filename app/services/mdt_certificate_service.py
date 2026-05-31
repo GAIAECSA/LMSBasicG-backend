@@ -1,12 +1,12 @@
 # services/mdt_certificate_service.py
 
+import re
+
 from fastapi import UploadFile
 from sqlalchemy.orm import Session
-import re
+
 from app.models.mdt_certificate import MdtCertificate
-
 from app.repositories import mdt_certificate_repo
-
 from app.schemas.mdt_certificate import (
     MdtBulkCertificateCreate,
     MdtCertificateCreate,
@@ -197,3 +197,23 @@ def delete_certificate(
     )
 
     db.commit()
+
+
+def get_certificate_by_id_and_course(db: Session, id_number: str, course_id: int):
+    # 1. Buscar el certificado único con ambos criterios
+    certificate = mdt_certificate_repo.get_by_id_and_course(
+        db=db, id_number=id_number, course_id=course_id
+    )
+
+    # 2. Validar existencia
+    if not certificate:
+        raise ValueError(
+            "No se encontró ningún certificado para el documento y curso especificados."
+        )
+
+    # 3. Marcar como visitado e impactar la base de datos
+    certificate.mark_as_visited()
+    db.commit()
+    db.refresh(certificate)
+
+    return certificate

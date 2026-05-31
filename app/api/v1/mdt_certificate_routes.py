@@ -1,24 +1,15 @@
 # api/v1/mdt_certificate_routes.py
 
-from fastapi import (
-    APIRouter,
-    Depends,
-    HTTPException,
-    UploadFile,
-    File,
-)
-
+from fastapi import APIRouter, Depends, File, HTTPException, UploadFile
 from sqlalchemy.orm import Session
 
 from app.db.session import SessionLocal
-
 from app.schemas.mdt_certificate import (
     MdtBulkCertificateCreate,
     MdtCertificateCreate,
-    MdtCertificateUpdate,
     MdtCertificateResponse,
+    MdtCertificateUpdate,
 )
-
 from app.services import mdt_certificate_service
 
 router = APIRouter()
@@ -134,25 +125,29 @@ def get_certificates_by_course_id(
 
 @router.get(
     "/id-number/{id_number}",
-    response_model=list[MdtCertificateResponse],
+    response_model=MdtCertificateResponse,  # Ahora devuelve un solo objeto
 )
-def get_certificates_by_id_number(
+def get_certificate_by_id_number_and_course(
     id_number: str,
+    course_id: int,  # Nuevo parámetro requerido (?course_id=X)
     db: Session = Depends(get_db),
 ):
-
     try:
-
-        return mdt_certificate_service.get_certificates_by_id_number(
+        return mdt_certificate_service.get_certificate_by_id_and_course(
             db=db,
             id_number=id_number,
+            course_id=course_id,
         )
-
+    except ValueError as e:
+        # Si el certificado no existe para esa combinación, disparamos 404
+        raise HTTPException(
+            status_code=404,
+            detail=str(e),
+        )
     except Exception as e:
-
         raise HTTPException(
             status_code=400,
-            detail=str(e),
+            detail=f"Error al procesar el certificado: {str(e)}",
         )
 
 

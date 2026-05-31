@@ -1,11 +1,13 @@
+from datetime import datetime, timezone
+
 from sqlalchemy import (
-    Column,
-    Integer,
-    DateTime,
-    String,
     Boolean,
     CheckConstraint,
+    Column,
+    DateTime,
     ForeignKey,
+    Integer,
+    String,
 )
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
@@ -33,6 +35,7 @@ class MdtCertificate(Base):
     certificate_type = Column(String(20), nullable=False)
 
     deleted = Column(Boolean, default=False, nullable=False)
+    visited_at = Column(DateTime(timezone=True), nullable=True, server_default=None)
 
     created_at = Column(
         DateTime(timezone=True),
@@ -51,3 +54,10 @@ class MdtCertificate(Base):
         "Course",
         back_populates="mdt_certificates",
     )
+
+    def mark_as_visited(self) -> None:
+        """
+        Asigna la fecha y hora actual en zona horaria UTC al campo visited_at.
+        Llamar a este método antes de hacer el db.commit() en tu servicio.
+        """
+        self.visited_at = datetime.now(timezone.utc)
