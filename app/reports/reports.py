@@ -13,10 +13,15 @@ from app.reports.e_final_grade import final_grade_report_service
 from app.reports.g_teacher_attendance.teacher_attendance_service import (
     generate_teacher_attendance_pdf,
 )
+from app.reports.h_diagnostic_quizz.practice_quizz_service import (
+    generate_course_practice_quizzes_pdf,
+)
 from app.reports.i_final_quizz.final_quizz_service import (
     generate_course_final_quizzes_pdf,
 )
 from app.reports.j_mdt_certificate import mdt_report_service
+from app.reports.k_survey_student import survey_report_service
+from app.reports.l_survey_teacher import professor_survey_report_service
 from app.reports.teacher import teacher_attendance_report_service
 from app.utils.jwt import get_current_user
 
@@ -287,7 +292,83 @@ def export_teacher_attendance_pdf(
 
 # 11 Encuesta satisfacción estudiante
 
+
+@router.get("/students")
+def get_student_surveys_report(
+    course_id: int = Query(
+        ..., gt=0, description="ID del curso para el reporte de estudiantes"
+    ),
+    db: Session = Depends(get_db),
+):
+    """
+    Descarga el reporte en PDF de la matriz de respuestas de los ESTUDIANTES
+    a todas las encuestas del curso especificado.
+    """
+    try:
+        pdf_bytes = survey_report_service.generate_course_surveys_pdf(
+            db=db, course_id=course_id
+        )
+
+        filename = f"reporte_encuestas_estudiantes_curso_{course_id}.pdf"
+
+        return Response(
+            content=pdf_bytes,
+            media_type="application/pdf",
+            headers={
+                "Content-Disposition": f'attachment; filename="{filename}"',
+                "Access-Control-Expose-Headers": "Content-Disposition",
+            },
+        )
+
+    except ValueError as e:
+        raise HTTPException(status_code=404, detail=str(e))
+    except Exception as e:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Error al exportar el reporte de estudiantes: {str(e)}",
+        )
+
+
 # 12 Encuesta satisfacción docente
+
+
+@router.get("/professors")
+def get_professor_surveys_report(
+    course_id: int = Query(
+        ..., gt=0, description="ID del curso para el reporte de profesores"
+    ),
+    db: Session = Depends(get_db),
+):
+    """
+    Descarga el reporte en PDF de la matriz de respuestas de los PROFESORES/DOCENTES
+    a todas las encuestas del curso especificado.
+    """
+    try:
+        pdf_bytes = (
+            professor_survey_report_service.generate_course_professor_surveys_pdf(
+                db=db, course_id=course_id
+            )
+        )
+
+        filename = f"reporte_encuestas_profesores_curso_{course_id}.pdf"
+
+        return Response(
+            content=pdf_bytes,
+            media_type="application/pdf",
+            headers={
+                "Content-Disposition": f'attachment; filename="{filename}"',
+                "Access-Control-Expose-Headers": "Content-Disposition",
+            },
+        )
+
+    except ValueError as e:
+        raise HTTPException(status_code=404, detail=str(e))
+    except Exception as e:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Error al exportar el reporte de profesores: {str(e)}",
+        )
+
 
 # 13 Evaluación diagnóstica
 
