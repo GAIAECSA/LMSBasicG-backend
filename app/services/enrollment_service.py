@@ -181,7 +181,7 @@ def create_massive_enrollments(
 
                 enrollment = enrollment_repo.create_flush(
                     db,
-                    EnrollmentCreate(
+                    Enrollment(
                         accepted=True,
                         user_id=existing_user.id,
                         course_id=course_id,
