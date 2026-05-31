@@ -34,3 +34,5 @@ app/reports/c_student_attendance/__init__.py
 /app/reports/d_practice_lesson/__pycache__
 /app/reports/teacher/__pycache__
 app/reports/teacher/__init__.py
+/app/reports/e_final_grade/__pycache__
+/app/reports/g_teacher_attendance/__pycache__

@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Acta de Calificaciones Finales</title>
+    <style>
+        @page {
+            size: A4 landscape;
+            margin: 15mm 15mm 15mm 15mm;
+
+            @bottom-right {
+                content: "Página " counter(page) " de " counter(pages);
+                font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+                font-size: 9px;
+                color: #94a3b8;
+            }
+        }
+
+        body {
+            font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+            color: #1e293b;
+            margin: 0;
+            padding: 0;
+            font-size: 11px;
+            line-height: 1.4;
+        }
+
+        .header {
+            border-bottom: 2px solid #e2e8f0;
+            padding-bottom: 12px;
+            margin-bottom: 20px;
+        }
+
+        .header-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .logo {
+            width: 75px;
+            height: auto;
+        }
+
+        .institution-title {
+            font-size: 16px;
+            font-weight: bold;
+            color: #0f172a;
+            padding-left: 12px;
+        }
+
+        .institution-sub {
+            font-size: 11px;
+            color: #64748b;
+            padding-left: 12px;
+        }
+
+        .meta-info {
+            text-align: right;
+            font-size: 10px;
+            color: #64748b;
+        }
+
+        .course-badge-box {
+            background-color: #f8fafc;
+            border-left: 4px solid #3b82f6;
+            padding: 12px 15px;
+            margin-bottom: 20px;
+            border-radius: 0 4px 4px 0;
+        }
+
+        .course-label {
+            font-size: 9px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: #64748b;
+            font-weight: bold;
+        }
+
+        .course-name {
+            font-size: 15px;
+            color: #0f172a;
+            font-weight: 700;
+        }
+
+        /* Tabla de Matriz de Calificaciones */
+        .matrix-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 5px;
+        }
+
+        .matrix-table th {
+            background-color: #0f172a;
+            color: #ffffff;
+            font-weight: 600;
+            text-align: left;
+            padding: 8px 10px;
+            font-size: 10px;
+            text-transform: uppercase;
+            letter-spacing: 0.3px;
+            border: 1px solid #1e293b;
+        }
+
+        .matrix-table th.center-th,
+        .matrix-table td.center-td {
+            text-align: center;
+        }
+
+        .matrix-table td {
+            padding: 8px 10px;
+            border: 1px solid #e2e8f0;
+            font-size: 11px;
+            color: #334155;
+            vertical-align: middle;
+        }
+
+        .matrix-table tr:nth-child(even) {
+            background-color: #f8fafc;
+        }
+
+        .no-submission {
+            color: #94a3b8;
+            font-style: italic;
+            font-size: 10px;
+        }
+
+        .score-text {
+            font-weight: 600;
+            color: #0f172a;
+        }
+
+        /* Estado Final Badges */
+        .badge {
+            font-size: 9px;
+            font-weight: bold;
+            padding: 2px 6px;
+            border-radius: 3px;
+            text-transform: uppercase;
+            display: inline-block;
+        }
+
+        .badge-paso {
+            background-color: #dcfce7;
+            color: #15803d;
+            border: 1px solid #bbf7d0;
+        }
+
+        .badge-no-paso {
+            background-color: #fee2e2;
+            color: #b91c1c;
+            border: 1px solid #fca5a5;
+        }
+
+        .footer {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            text-align: center;
+            font-size: 9px;
+            color: #94a3b8;
+            border-top: 1px solid #f1f5f9;
+            padding-top: 6px;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="header">
+        <table class="header-table">
+            <tr>
+                <td style="width: 75px;">
+                    <img src="{{ logo_path }}" class="logo" alt="Logo">
+                </td>
+                <td>
+                    <div class="institution-title">Gaia Academic</div>
+                    <div class="institution-sub">Sistemas LMS • Reporte Consolidado Final</div>
+                </td>
+                <td class="meta-info">
+                    <strong>Acta Oficial de Notas</strong><br>
+                    Fecha Impresión: {{ generated_at }}
+                </td>
+            </tr>
+        </table>
+    </div>
+
+    <div class="course-badge-box">
+        <div class="course-label">Curso Académico</div>
+        <div class="course-name">{{ report.course_name }}</div>
+    </div>
+
+    <table class="matrix-table">
+        <thead>
+            <tr>
+                <th style="width: 4%; text-align: center;">#</th>
+                <th style="width: 22%;">Estudiante</th>
+                {% for header in report.headers %}
+                <th class="center-th" style="font-size: 9px;">{{ header.title }}</th>
+                {% endfor %}
+                <th class="center-th" style="width: 8%; background-color: #1e293b;">Promedio</th>
+                <th class="center-th" style="width: 10%; background-color: #1e293b;">Estado</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for row in report.rows %}
+            <tr>
+                <td class="center-td">{{ loop.index }}</td>
+                <td><strong>{{ row.student_name }}</strong></td>
+
+                {% for grade in row.grades %}
+                <td class="center-td">
+                    {% if grade == 'Sin entrega' %}
+                    <span class="no-submission">—</span>
+                    {% else %}
+                    <span class="score-text">{{ grade }}</span>
+                    {% endif %}
+                </td>
+                {% endfor %}
+
+                <td class="center-td score-text" style="background-color: #f8fafc;">
+                    {{ row.average }}
+                </td>
+
+                <td class="center-td">
+                    {% if row.status == 'PASÓ' %}
+                    <span class="badge badge-paso">{{ row.status }}</span>
+                    {% else %}
+                    <span class="badge badge-no-paso">{{ row.status }}</span>
+                    {% endif %}
+                </td>
+            </tr>
+            {% else %}
+            <tr>
+                <td colspan="{{ report.headers|length + 4 }}"
+                    style="text-align: center; padding: 20px; color: #64748b; font-style: italic;">
+                    No existen estudiantes matriculados o no se registran actividades evaluables obligatorias en este
+                    curso.
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <div class="footer">
+        Este documento es un reporte consolidado emitido automáticamente por Gaia Academic LMS y es válido para
+        auditorías internas de rendimiento académico.
+    </div>
+
+</body>
+
+</html>

@@ -7,6 +7,10 @@ from app.reports.a_course_structure import course_structure_report_service
 from app.reports.b_students_files import homework_students_report_service
 from app.reports.c_student_attendance import student_attendance_report_service
 from app.reports.d_practice_lesson import homework_graded_report_service
+from app.reports.e_final_grade import final_grade_report_service
+from app.reports.g_teacher_attendance.teacher_attendance_service import (
+    generate_teacher_attendance_pdf,
+)
 from app.reports.teacher import teacher_attendance_report_service
 from app.utils.jwt import get_current_user
 
@@ -206,8 +210,8 @@ def export_course_student_attendance_pdf(
 
 @router.get("/reports/practice/lessons/pdf")
 def export_practice_lesson_report(
+    course_id: int,
     db: Session = Depends(get_db),
-    course_id: int = None,
 ):
 
     pdf = homework_graded_report_service.generate_course_graded_pdf(
@@ -221,3 +225,66 @@ def export_practice_lesson_report(
             "Content-Disposition": 'attachment; filename="practice_lesson_report.pdf"'
         },
     )
+
+
+# 8 Registro notas finales
+
+
+@router.get("/reports/final/grades/pdf")
+def export_final_grades_report(
+    course_id: int,
+    db: Session = Depends(get_db),
+):
+
+    pdf = final_grade_report_service.generate_course_final_grades_pdf(
+        db=db, course_id=course_id
+    )
+
+    return Response(
+        content=pdf,
+        media_type="application/pdf",
+        headers={
+            "Content-Disposition": 'attachment; filename="final_grades_report.pdf"'
+        },
+    )
+
+
+# 9 Petición encuesta
+
+# 10 Reporte de asistencia del profesor
+
+
+@router.get("/reports/teacher/attendance/pdf")
+def export_teacher_attendance_pdf(
+    course_id: int,
+    db: Session = Depends(get_db),
+):
+    try:
+        pdf = generate_teacher_attendance_pdf(db=db, course_id=course_id)
+
+        filename = f"reporte_asistencia_docente_curso_{course_id}.pdf"
+
+        return Response(
+            content=pdf,
+            media_type="application/pdf",
+            headers={"Content-Disposition": f'attachment; filename="{filename}"'},
+        )
+
+    except ValueError as e:
+        raise HTTPException(status_code=404, detail=str(e))
+    except Exception as e:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Error interno al generar el reporte de asistencia: {str(e)}",
+        )
+
+
+# 11 Encuesta satisfacción estudiante
+
+# 12 Encuesta satisfacción docente
+
+# 13 Evaluación diagnóstica
+
+# 14 Evaluacion final teórica
+
+# 15 Reporte de descargas certificado
