@@ -199,16 +199,21 @@ def delete_certificate(
     db.commit()
 
 
-def get_certificate_by_id_and_course(db: Session, id_number: str, course_id: int):
-    # 1. Buscar el certificado único con ambos criterios
+def get_certificate_by_id_and_course(
+    db: Session, id_number: str, course_id: int, certificate_type: str
+):
+    # 1. Buscar el certificado único usando los tres criterios
     certificate = mdt_certificate_repo.get_by_id_and_course(
-        db=db, id_number=id_number, course_id=course_id
+        db=db,
+        id_number=id_number,
+        course_id=course_id,
+        certificate_type=certificate_type,  # <-- Nuevo argumento
     )
 
     # 2. Validar existencia
     if not certificate:
         raise ValueError(
-            "No se encontró ningún certificado para el documento y curso especificados."
+            "No se encontró ningún certificado que coincida con el documento, curso y tipo especificados."
         )
 
     # 3. Marcar como visitado e impactar la base de datos

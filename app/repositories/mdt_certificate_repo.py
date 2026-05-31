@@ -103,14 +103,15 @@ def soft_delete(
 
 
 def get_by_id_and_course(
-    db: Session, id_number: str, course_id: int
+    db: Session, id_number: str, course_id: int, certificate_type: str
 ) -> MdtCertificate | None:
     return (
         db.query(MdtCertificate)
         .filter(
             MdtCertificate.id_number == id_number,
             MdtCertificate.course_id == course_id,
+            MdtCertificate.certificate_type == certificate_type,
             MdtCertificate.deleted.is_(False),
         )
-        .first()  # Trae el registro único o None si no hace match
+        .first()
     )

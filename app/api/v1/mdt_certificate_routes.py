@@ -125,11 +125,12 @@ def get_certificates_by_course_id(
 
 @router.get(
     "/id-number/{id_number}",
-    response_model=MdtCertificateResponse,  # Ahora devuelve un solo objeto
+    response_model=MdtCertificateResponse,
 )
 def get_certificate_by_id_number_and_course(
     id_number: str,
-    course_id: int,  # Nuevo parámetro requerido (?course_id=X)
+    course_id: int,
+    certificate_type: str,  # <-- Nuevo parámetro requerido (?certificate_type=MDT)
     db: Session = Depends(get_db),
 ):
     try:
@@ -137,9 +138,9 @@ def get_certificate_by_id_number_and_course(
             db=db,
             id_number=id_number,
             course_id=course_id,
+            certificate_type=certificate_type,  # <-- Se envía al servicio
         )
     except ValueError as e:
-        # Si el certificado no existe para esa combinación, disparamos 404
         raise HTTPException(
             status_code=404,
             detail=str(e),
