@@ -20,7 +20,7 @@ from .professor_survey_report_schemas import (
 
 def _extract_numeric_score(value) -> float | None:
     """
-    Parsea la respuesta Likert para extraer el valor flotante/entero.
+    Parsea la respuesta Likert para extraer el valor numérico.
     """
     if value is None:
         return None
@@ -78,7 +78,6 @@ def generate_course_professor_surveys_pdf(db: Session, course_id: int):
                 or []
             )
 
-        # Mapear headers P1, P2...
         headers = [
             ProfessorQuestionHeaderSchema(
                 id=q.get("id", idx + 1),
@@ -91,7 +90,11 @@ def generate_course_professor_surveys_pdf(db: Session, course_id: int):
         rows = []
         for res in block_responses:
             professor_answers = []
-            answers_payload = res.survey_answers or {}
+
+            # --- CORRECCIÓN AQUÍ: Entrar a la clave "answers" del formato JSON ---
+            response_json = res.survey_answers or {}
+            answers_payload = response_json.get("answers", {})
+            # ---------------------------------------------------------------------
 
             total_score_sum = 0.0
             answered_questions_count = 0
