@@ -293,7 +293,7 @@ def export_teacher_attendance_pdf(
 # 11 Encuesta satisfacción estudiante
 
 
-@router.get("/students")
+@router.get("/s/students")
 def get_student_surveys_report(
     course_id: int = Query(
         ..., gt=0, description="ID del curso para el reporte de estudiantes"
