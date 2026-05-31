@@ -135,7 +135,7 @@
         }
 
         .module-header {
-            background-color: #1e293b;
+            background-color: #2563eb;
             color: #ffffff;
             padding: 10px 14px;
             font-size: 15px;
@@ -179,31 +179,41 @@
             font-style: italic;
         }
 
-        /* Badge para marcar Bloques Predeterminados */
-        .badge-default {
-            background-color: #fef3c7;
-            color: #d97706;
-            font-size: 10px;
-            font-weight: bold;
-            padding: 1px 6px;
-            border-radius: 4px;
-            margin-left: 6px;
-            border: 1px solid #fcd34d;
-            display: inline-block;
-            vertical-align: middle;
-        }
-
-        /* Footer Fijo Legal */
+        /* Footer Fijo Transparente (Solo para espaciado base si fuera necesario) */
         .footer-text {
             position: fixed;
             bottom: 0;
             left: 0;
             width: 100%;
             text-align: center;
-            font-size: 10px;
+            font-size: 9px;
             color: #94a3b8;
             border-top: 1px solid #f1f5f9;
-            padding-top: 8px;
+            padding-top: 6px;
+        }
+
+        /* Bloque de Cierre: Logo de la Plataforma al Final del Contenido */
+        .platform-closure {
+            margin-top: 50px;
+            padding-top: 20px;
+            border-top: 1px dashed #e2e8f0;
+            text-align: center;
+            page-break-inside: avoid;
+            /* Evita que el logo se separe de su texto explicativo */
+        }
+
+        .platform-logo {
+            width: 110px;
+            /* Tamaño controlado y sutil */
+            height: auto;
+            display: inline-block;
+            margin-bottom: 8px;
+        }
+
+        .platform-info {
+            font-size: 10px;
+            color: #94a3b8;
+            letter-spacing: 0.2px;
         }
     </style>
 </head>
@@ -283,8 +293,15 @@
     </p>
     {% endfor %}
 
+    <div class="platform-closure">
+        <img src="{{ logo_plataform }}" class="platform-logo" alt="Logo Plataforma">
+        <div class="platform-info">
+            Documento curricular oficial generado de manera automática por la plataforma Athena LMS.
+        </div>
+    </div>
+
     <div class="footer-text">
-        Documento curricular oficial generado de manera automática por la plataforma Gaia Academic.
+        Gaia Academic &copy; 2026 - Reporte Confidencial de Gestión Curricular
     </div>
 
 </body>
