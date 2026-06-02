@@ -43,7 +43,7 @@ def delete_course(
     course_id: int, db: Session = Depends(get_db), user=Depends(require_admin)
 ):
     try:
-        course_service.delete_course(db, course_id)
+        course_service.soft_delete_course_cascade(db, course_id)
         return {"detail": "Course deleted successfully"}
     except ValueError as e:
         raise HTTPException(status_code=404, detail=str(e))

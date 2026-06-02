@@ -1,10 +1,23 @@
 import os
 
 from fastapi import UploadFile
+from sqlalchemy import select, update
 from sqlalchemy.orm import Session
 
+from app.models.block_progress import BlockProgress
+from app.models.certificate import Certificate
+from app.models.certificate_template import CertificateTemplate
 from app.models.course import Course
+from app.models.course_attendance import CourseAttendance
+from app.models.enrollment import Enrollment
+from app.models.forum_response import ForumResponse
+from app.models.homework_response import HomeworkResponse
+from app.models.lesson import Lesson
 from app.models.lesson_block import LessonBlock
+from app.models.mdt_certificate import MdtCertificate
+from app.models.module import Module
+from app.models.quizz_response import QuizzResponse
+from app.models.survey_response import SurveyResponse
 from app.repositories import course_repo, enrollment_repo, lesson_block_repo
 from app.schemas.course import CourseCreate, CourseUpdate
 from app.utils.file_upload import save_course_image
@@ -256,3 +269,99 @@ def handle_mdt_blocks_transition(
             db,
             course.id,
         )
+
+
+def soft_delete_course_cascade(db: Session, course_id: int) -> bool:
+    """
+    Realiza un borrado lógico (soft delete) de un curso y todas sus
+    entidades dependientes en un solo flujo transaccional usando context manager.
+    """
+    # 1. Subconsultas para identificar los IDs relacionados
+    enrollments_subq = select(Enrollment.id).where(Enrollment.course_id == course_id)
+    modules_subq = select(Module.id).where(Module.course_id == course_id)
+    lessons_subq = select(Lesson.id).where(Lesson.module_id.in_(modules_subq))
+
+    # El context manager db.begin() maneja el commit y rollback automáticamente
+    with db.begin():
+
+        # 2. Borrado lógico de Respuestas e Interacciones (Dependientes de Enrollment)
+        db.execute(
+            update(BlockProgress)
+            .where(BlockProgress.enrollment_id.in_(enrollments_subq))
+            .values(deleted=True)
+        )
+        db.execute(
+            update(HomeworkResponse)
+            .where(HomeworkResponse.enrollment_id.in_(enrollments_subq))
+            .values(deleted=True)
+        )
+        db.execute(
+            update(SurveyResponse)
+            .where(SurveyResponse.enrollment_id.in_(enrollments_subq))
+            .values(deleted=True)
+        )
+        db.execute(
+            update(QuizzResponse)
+            .where(QuizzResponse.enrollment_id.in_(enrollments_subq))
+            .values(deleted=True)
+        )
+        db.execute(
+            update(ForumResponse)
+            .where(ForumResponse.enrollment_id.in_(enrollments_subq))
+            .values(deleted=True)
+        )
+
+        # 3. Borrado lógico de Enrollments
+        db.execute(
+            update(Enrollment)
+            .where(Enrollment.course_id == course_id)
+            .values(deleted=True)
+        )
+
+        # 4. Borrado lógico del Contenido del Curso (LessonBlocks, Lessons, Modules)
+        db.execute(
+            update(LessonBlock)
+            .where(
+                (LessonBlock.lesson_id.in_(lessons_subq))
+                | (LessonBlock.course_id == course_id)
+            )
+            .values(deleted=True)
+        )
+
+        db.execute(
+            update(Lesson)
+            .where(Lesson.module_id.in_(modules_subq))
+            .values(deleted=True)
+        )
+
+        db.execute(
+            update(Module).where(Module.course_id == course_id).values(deleted=True)
+        )
+
+        # 5. Borrado lógico de otros adjuntos del curso
+        db.execute(
+            update(CourseAttendance)
+            .where(CourseAttendance.course_id == course_id)
+            .values(deleted=True)
+        )
+        db.execute(
+            update(CertificateTemplate)
+            .where(CertificateTemplate.course_id == course_id)
+            .values(deleted=True)
+        )
+        db.execute(
+            update(Certificate)
+            .where(Certificate.course_id == course_id)
+            .values(deleted=True)
+        )
+        db.execute(
+            update(MdtCertificate)
+            .where(MdtCertificate.course_id == course_id)
+            .values(deleted=True)
+        )
+
+        # 6. Borrado lógico del Curso Padre
+        db.execute(update(Course).where(Course.id == course_id).values(deleted=True))
+
+    # Si llegamos aquí, el commit ya se realizó con éxito
+    return True
