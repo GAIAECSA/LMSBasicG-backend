@@ -1,16 +1,16 @@
-from sqlalchemy.orm import Session
-from app.helpers.recalculate_enrollment_certificate import (
-    recalculate_enrollment_certificate,
-)
+import logging
+import os
+import uuid
+
 from fastapi import UploadFile
+from sqlalchemy.orm import Session
+
+from app.helpers.recalculate_enrollment_certificate import \
+    recalculate_enrollment_certificate
 from app.models.certificate import Certificate
-from app.repositories import certificate_repo
+from app.repositories import certificate_repo, enrollment_repo
 from app.schemas.certificate import CertificateCreate, CertificateUpdate
 from app.utils.file_upload import save_certificate
-
-import uuid
-import os
-import logging
 
 logger = logging.getLogger(__name__)
 
@@ -57,8 +57,7 @@ def update_certificate(
 
         update_data["final_grade"] = recalculate_enrollment_certificate(
             db,
-            certificate.user_id,
-            certificate.course_id,
+            enrollment_repo.get_existing_enrollment(db, certificate.course_id, certificate.user_id),
         )
 
         old_file_path = None
