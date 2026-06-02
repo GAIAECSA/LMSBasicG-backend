@@ -5,8 +5,9 @@ import uuid
 from fastapi import UploadFile
 from sqlalchemy.orm import Session
 
-from app.helpers.recalculate_enrollment_certificate import \
-    recalculate_enrollment_certificate
+from app.helpers.recalculate_enrollment_certificate import (
+    recalculate_enrollment_certificate,
+)
 from app.models.certificate import Certificate
 from app.repositories import certificate_repo, enrollment_repo
 from app.schemas.certificate import CertificateCreate, CertificateUpdate
@@ -42,34 +43,26 @@ def update_certificate(
     data: CertificateUpdate,
     file: UploadFile | None,
 ):
-
     with db.begin():
-
         certificate = certificate_repo.get_by_id(
             db,
             certificate_id,
         )
-
         if not certificate:
             raise Exception("Certificado no encontrado")
 
-        update_data = data.model_dump(exclude_unset=True)
-
-        update_data["final_grade"] = recalculate_enrollment_certificate(
-            db,
-            enrollment_repo.get_existing_enrollment(db, certificate.course_id, certificate.user_id),
-        )
+        update_data = data.model_dump(exclude_unset=True, exclude={"final_grade"})
 
         old_file_path = None
 
         if file:
-
             if certificate.file_url:
                 old_file_path = certificate.file_url.lstrip("/")
 
             saved_file = save_certificate(file)
 
-            update_data["file_url"] = saved_file["file_url"]
+            if saved_file:
+                update_data["file_url"] = saved_file
 
         for key, value in update_data.items():
             setattr(certificate, key, value)
@@ -80,13 +73,9 @@ def update_certificate(
         )
 
     if file and old_file_path and os.path.exists(old_file_path):
-
         try:
-
             os.remove(old_file_path)
-
         except Exception as e:
-
             logger.warning(f"No se pudo eliminar archivo viejo: {e}")
 
     return updated
