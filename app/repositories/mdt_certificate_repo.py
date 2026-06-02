@@ -102,7 +102,7 @@ def soft_delete(
     return certificate
 
 
-def get_by_id_and_course(
+def get_by_id_number_and_course(
     db: Session, id_number: str, course_id: int, certificate_type: str
 ) -> MdtCertificate | None:
     return (

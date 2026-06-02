@@ -1,5 +1,6 @@
 # services/mdt_certificate_service.py
 
+import os
 import re
 
 from fastapi import UploadFile
@@ -22,31 +23,58 @@ def create_certificate(
     data: MdtCertificateCreate,
     file: UploadFile,
 ):
-
     if not file:
         raise Exception("El archivo es requerido")
 
-    saved_file = save_certificate_mdt(file)
-
     certificate_data = data.model_dump()
 
-    certificate_data.update(
-        {
-            "file_url": saved_file["file_url"],
-            "file_name": saved_file["filename"],
-        }
-    )
+    with db.begin():
 
-    certificate = MdtCertificate(**certificate_data)
+        existing_certificate = mdt_certificate_repo.get_by_id_number_and_course(
+            db,
+            certificate_data["id_number"],
+            certificate_data["course_id"],
+            certificate_data["certificate_type"],
+        )
 
-    certificate = mdt_certificate_repo.create(
-        db=db,
-        certificate=certificate,
-    )
+        saved_file = save_certificate_mdt(file)
 
-    db.commit()
+        if existing_certificate:
 
-    return certificate
+            if existing_certificate.file_url:
+                try:
+                    file_path = existing_certificate.file_url.lstrip("/")
+                    if os.path.exists(file_path):
+                        os.remove(file_path)
+                except Exception:
+                    pass
+
+            certificate_data.update(
+                {
+                    "file_url": saved_file["file_url"],
+                    "file_name": saved_file["filename"],
+                }
+            )
+
+            return mdt_certificate_repo.update(
+                db=db,
+                certificate=existing_certificate,
+                data=certificate_data,
+            )
+
+        certificate_data.update(
+            {
+                "file_url": saved_file["file_url"],
+                "file_name": saved_file["filename"],
+            }
+        )
+
+        certificate = MdtCertificate(**certificate_data)
+
+        return mdt_certificate_repo.create(
+            db=db,
+            certificate=certificate,
+        )
 
 
 def create_certificates_bulk(
@@ -82,19 +110,50 @@ def create_certificates_bulk(
 
                     id_number = match.group()
 
+                    existing_certificate = (
+                        mdt_certificate_repo.get_by_id_number_and_course(
+                            db,
+                            id_number,
+                            base_data["course_id"],
+                            base_data["certificate_type"],
+                        )
+                    )
+
                     saved_file = save_certificate_mdt(file)
 
-                    certificate = MdtCertificate(
-                        **base_data,
-                        id_number=id_number,
-                        file_url=saved_file["file_url"],
-                        file_name=saved_file["filename"],
-                    )
+                    if existing_certificate:
 
-                    certificate = mdt_certificate_repo.create(
-                        db=db,
-                        certificate=certificate,
-                    )
+                        if existing_certificate.file_url:
+                            try:
+                                file_path = existing_certificate.file_url.lstrip("/")
+
+                                if os.path.exists(file_path):
+                                    os.remove(file_path)
+
+                            except Exception:
+                                pass
+
+                        existing_certificate.file_url = saved_file["file_url"]
+                        existing_certificate.file_name = saved_file["filename"]
+
+                        certificate = mdt_certificate_repo.update(
+                            db=db,
+                            certificate=existing_certificate,
+                        )
+
+                    else:
+
+                        certificate = MdtCertificate(
+                            **base_data,
+                            id_number=id_number,
+                            file_url=saved_file["file_url"],
+                            file_name=saved_file["filename"],
+                        )
+
+                        certificate = mdt_certificate_repo.create(
+                            db=db,
+                            certificate=certificate,
+                        )
 
                     created.append(
                         {
@@ -206,7 +265,7 @@ def get_certificate_by_id_and_course(
     db: Session, id_number: str, course_id: int, certificate_type: str
 ):
     # 1. Buscar el certificado único usando los tres criterios
-    certificate = mdt_certificate_repo.get_by_id_and_course(
+    certificate = mdt_certificate_repo.get_by_id_number_and_course(
         db=db,
         id_number=id_number,
         course_id=course_id,
