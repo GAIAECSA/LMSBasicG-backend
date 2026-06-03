@@ -134,7 +134,7 @@ def get_certificate_by_id_number_and_course(
     db: Session = Depends(get_db),
 ):
     try:
-        return mdt_certificate_service.get_certificate_by_id_and_course(
+        return mdt_certificate_service.get_certificate_by_id_number_and_course(
             db=db,
             id_number=id_number,
             course_id=course_id,
