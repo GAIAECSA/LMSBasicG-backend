@@ -1,23 +1,37 @@
 from sqlalchemy.orm import Session
-from app.repositories import user_repo
+
 from app.core.security import hash_password, verify_password
+from app.helpers import blind_index
 from app.models.user import User
+from app.repositories import user_repo
 from app.schemas.user import UserCreate, UserLogin, UserUpdate
 
 
 def create_user(db: Session, data: UserCreate):
-
     if user_repo.get_by_username(db, data.username):
         raise ValueError("El nombre de usuario ya existe")
 
     data_dict = data.model_dump(exclude={"password", "role_id"})
 
+    # Calculamos los Blind Indexes (Hashes) en la capa de servicio
+    idnumber_hash = (
+        blind_index.generate_blind_index(data.idnumber) if data.idnumber else None
+    )
+    phone_number_hash = (
+        blind_index.generate_blind_index(data.phone_number)
+        if data.phone_number
+        else None
+    )
+
     user = User(
         **data_dict,
+        idnumber_hash=idnumber_hash,  # Asignamos el hash de la cédula
+        phone_number_hash=phone_number_hash,  # Asignamos el hash del teléfono
         password=hash_password(data.password),
         role_id=2  # Asigna el rol de visitante por defecto
     )
 
+    # El repositorio guarda el objeto sin saber nada de los hashes
     return user_repo.create(db, user)
 
 
@@ -49,6 +63,11 @@ def update_user(db: Session, user_id: int, data: UserUpdate):
 
     for key, value in update_data.items():
         setattr(user, key, value)
+
+        if key == "idnumber":
+            user.idnumber_hash = blind_index.generate_blind_index(value)
+        elif key == "phone_number":
+            user.phone_number_hash = blind_index.generate_blind_index(value)
 
     return user_repo.update(db, user)
 

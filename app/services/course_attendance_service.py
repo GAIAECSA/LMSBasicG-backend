@@ -1,4 +1,5 @@
 from sqlalchemy.orm import Session
+
 from app.models.attendance import Attendance
 from app.models.course_attendance import CourseAttendance
 from app.repositories import attendance_repo, course_attendance_repo, enrollment_repo
@@ -53,7 +54,14 @@ def delete_course_attendance(db: Session, course_attendance_id: int):
     course_attendance = course_attendance_repo.get_by_id(db, course_attendance_id)
     if not course_attendance:
         raise Exception("No encontrado")
-    return course_attendance_repo.delete(db, course_attendance)
+
+    with db.begin():
+        for student_attendance in course_attendance.attendance:
+            attendance_repo.delete(db, student_attendance)
+
+        course_attendance_repo.delete(db, course_attendance)
+
+    return True
 
 
 def get_course_attendance(db: Session, course_attendance_id: int):

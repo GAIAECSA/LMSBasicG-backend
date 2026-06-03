@@ -4,9 +4,10 @@ import uuid
 from fastapi import UploadFile
 from sqlalchemy.orm import Session
 
+from app.core.security import hash_password
+from app.helpers import blind_index
 from app.models.attendance import Attendance
 from app.models.certificate import Certificate
-from app.models.course import Course
 from app.models.enrollment import Enrollment
 from app.models.user import User
 from app.repositories import (
@@ -17,7 +18,6 @@ from app.repositories import (
     enrollment_repo,
     user_repo,
 )
-from app.repositories.course_repo import get_by_id as COU_get_course_by_id
 from app.schemas.enrollment import EnrollmentCreate, EnrollmentUpdate
 from app.schemas.user import UserCreate
 from app.utils.file_upload import save_course_voucher
@@ -154,22 +154,44 @@ def create_massive_enrollments(
         raise Exception("Curso no encontrado")
 
     with db.begin():
-
         for user_data in users:
-
             try:
-
                 with db.begin_nested():
+                    # 1. Generar el hash de la cédula para poder buscar al usuario
+                    current_idnumber_hash = (
+                        blind_index.generate_blind_index(user_data.idnumber)
+                        if user_data.idnumber
+                        else None
+                    )
 
-                    existing_user = user_repo.get_by_email_or_idnumber(
+                    # 2. Buscar usando el hash (NO el texto plano)
+                    existing_user = user_repo.get_by_email_or_idnumber_hash(
                         db,
                         user_data.email,
-                        user_data.idnumber,
+                        current_idnumber_hash,
                     )
 
                     if not existing_user:
-                        user_model = User(**user_data.model_dump())
-                        user_model.role_id = 2
+                        # 3. Extraer datos excluyendo password y rol para inyectarlos de forma segura
+                        user_dict = user_data.model_dump(
+                            exclude={"password", "role_id"}
+                        )
+
+                        # Generar el hash del teléfono
+                        current_phone_hash = (
+                            blind_index.generate_blind_index(user_data.phone_number)
+                            if user_data.phone_number
+                            else None
+                        )
+
+                        # 4. Crear el usuario inyectando los hashes y la contraseña cifrada
+                        user_model = User(
+                            **user_dict,
+                            idnumber_hash=current_idnumber_hash,
+                            phone_number_hash=current_phone_hash,
+                            password=hash_password(user_data.password),
+                            role_id=2,
+                        )
 
                         existing_user = user_repo.create_flush(
                             db,
@@ -202,7 +224,6 @@ def create_massive_enrollments(
                     )
 
                     if course_attendances:
-
                         attendances = [
                             Attendance(
                                 enrollment_id=enrollment.id,
@@ -218,7 +239,6 @@ def create_massive_enrollments(
                         )
 
                     if enrollment.role_id == 4 and not course.is_mdt:
-
                         code = f"CERT-{uuid.uuid4().hex[:10].upper()}"
 
                         certificate_repo.create(
@@ -239,7 +259,6 @@ def create_massive_enrollments(
                     )
 
             except Exception as e:
-
                 failed.append(
                     {
                         "email": user_data.email,

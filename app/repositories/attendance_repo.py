@@ -1,4 +1,5 @@
 from sqlalchemy.orm import Session
+
 from app.models.attendance import Attendance
 
 
@@ -18,8 +19,8 @@ def update(db: Session, attendance: Attendance):
 
 def delete(db: Session, attendance: Attendance):
     attendance.deleted = True
-    db.merge(attendance)
-    db.commit()
+    db.add(attendance)
+    db.flush()
     return attendance
 
 
@@ -55,6 +56,7 @@ def get_by_enrollment_and_course_attendance(
         .first()
     )
 
+
 def get_all_by_enrollment(db: Session, enrollment_id: int):
     return (
         db.query(Attendance)
@@ -64,6 +66,7 @@ def get_all_by_enrollment(db: Session, enrollment_id: int):
         )
         .all()
     )
+
 
 # Metodos compuestos
 

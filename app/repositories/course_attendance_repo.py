@@ -1,4 +1,5 @@
 from sqlalchemy.orm import Session
+
 from app.models.course_attendance import CourseAttendance
 
 
@@ -11,8 +12,8 @@ def update(db: Session, course_attendance: CourseAttendance):
 
 def delete(db: Session, course_attendance: CourseAttendance):
     course_attendance.deleted = True
-    db.merge(course_attendance)
-    db.commit()
+    db.add(course_attendance)
+    db.flush()
     return course_attendance
 
 
