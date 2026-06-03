@@ -1,11 +1,14 @@
 from sqlalchemy.orm import Session, joinedload
+
 from app.models.block_progress import BlockProgress
+
 
 def create(db: Session, progress: BlockProgress):
     db.add(progress)
-    db.commit()
+    db.flush()
     db.refresh(progress)
     return progress
+
 
 def update(db: Session, progress: BlockProgress):
     db.merge(progress)
@@ -13,38 +16,51 @@ def update(db: Session, progress: BlockProgress):
     db.refresh(progress)
     return progress
 
+
 def delete(db: Session, progress: BlockProgress):
     progress.deleted = True
     db.merge(progress)
-    db.commit()
+    db.flush()
     return progress
 
+
 def get_by_id(db: Session, progress_id: int):
-    return db.query(BlockProgress)\
-        .filter(
-            BlockProgress.id == progress_id,
-            BlockProgress.deleted == False
-        )\
+    return (
+        db.query(BlockProgress)
+        .filter(BlockProgress.id == progress_id, BlockProgress.deleted == False)
         .first()
+    )
+
 
 def get_by_enrollment_block(db: Session, enrollment_id: int, lesson_block_id: int):
-    return db.query(BlockProgress)\
+    return (
+        db.query(BlockProgress)
         .filter(
             BlockProgress.enrollment_id == enrollment_id,
             BlockProgress.lesson_block_id == lesson_block_id,
-            BlockProgress.deleted == False
-        )\
+            BlockProgress.deleted == False,
+        )
         .first()
+    )
 
 
 def get_by_enrollment(db: Session, enrollment_id: int):
-    return db.query(BlockProgress)\
+    return (
+        db.query(BlockProgress)
         .filter(
-            BlockProgress.enrollment_id == enrollment_id,
-            BlockProgress.deleted == False
-        )\
-        .order_by(BlockProgress.lesson_block_id)\
+            BlockProgress.enrollment_id == enrollment_id, BlockProgress.deleted == False
+        )
+        .order_by(BlockProgress.lesson_block_id)
         .all()
+    )
 
 
-
+def get_by_lesson_block_id(db: Session, lesson_block_id: int):
+    return (
+        db.query(BlockProgress)
+        .filter(
+            BlockProgress.lesson_block_id == lesson_block_id,
+            BlockProgress.deleted == False,
+        )
+        .all()
+    )
