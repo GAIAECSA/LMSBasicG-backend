@@ -6,13 +6,12 @@ import re
 from fastapi import UploadFile
 from sqlalchemy.orm import Session
 
+from app.helpers import blind_index
 from app.models.mdt_certificate import MdtCertificate
 from app.repositories import mdt_certificate_repo
-from app.schemas.mdt_certificate import (
-    MdtBulkCertificateCreate,
-    MdtCertificateCreate,
-    MdtCertificateUpdate,
-)
+from app.schemas.mdt_certificate import (MdtBulkCertificateCreate,
+                                         MdtCertificateCreate,
+                                         MdtCertificateUpdate)
 from app.utils.file_upload import save_certificate_mdt
 
 ID_NUMBER_REGEX = r"\d{10}"
@@ -28,11 +27,15 @@ def create_certificate(
 
     certificate_data = data.model_dump()
 
+    id_number_hash = blind_index.generate_blind_index(certificate_data["id_number"])
+
+    certificate_data["id_number_hash"] = id_number_hash
+
     with db.begin():
 
-        existing_certificate = mdt_certificate_repo.get_by_id_number_and_course(
+        existing_certificate = mdt_certificate_repo.get_by_id_number_hash_and_course(
             db,
-            certificate_data["id_number"],
+            id_number_hash,
             certificate_data["course_id"],
             certificate_data["certificate_type"],
         )
@@ -44,8 +47,10 @@ def create_certificate(
             if existing_certificate.file_url:
                 try:
                     file_path = existing_certificate.file_url.lstrip("/")
+
                     if os.path.exists(file_path):
                         os.remove(file_path)
+
                 except Exception:
                     pass
 
@@ -69,7 +74,9 @@ def create_certificate(
             }
         )
 
-        certificate = MdtCertificate(**certificate_data)
+        certificate = MdtCertificate(
+            **certificate_data,
+        )
 
         return mdt_certificate_repo.create(
             db=db,
@@ -110,10 +117,14 @@ def create_certificates_bulk(
 
                     id_number = match.group()
 
+                    id_number_hash = blind_index.generate_blind_index(
+                        id_number
+                    )
+
                     existing_certificate = (
-                        mdt_certificate_repo.get_by_id_number_and_course(
+                        mdt_certificate_repo.get_by_id_number_hash_and_course(
                             db,
-                            id_number,
+                            id_number_hash,
                             base_data["course_id"],
                             base_data["certificate_type"],
                         )
@@ -133,6 +144,8 @@ def create_certificates_bulk(
                             except Exception:
                                 pass
 
+                        existing_certificate.id_number = id_number
+                        existing_certificate.id_number_hash = id_number_hash
                         existing_certificate.file_url = saved_file["file_url"]
                         existing_certificate.file_name = saved_file["filename"]
 
@@ -146,6 +159,7 @@ def create_certificates_bulk(
                         certificate = MdtCertificate(
                             **base_data,
                             id_number=id_number,
+                            id_number_hash=id_number_hash,
                             file_url=saved_file["file_url"],
                             file_name=saved_file["filename"],
                         )
@@ -212,10 +226,10 @@ def get_certificates_by_id_number(
     db: Session,
     id_number: str,
 ):
-
-    return mdt_certificate_repo.get_by_id_number(
+    id_number_hash = blind_index.generate_blind_index(id_number)
+    return mdt_certificate_repo.get_by_id_number_hash(
         db,
-        id_number,
+        id_number_hash,
     )
 
 
@@ -261,13 +275,14 @@ def delete_certificate(
     db.commit()
 
 
-def get_certificate_by_id_and_course(
+def get_certificate_by_id_number_and_course(
     db: Session, id_number: str, course_id: int, certificate_type: str
 ):
-    # 1. Buscar el certificado único usando los tres criterios
-    certificate = mdt_certificate_repo.get_by_id_number_and_course(
+
+    id_number_hash = blind_index.generate_blind_index(id_number)
+    certificate = mdt_certificate_repo.get_by_id_number_hash_and_course(
         db=db,
-        id_number=id_number,
+        id_number_hash=id_number_hash,
         course_id=course_id,
         certificate_type=certificate_type,  # <-- Nuevo argumento
     )

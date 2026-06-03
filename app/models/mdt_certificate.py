@@ -1,3 +1,4 @@
+import os
 from datetime import datetime, timezone
 
 from sqlalchemy import (
@@ -11,8 +12,12 @@ from sqlalchemy import (
 )
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
+from sqlalchemy_utils import EncryptedType
+from sqlalchemy_utils.types.encrypted.encrypted_type import AesEngine
 
 from app.db.base import Base
+
+SECRET_KEY = os.getenv("ENCRYPTION_KEY")
 
 
 class MdtCertificate(Base):
@@ -27,15 +32,36 @@ class MdtCertificate(Base):
 
     id = Column(Integer, primary_key=True, index=True)
 
-    course_id = Column(Integer, ForeignKey("courses.id"), nullable=False, index=True)
+    course_id = Column(
+        Integer,
+        ForeignKey("courses.id"),
+        nullable=False,
+        index=True,
+    )
+
     file_url = Column(String, nullable=False)
     file_name = Column(String, nullable=False)
-    id_number = Column(String(100), nullable=False, index=True)
+
+    id_number = Column(
+        EncryptedType(String, SECRET_KEY, AesEngine, "pkcs5"),
+        nullable=False,
+    )
+
+    id_number_hash = Column(
+        String,
+        nullable=False,
+        index=True,
+    )
 
     certificate_type = Column(String(20), nullable=False)
 
     deleted = Column(Boolean, default=False, nullable=False)
-    visited_at = Column(DateTime(timezone=True), nullable=True, server_default=None)
+
+    visited_at = Column(
+        DateTime(timezone=True),
+        nullable=True,
+        server_default=None,
+    )
 
     created_at = Column(
         DateTime(timezone=True),
