@@ -1,12 +1,14 @@
+from typing import Optional
+
+from fastapi import Form, Request, UploadFile
 from sqlalchemy.orm import Session
+
 from app.models.certificate_template import CertificateTemplate
 from app.repositories import certificate_template_repo
 from app.schemas.certificate_template import (
     CertificateTemplateCreate,
     CertificateTemplateUpdate,
 )
-from fastapi import UploadFile, Request, Form
-from typing import Optional
 from app.utils.file_upload import save_certificate_template_image
 
 
@@ -16,14 +18,12 @@ async def create_certificate_template(
     background_image: UploadFile = None,
     request: Request = None,
 ):
-    print("\n========== CREATE TEMPLATE ==========")
 
     existing = certificate_template_repo.get_by_course(db, data["course_id"])
     if existing:
         raise Exception("Plantilla existente en el curso")
 
     form = await request.form()
-    print("📦 FORM KEYS:", list(form.keys()))
 
     image_url = None
     if background_image:
@@ -42,13 +42,10 @@ async def create_certificate_template(
 
         print(f"🔑 file_key: {file_key} -> {file}")
 
-        # ✅ FIX: Evaluamos si existe el archivo y si tiene un nombre válido
         if file is not None and getattr(file, "filename", ""):
             field["signatureImage"] = save_certificate_template_image(file)
-            print("🆕 IMAGE SAVED")
         else:
             field["signatureImage"] = None
-            print("❌ NO IMAGE")
 
         processed_fields.append(field)
 
@@ -69,14 +66,12 @@ async def update_certificate_template(
     background_image: UploadFile = None,
     request: Request = None,
 ):
-    print("\n========== UPDATE TEMPLATE ==========")
 
     template = certificate_template_repo.get_by_id(db, template_id)
     if not template:
         raise Exception("Plantilla no encontrada")
 
     form = await request.form()
-    print("📦 FORM KEYS:", list(form.keys()))
 
     if background_image:
         template.background_image_url = save_certificate_template_image(
@@ -92,22 +87,15 @@ async def update_certificate_template(
         field = dict(field)
         field_id = field.get("id")
 
-        print("\n🧩 FIELD:", field)
 
         file_key = f"signature_{field_id}"
         file = form.get(file_key)
 
-        print(f"🔑 file_key: {file_key} -> {file}")
-
-        # ✅ FIX: Evaluamos de la misma forma
         if file is not None and getattr(file, "filename", ""):
             field["signatureImage"] = save_certificate_template_image(file)
-            print("🆕 NEW IMAGE")
         else:
-            # 🔥 CRÍTICO: mantener imagen anterior del DB
             old = next((f for f in existing_fields if f.get("id") == field_id), {})
             field["signatureImage"] = old.get("signatureImage")
-            print("♻️ KEEP OLD IMAGE")
 
         updated_fields.append(field)
 

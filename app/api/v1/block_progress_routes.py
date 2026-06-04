@@ -4,8 +4,8 @@ from sqlalchemy.orm import Session
 from app.db.session import SessionLocal
 from app.schemas.block_progress import (
     BlockProgressCreate,
-    BlockProgressUpdate,
     BlockProgressResponse,
+    BlockProgressUpdate,
 )
 from app.services import block_progress_service
 from app.utils.jwt import get_current_user, require_admin
@@ -19,18 +19,6 @@ def get_db():
         yield db
     finally:
         db.close()
-
-
-@router.post("/progress", response_model=BlockProgressResponse)
-def create_block_progress(
-    data: BlockProgressCreate,
-    db: Session = Depends(get_db),
-    user=Depends(get_current_user),
-):
-    try:
-        return block_progress_service.create_block_progress(db, data)
-    except Exception as e:
-        raise HTTPException(status_code=400, detail=str(e))
 
 
 @router.put("/progress/{progress_id}", response_model=BlockProgressResponse)

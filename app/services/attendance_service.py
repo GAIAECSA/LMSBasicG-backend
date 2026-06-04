@@ -20,19 +20,11 @@ def update_attendance(db: Session, attendance_id: int, data: AttendanceUpdate):
     attendance = attendance_repo.get_by_id(db, attendance_id)
 
     if not attendance:
-        raise Exception("Asistencia no encontrada")
+        raise ValueError("Asistencia no encontrada")
 
-    update_data = data.model_dump(exclude_unset=True)
-    enrollment_id = update_data.get("enrollment_id", attendance.enrollment_id)
-    course_attendance_id = update_data.get(
-        "course_attendance_id", attendance.course_attendance_id
+    update_data = data.model_dump(
+        exclude_unset=True, exclude={"enrollment_id", "course_attendance_id"}
     )
-
-    existing = attendance_repo.get_by_enrollment_and_course_attendance(
-        db, enrollment_id, course_attendance_id
-    )
-    if existing and existing.id != attendance.id:
-        raise Exception("Ya existe una asistencia para este estudiante")
 
     for key, value in update_data.items():
         setattr(attendance, key, value)
@@ -60,6 +52,7 @@ def get_attendance(db: Session, attendance_id: int):
 
 def get_all_attendance_by_course_attendance(db: Session, course_attendance_id: int):
     return attendance_repo.get_all_by_course_attendance(db, course_attendance_id)
+
 
 def get_all_attendance_by_enrollment(db: Session, enrollment_id: int):
     return attendance_repo.get_all_by_enrollment(db, enrollment_id)

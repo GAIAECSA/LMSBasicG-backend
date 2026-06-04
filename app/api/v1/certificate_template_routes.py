@@ -1,16 +1,11 @@
-from fastapi import APIRouter, Depends, HTTPException, UploadFile, File, Request, Form
-from sqlalchemy.orm import Session
 import json
-from app.db.session import get_db
-from app.schemas.certificate_template import (
-    CertificateTemplateCreate,
-    CertificateTemplateUpdate,
-    CertificateTemplateResponse,
-)
-from app.services import certificate_template_service
 
+from fastapi import APIRouter, Depends, File, Form, HTTPException, Request, UploadFile
 from sqlalchemy.orm import Session
-from app.db.session import SessionLocal
+
+from app.db.session import SessionLocal, get_db
+from app.schemas.certificate_template import CertificateTemplateResponse
+from app.services import certificate_template_service
 from app.utils.jwt import get_current_user
 
 router = APIRouter()
