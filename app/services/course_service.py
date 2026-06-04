@@ -1,4 +1,5 @@
 import os
+import uuid
 
 from fastapi import UploadFile
 from sqlalchemy import select, update
@@ -18,7 +19,12 @@ from app.models.mdt_certificate import MdtCertificate
 from app.models.module import Module
 from app.models.quizz_response import QuizzResponse
 from app.models.survey_response import SurveyResponse
-from app.repositories import course_repo, enrollment_repo, lesson_block_repo
+from app.repositories import (
+    certificate_repo,
+    course_repo,
+    enrollment_repo,
+    lesson_block_repo,
+)
 from app.schemas.course import CourseCreate, CourseUpdate
 from app.utils.file_upload import save_course_image
 
@@ -63,13 +69,15 @@ def update_course(
     data: CourseUpdate,
     image: UploadFile | None = None,
 ):
+    new_image_url = None
+    if image:
+        new_image_url = save_course_image(image)
 
     with db.begin():
-
         course = course_repo.get_by_id(db, course_id)
 
         if not course:
-            raise Exception("Curso no encontrado")
+            raise ValueError("Curso no encontrado")
 
         update_data = data.model_dump(exclude_unset=True)
 
@@ -79,9 +87,8 @@ def update_course(
                 update_data["name"],
                 course.subcategory_id,
             )
-
             if existing:
-                raise Exception("El curso ya existe en esta subcategoría")
+                raise ValueError("El curso ya existe en esta subcategoría")
 
         old_is_mdt = course.is_mdt
         new_is_mdt = update_data.get("is_mdt", old_is_mdt)
@@ -89,15 +96,16 @@ def update_course(
         for key, value in update_data.items():
             setattr(course, key, value)
 
-        if image:
-
+        if new_image_url:
             if course.image_url:
                 old_path = course.image_url.lstrip("/")
-
                 if os.path.exists(old_path):
-                    os.remove(old_path)
+                    try:
+                        os.remove(old_path)
+                    except Exception as e:
+                        print(f"Error al eliminar imagen antigua: {e}")
 
-            course.image_url = save_course_image(image)
+            course.image_url = new_image_url
 
         handle_mdt_blocks_transition(
             db=db,
@@ -105,6 +113,30 @@ def update_course(
             old_is_mdt=old_is_mdt,
             new_is_mdt=new_is_mdt,
         )
+
+        if old_is_mdt and not new_is_mdt:
+            enrollments = enrollment_repo.get_all_by_course_id(db, course.id)
+
+            existing_certs = certificate_repo.get_all_by_course(db, course.id)
+            users_with_certs = {cert.user_id for cert in existing_certs}
+
+            new_certificates = []
+            for enrollment in enrollments:
+                if (
+                    enrollment.role_id == 4
+                    and enrollment.user_id not in users_with_certs
+                ):
+                    code = f"CERT-{uuid.uuid4().hex[:10].upper()}"
+                    new_certificates.append(
+                        Certificate(
+                            user_id=enrollment.user_id,
+                            course_id=course.id,
+                            certificate_code=code,
+                        )
+                    )
+
+            if new_certificates:
+                db.add_all(new_certificates)
 
         return course_repo.update(db, course)
 
