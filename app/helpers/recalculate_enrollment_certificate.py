@@ -1,18 +1,15 @@
 from sqlalchemy.orm import Session
 
 from app.models.enrollment import Enrollment
-
-from app.repositories.quizz_response_repo import (
-    get_all_by_enrollment as QUI_get_by_enrollment,
+from app.repositories.certificate_repo import (
+    get_by_user_and_course as CER_get_by_user_and_course,
 )
-
+from app.repositories.certificate_repo import update as CER_update
 from app.repositories.homework_response_repo import (
     get_all_by_enrollment as HW_get_by_enrollment,
 )
-
-from app.repositories.certificate_repo import (
-    get_by_user_and_course as CER_get_by_user_and_course,
-    update as CER_update,
+from app.repositories.quizz_response_repo import (
+    get_all_by_enrollment as QUI_get_by_enrollment,
 )
 
 
@@ -46,6 +43,33 @@ def recalculate_enrollment_certificate(
         db=db,
         certificate=certificate,
     )
+
+
+def recalculate_enrollment_certificate_optimized(
+    db: Session,
+    enrollment: Enrollment,
+):
+    course = enrollment.course
+
+    if not course or course.is_mdt:
+        return
+
+    final_grade = calculate_final_grade_average(
+        db=db,
+        enrollment_id=enrollment.id,
+    )
+
+    certificate = CER_get_by_user_and_course(
+        db=db,
+        user_id=enrollment.user_id,
+        course_id=enrollment.course_id,
+    )
+
+    if not certificate:
+        return
+
+    if certificate.final_grade != final_grade:
+        certificate.final_grade = final_grade
 
 
 def calculate_final_grade_average(

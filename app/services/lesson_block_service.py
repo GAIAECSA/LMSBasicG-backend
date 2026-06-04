@@ -7,6 +7,7 @@ from sqlalchemy.orm.attributes import flag_modified
 
 from app.helpers.recalculate_enrollment_certificate import (
     recalculate_enrollment_certificate,
+    recalculate_enrollment_certificate_optimized,
 )
 from app.models.block_progress import BlockProgress
 from app.models.lesson_block import LessonBlock
@@ -21,23 +22,28 @@ from app.utils.file_upload import save_lesson_file
 
 
 def create_lesson_block(
-    db: Session, data: LessonBlockCreate, file: UploadFile | None = None
+    db: Session,
+    data: LessonBlockCreate,
+    file: UploadFile | None = None,
 ):
     with db.begin():
-        content = {"base": "base"}
+        lesson = lesson_repo.get_by_id(db, data.lesson_id)
+        if not lesson:
+            raise ValueError("Lección no encontrada")
+
+        content = data.content.copy() if data.content else {}
 
         if file:
-            # file_data = save_lesson_file(file)
+            file_data = save_lesson_file(file)
 
-            pass
-            # content = {
-            #     "file_url": file_data["file_url"],
-            #     "filename": file_data["filename"]
-            # }
-        elif data.content:
-            content = data.content
-        else:
-            pass
+            if file_data:
+                content.update(
+                    {
+                        "file_url": file_data["file_url"],
+                        "filename": file_data["filename"],
+                        "stored_name": file_data["stored_name"],
+                    }
+                )
 
         lesson_block = LessonBlock(
             **data.model_dump(exclude={"content"}),
@@ -46,28 +52,19 @@ def create_lesson_block(
 
         lesson_block = lesson_block_repo.create(db, lesson_block)
 
-        lesson = lesson_repo.get_by_id(db, lesson_block.lesson_id)
-
-        if not lesson:
-            raise Exception("Lección no encontrada")
-
         course_id = lesson.module.course_id
+        enrollments = enrollment_repo.get_all_by_course_id(db, course_id)
 
-        enrollments = enrollment_repo.get_all_by_course_id(
-            db,
-            course_id,
-        )
+        if enrollments:
+            progress_objects = [
+                BlockProgress(
+                    enrollment_id=enrollment.id,
+                    lesson_block_id=lesson_block.id,
+                )
+                for enrollment in enrollments
+            ]
 
-        for enrollment in enrollments:
-            progress = BlockProgress(
-                enrollment_id=enrollment.id,
-                lesson_block_id=lesson_block.id,
-            )
-
-            block_progress_repo.create(
-                db,
-                progress,
-            )
+            block_progress_repo.bulk_create(db, progress_objects)
 
         return lesson_block
 
@@ -86,58 +83,50 @@ def update_lesson_block(
             lesson_block = lesson_block_repo.get_by_id(db, lesson_block_id)
 
             if not lesson_block:
-                raise Exception("Bloque no encontrado")
+                raise ValueError("Bloque no encontrado")
 
             old_counts_toward_grade = lesson_block.counts_toward_grade
 
-            data_dict = data.model_dump(
-                exclude_unset=True,
-            )
+            data_dict = data.model_dump(exclude_unset=True)
 
             update_data = {
                 key: value for key, value in data_dict.items() if key != "content"
             }
-
             for key, value in update_data.items():
                 setattr(lesson_block, key, value)
 
-            if file:
-                old_file_url = (lesson_block.content or {}).get("file_url")
+            current_content = (lesson_block.content or {}).copy()
 
+            if "content" in data_dict and data_dict["content"] is not None:
+                current_content.update(jsonable_encoder(data_dict["content"]))
+
+            if file:
+                old_file_url = current_content.get("file_url")
                 if old_file_url:
                     old_file_path_to_delete = old_file_url.lstrip("/")
 
                 file_data = save_lesson_file(file)
-
                 new_file_path_to_delete_on_error = file_data["file_url"].lstrip("/")
 
-                lesson_block.content = {
-                    "file_url": file_data["file_url"],
-                    "filename": file_data["filename"],
-                }
+                current_content.update(
+                    {
+                        "file_url": file_data["file_url"],
+                        "filename": file_data["filename"],
+                        "stored_name": file_data.get("stored_name"),
+                    }
+                )
 
-                flag_modified(lesson_block, "content")
-
-            elif "content" in data_dict:
-                incoming_content = data_dict.get("content")
-
-                if incoming_content is not None:
-                    lesson_block.content = jsonable_encoder(incoming_content)
-                    flag_modified(lesson_block, "content")
+            lesson_block.content = current_content
+            flag_modified(lesson_block, "content")
 
             lesson_block = lesson_block_repo.update(db, lesson_block)
 
             if old_counts_toward_grade != lesson_block.counts_toward_grade:
-                enrollments = enrollment_repo.get_all_by_course_id(
-                    db,
-                    lesson_block.lesson.module.course_id,
-                )
+                course_id = lesson_block.lesson.module.course_id
+                enrollments = enrollment_repo.get_all_by_course_id(db, course_id)
 
                 for enrollment in enrollments:
-                    recalculate_enrollment_certificate(
-                        db=db,
-                        enrollment=enrollment,
-                    )
+                    recalculate_enrollment_certificate_optimized(db, enrollment)
 
         if old_file_path_to_delete and os.path.exists(old_file_path_to_delete):
             os.remove(old_file_path_to_delete)
@@ -149,7 +138,6 @@ def update_lesson_block(
             new_file_path_to_delete_on_error
         ):
             os.remove(new_file_path_to_delete_on_error)
-
         raise
 
 

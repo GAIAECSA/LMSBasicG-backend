@@ -64,3 +64,9 @@ def get_by_lesson_block_id(db: Session, lesson_block_id: int):
         )
         .all()
     )
+
+
+def bulk_create(db: Session, progresses: list[BlockProgress]):
+    db.add_all(progresses)
+    db.flush()
+    return progresses
