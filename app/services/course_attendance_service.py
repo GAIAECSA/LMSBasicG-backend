@@ -51,17 +51,25 @@ def update_course_attendance(
 
 
 def delete_course_attendance(db: Session, course_attendance_id: int):
-    course_attendance = course_attendance_repo.get_by_id(db, course_attendance_id)
-    if not course_attendance:
-        raise Exception("No encontrado")
+    try:
+        with db.begin():
+            course_attendance = course_attendance_repo.get_by_id(
+                db,
+                course_attendance_id,
+            )
 
-    with db.begin():
-        for student_attendance in course_attendance.attendance:
-            attendance_repo.delete(db, student_attendance)
+            if not course_attendance:
+                raise Exception("No encontrado")
 
-        course_attendance_repo.delete(db, course_attendance)
+            for student_attendance in course_attendance.attendance:
+                attendance_repo.delete(db, student_attendance)
 
-    return True
+            course_attendance_repo.delete(db, course_attendance)
+
+        return True
+
+    except Exception as e:
+        raise e
 
 
 def get_course_attendance(db: Session, course_attendance_id: int):
