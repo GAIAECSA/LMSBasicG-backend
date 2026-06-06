@@ -1,3 +1,5 @@
+from http.client import HTTPException
+
 from sqlalchemy.orm import Session
 
 from app.models.attendance import Attendance
@@ -51,7 +53,10 @@ def update_course_attendance(
 
 
 def delete_course_attendance(db: Session, course_attendance_id: int):
-    print("¿Hay transacción activa ANTES de empezar?:", db.in_transaction())
+    estado = db.in_transaction()
+    raise HTTPException(
+        status_code=400, detail=f"¿Hay transaccion activa ANTES de empezar?: {estado}"
+    )
     try:
         with db.begin():
             course_attendance = course_attendance_repo.get_by_id(
