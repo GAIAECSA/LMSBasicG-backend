@@ -51,6 +51,7 @@ def update_course_attendance(
 
 
 def delete_course_attendance(db: Session, course_attendance_id: int):
+    print("¿Hay transacción activa ANTES de empezar?:", db.in_transaction())
     try:
         with db.begin():
             course_attendance = course_attendance_repo.get_by_id(
