@@ -1,4 +1,3 @@
-from django import db
 from sqlalchemy.orm import Session
 
 from app.core.security import hash_password, verify_password
