@@ -70,3 +70,15 @@ def update_user(
         return user_service.update_user(db, user_id, data)
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
+
+@router.delete("/users/{user_id}")
+def delete_user(
+    user_id: int,
+    db: Session = Depends(get_db),
+    user=Depends(require_admin),
+):
+    try:
+        user_service.delete_user(db, user_id)
+        return {"detail": "Usuario eliminado correctamente"}
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))

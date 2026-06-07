@@ -1,6 +1,6 @@
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, joinedload
+
 from app.models.quizz_response import QuizzResponse
-from sqlalchemy.orm import joinedload
 
 
 def create(db: Session, quizz_response: QuizzResponse):
@@ -15,6 +15,13 @@ def delete(db: Session, quizz_response: QuizzResponse):
     db.merge(quizz_response)
     db.commit()
     return quizz_response
+
+
+def soft_delete_by_enrollment(db: Session, enrollment_id: int):
+    db.query(QuizzResponse).filter(QuizzResponse.enrollment_id == enrollment_id).update(
+        {"deleted": True}
+    )
+    db.commit()
 
 
 def get_by_id(db: Session, quizz_response_id: int):

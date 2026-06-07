@@ -3,7 +3,6 @@ from sqlalchemy.orm import Session
 from app.models.enrollment import Enrollment
 from app.models.homework_response import HomeworkResponse
 from app.models.lesson_block import LessonBlock
-from app.models.lesson_block import LessonBlock
 
 
 def delete(db: Session, homework_response: HomeworkResponse):
@@ -11,6 +10,13 @@ def delete(db: Session, homework_response: HomeworkResponse):
     db.merge(homework_response)
     db.commit()
     return homework_response
+
+
+def soft_delete_by_enrollment(db: Session, enrollment_id: int):
+    db.query(HomeworkResponse).filter(
+        HomeworkResponse.enrollment_id == enrollment_id
+    ).update({"deleted": True})
+    db.commit()
 
 
 def get_by_id(db: Session, homework_response_id: int):

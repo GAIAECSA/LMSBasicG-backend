@@ -50,3 +50,10 @@ def create_flush(db: Session, user: User):
     db.add(user)
     db.flush()
     return user
+
+
+def soft_delete(db: Session, user: User):
+    user.deleted = True
+    db.add(user)
+    db.flush()
+    return user

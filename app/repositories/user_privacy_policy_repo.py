@@ -36,3 +36,10 @@ def get_by_privacy_policy_id(db: Session, privacy_policy_id: int):
         .filter(UserPrivacyPolicy.privacy_policy_id == privacy_policy_id)
         .all()
     )
+
+
+def soft_delete_by_user(db: Session, user_id: int):
+    db.query(UserPrivacyPolicy).filter(UserPrivacyPolicy.user_id == user_id).update(
+        {"deleted": True}
+    )
+    db.commit()

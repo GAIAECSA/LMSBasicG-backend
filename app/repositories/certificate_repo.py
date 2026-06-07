@@ -1,4 +1,5 @@
 from sqlalchemy.orm import Session
+
 from app.models.certificate import Certificate
 
 
@@ -7,6 +8,13 @@ def delete(db: Session, certificate: Certificate):
     db.merge(certificate)
     db.commit()
     return certificate
+
+
+def soft_delete_by_user(db: Session, user_id: int):
+    db.query(Certificate).filter(Certificate.user_id == user_id).update(
+        {"deleted": True}
+    )
+    db.commit()
 
 
 def get_by_id(db: Session, certificate_id: int):

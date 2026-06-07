@@ -1,4 +1,5 @@
 from sqlalchemy.orm import Session, joinedload
+
 from app.models.enrollment import Enrollment
 
 
@@ -20,6 +21,13 @@ def delete(db: Session, enrollment: Enrollment):
     enrollment.deleted = True
     db.merge(enrollment)
     db.commit()
+    return enrollment
+
+
+def soft_delete(db: Session, enrollment: Enrollment):
+    enrollment.deleted = True
+    db.add(enrollment)
+    db.flush()
     return enrollment
 
 

@@ -1,11 +1,11 @@
 from sqlalchemy import (
-    Column,
-    Integer,
     Boolean,
+    Column,
     DateTime,
     ForeignKey,
-    func,
+    Integer,
     UniqueConstraint,
+    func,
 )
 from sqlalchemy.orm import relationship
 
@@ -30,6 +30,7 @@ class UserPrivacyPolicy(Base):
     )
 
     created_at = Column(DateTime(timezone=True), server_default=func.now())
+    deleted = Column(Boolean, default=False, nullable=False)
 
     user = relationship("User", back_populates="privacy_policies")
 
