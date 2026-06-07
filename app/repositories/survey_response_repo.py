@@ -76,4 +76,3 @@ def soft_delete_by_enrollment(db: Session, enrollment_id: int):
     db.query(SurveyResponse).filter(
         SurveyResponse.enrollment_id == enrollment_id
     ).update({"deleted": True})
-    db.commit()

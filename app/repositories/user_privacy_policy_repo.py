@@ -42,4 +42,3 @@ def soft_delete_by_user(db: Session, user_id: int):
     db.query(UserPrivacyPolicy).filter(UserPrivacyPolicy.user_id == user_id).update(
         {"deleted": True}
     )
-    db.commit()

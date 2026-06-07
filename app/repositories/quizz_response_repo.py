@@ -21,7 +21,6 @@ def soft_delete_by_enrollment(db: Session, enrollment_id: int):
     db.query(QuizzResponse).filter(QuizzResponse.enrollment_id == enrollment_id).update(
         {"deleted": True}
     )
-    db.commit()
 
 
 def get_by_id(db: Session, quizz_response_id: int):
