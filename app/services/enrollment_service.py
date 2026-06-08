@@ -147,13 +147,13 @@ def create_massive_enrollments(
     skipped = []
     failed = []
 
-    course_attendances = course_attendance_repo.get_by_course(db, course_id)
-    course = course_repo.get_by_id(db, course_id)
-
-    if not course:
-        raise Exception("Curso no encontrado")
-
     with db.begin():
+        course_attendances = course_attendance_repo.get_by_course(db, course_id)
+        course = course_repo.get_by_id(db, course_id)
+
+        if not course:
+            raise Exception("Curso no encontrado")
+
         for user_data in users:
             try:
                 with db.begin_nested():
