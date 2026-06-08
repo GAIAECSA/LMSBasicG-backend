@@ -1,13 +1,14 @@
 from sqlalchemy.orm import Session
+
 from app.helpers import recalculate_enrollment_certificate
 from app.helpers.recalculate_enrollment_certificate import (
     recalculate_enrollment_certificate,
 )
 from app.models.quizz_response import QuizzResponse
 from app.repositories import quizz_response_repo
-from app.schemas.quizz_response import QuizzResponseCreate, QuizzResponseUpdate
-from app.repositories.lesson_block_repo import get_by_id as LES_BLO_get_by_id
 from app.repositories.course_repo import get_by_id as COU_get_by_id
+from app.repositories.lesson_block_repo import get_by_id as LES_BLO_get_by_id
+from app.schemas.quizz_response import QuizzResponseCreate, QuizzResponseUpdate
 
 
 def create_quizz_response(
@@ -28,7 +29,7 @@ def create_quizz_response(
 
         quizz_response = QuizzResponse(**data.model_dump())
 
-        response = quizz_response_repo.create(
+        response = quizz_response_repo.create_flush(
             db,
             quizz_response,
         )

@@ -10,6 +10,13 @@ def create(db: Session, quizz_response: QuizzResponse):
     return quizz_response
 
 
+def create_flush(db: Session, quizz_response: QuizzResponse):
+    db.add(quizz_response)
+    db.flush()
+    db.refresh(quizz_response)
+    return quizz_response
+
+
 def delete(db: Session, quizz_response: QuizzResponse):
     quizz_response.deleted = True
     db.merge(quizz_response)
