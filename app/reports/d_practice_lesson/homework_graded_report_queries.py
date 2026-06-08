@@ -3,29 +3,33 @@ from sqlalchemy.orm import Session
 
 from app.models.enrollment import Enrollment
 from app.models.homework_response import HomeworkResponse
+from app.models.lesson import Lesson
 from app.models.lesson_block import LessonBlock
+from app.models.module import Module
 from app.models.user import User
 
 
-def get_all_graded_homeworks_matrix(db: Session, course_id: int):
-    """
-    Obtiene la combinación de cada estudiante matriculado con cada bloque
-    de tarea del curso que tenga 'counts_toward_grade' en True.
-    """
+def get_all_graded_homeworks_matrix(
+    db: Session,
+    course_id: int,
+):
     return (
         db.query(
             User.id.label("student_id"),
-            func.concat(User.firstname, " ", User.lastname).label("student_name"),
+            func.concat(
+                User.firstname,
+                " ",
+                User.lastname,
+            ).label("student_name"),
             LessonBlock.id.label("block_id"),
             LessonBlock.content.label("block_content"),
+            LessonBlock.order.label("block_order"),
             HomeworkResponse.id.label("response_id"),
             HomeworkResponse.score.label("score"),
             HomeworkResponse.created_at.label("submitted_at"),
             HomeworkResponse.status.label("submission_status"),
         )
-        .select_from(
-            Enrollment
-        )  # <-- Establece explícitamente el origen izquierdo de la consulta
+        .select_from(Enrollment)
         .join(
             User,
             and_(
@@ -34,10 +38,23 @@ def get_all_graded_homeworks_matrix(db: Session, course_id: int):
             ),
         )
         .join(
+            Module,
+            and_(
+                Module.course_id == Enrollment.course_id,
+                Module.deleted.is_(False),
+            ),
+        )
+        .join(
+            Lesson,
+            and_(
+                Lesson.module_id == Module.id,
+                Lesson.deleted.is_(False),
+            ),
+        )
+        .join(
             LessonBlock,
             and_(
-                LessonBlock.course_id
-                == Enrollment.course_id,  # Multiplica cada alumno por cada bloque del curso
+                LessonBlock.lesson_id == Lesson.id,
                 LessonBlock.counts_toward_grade.is_(True),
                 LessonBlock.is_active.is_(True),
                 LessonBlock.deleted.is_(False),
@@ -54,12 +71,14 @@ def get_all_graded_homeworks_matrix(db: Session, course_id: int):
         )
         .filter(
             Enrollment.course_id == course_id,
-            Enrollment.role_id == 4,  # Rol Estudiante
+            Enrollment.role_id == 4,
             Enrollment.deleted.is_(False),
         )
         .order_by(
             User.lastname.asc(),
             User.firstname.asc(),
+            Module.order.asc(),
+            Lesson.order.asc(),
             LessonBlock.order.asc(),
         )
         .all()
