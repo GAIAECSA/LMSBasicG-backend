@@ -19,3 +19,9 @@ docker run -d \
   --env-file .env \
   mdt_lms-api
   docker logs -f fastapi_app_mdt_lms
+
+  # creacion de subdirectorios
+
+  mkdir -p /root/mdt_data/demo/uploads
+  cp -a uploads/. /root/mdt_data/demo/uploads/    # solo para copiar
+  ls -lah /root/mdt_data/demo/uploads

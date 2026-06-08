@@ -6,9 +6,12 @@ services:
     container_name: fastapi_app_mdt_lms
     ports:
       - "9002:9002"
+
     volumes:
       - ./app:/app/app
-      - ./uploads:/app/uploads
+      - /root/mdt_data/demo/uploads:/app/uploads
+
     env_file:
       - .env
+
     restart: always
