@@ -1,5 +1,6 @@
-from sqlalchemy.orm import Session
 from datetime import datetime
+
+from sqlalchemy.orm import Session
 
 from app.models.block_progress import BlockProgress
 from app.repositories import block_progress_repo
@@ -65,7 +66,7 @@ def complete_block(db: Session, enrollment_id: int, lesson_block_id: int):
             started_at=datetime.utcnow(),
             completed_at=datetime.utcnow(),
         )
-        return block_progress_repo.create(db, progress)
+        return block_progress_repo.create_no_flush(db, progress)
 
     progress.is_completed = True
     progress.completed_at = datetime.utcnow()
