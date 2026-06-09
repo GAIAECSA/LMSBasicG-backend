@@ -10,14 +10,9 @@ from app.models.attendance import Attendance
 from app.models.certificate import Certificate
 from app.models.enrollment import Enrollment
 from app.models.user import User
-from app.repositories import (
-    attendance_repo,
-    certificate_repo,
-    course_attendance_repo,
-    course_repo,
-    enrollment_repo,
-    user_repo,
-)
+from app.repositories import (attendance_repo, certificate_repo,
+                              course_attendance_repo, course_repo,
+                              enrollment_repo, user_repo)
 from app.schemas.enrollment import EnrollmentCreate, EnrollmentUpdate
 from app.schemas.user import UserCreate
 from app.utils.file_upload import save_course_voucher
@@ -50,16 +45,15 @@ def create_enrollment(
         course = course_repo.get_by_id(db, data.course_id)
         if not course:
             raise Exception("Curso no encontrado")
-        if role.id == 4 and not course.is_mdt:
-            code = f"CERT-{uuid.uuid4().hex[:10].upper()}"
-            certificate_repo.create(
-                db,
-                Certificate(
-                    user_id=data.user_id,
-                    course_id=data.course_id,
-                    certificate_code=code,
-                ),
-            )
+        code = f"CERT-{uuid.uuid4().hex[:10].upper()}"
+        certificate_repo.create(
+            db,
+            Certificate(
+                user_id=data.user_id,
+                course_id=data.course_id,
+                certificate_code=code,
+            ),
+        )
 
         course_attendances = course_attendance_repo.get_by_course(db, data.course_id)
 
