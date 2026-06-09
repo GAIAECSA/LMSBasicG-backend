@@ -8,11 +8,11 @@ from sqlalchemy.orm import Session
 
 # TODO: Ajusta estas importaciones a la estructura real de tu aplicación
 from app.db.session import get_db
-from app.dependencies.auth import (
-    get_current_user,
-)  # Dependencia que recupera el usuario logueado
 from app.models.enrollment import Enrollment
 from app.models.user import User
+from app.utils.jwt import (
+    get_current_user,
+)  # Dependencia que recupera el usuario logueado
 
 # Importaciones de seguridad y configuración local
 from .config_zoom import settings
