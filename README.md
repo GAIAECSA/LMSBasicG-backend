@@ -11,6 +11,7 @@ docker exec -it fastapi_app_mdt_lms bash
 
 # Pasos
 mkdir -p /root/mdt_data/demo/uploads
+
 docker stop fastapi_app_mdt_lms
 docker rm fastapi_app_mdt_lms
 docker build -t mdt_lms-api .
@@ -53,3 +54,16 @@ docker run -d \
   mkdir -p /root/mdt_data/demo/uploads
   cp -a uploads/. /root/mdt_data/demo/uploads/    # solo para copiar
   ls -lah /root/mdt_data/demo/uploads
+
+
+  # no se que hace
+
+  root@ubuntu:~# root@ubuntu:~# mkdir -p /opt/lmsbasicg/secrets
+root@ubuntu:~# openssl genpkey \
+>   -algorithm RSA \
+>   -out /opt/lmsbasicg/secrets/gaia-lti-private.pem \
+>   -pkeyopt rsa_keygen_bits:2048
+...+....+......+........+.+...+..+.........+.......+.....+.........................+.....+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++*.+.....+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++*..........+...+..........+.....+...............................+......+.....+................+..+...+...+.......+..+.......+.....+.+.................+...+...+....+......+............+.....+....+.....+...+.+.........+...+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+.........+.+..+..........+.........+...+...+...+.....................+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++*....+.......+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++*...................+....+..+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+root@ubuntu:~# chmod 600 /opt/lmsbasicg/secrets/gaia-lti-private.pem
+root@ubuntu:~# openssl rand -hex 32
