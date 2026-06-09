@@ -1,13 +1,15 @@
-from fastapi import APIRouter, Depends, Form, HTTPException, Request
+from fastapi import APIRouter, Depends, Form, HTTPException
 from fastapi.responses import HTMLResponse, RedirectResponse
 from sqlalchemy.orm import Session
 
 from app.db.session import SessionLocal
+
+# Importación exacta de tu método de autenticación
 from app.utils.jwt import get_current_user
 
 from . import zoom_service
 
-router = APIRouter()
+router = APIRouter(prefix="/api/v1/lti", tags=["Zoom LTI Integration"])
 
 
 def get_db():
@@ -30,9 +32,10 @@ def jwks():
 def launch_tool(
     course_id: int,
     db: Session = Depends(get_db),
-    user=Depends(get_current_user),
+    user: dict = Depends(get_current_user),  # Reutilizando tu método
 ):
     try:
+        # Pasamos el diccionario 'user' que contiene {"user_id": int, "role_id": int}
         return zoom_service.initiate_launch(db, course_id, user)
     except Exception as e:
         raise HTTPException(status_code=403, detail=str(e))
@@ -46,7 +49,6 @@ def lti_login_init(
     lti_message_hint: str = None,
     client_id: str = None,
 ):
-    # Requisito de redirección OIDC por especificación LTI 1.3
     return {"status": "ready"}
 
 

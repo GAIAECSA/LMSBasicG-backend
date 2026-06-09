@@ -5,7 +5,6 @@ from datetime import datetime, timedelta, timezone
 from fastapi.responses import HTMLResponse, RedirectResponse
 from sqlalchemy.orm import Session, joinedload
 
-# Ajusta estas rutas a la ubicación real de tus modelos
 from app.models.enrollment import Enrollment
 
 from .config_zoom import settings
@@ -16,13 +15,14 @@ def get_lti_jwks() -> dict:
     return get_jwks()
 
 
-def initiate_launch(db: Session, course_id: int, current_user) -> RedirectResponse:
-    # Garantizamos el contexto transaccional para la lectura segura de la matrícula
+def initiate_launch(db: Session, course_id: int, user: dict) -> RedirectResponse:
+    # Usamos db.begin() para manejar la transacción de lectura de forma consistente
     with db.begin():
         enrollment = (
             db.query(Enrollment)
             .filter(
-                Enrollment.user_id == current_user.id,
+                Enrollment.user_id
+                == user["user_id"],  # Ajustado para leer el diccionario de tu JWT
                 Enrollment.course_id == course_id,
                 Enrollment.deleted == False,
             )
@@ -35,7 +35,7 @@ def initiate_launch(db: Session, course_id: int, current_user) -> RedirectRespon
     params = {
         "iss": settings.LMS_ISSUER,
         "target_link_uri": settings.ZOOM_TARGET_LINK_URI,
-        "login_hint": str(current_user.id),
+        "login_hint": str(user["user_id"]),
         "lti_message_hint": str(course_id),
         "client_id": settings.ZOOM_CLIENT_ID,
     }
@@ -55,7 +55,8 @@ def process_authorization(
     if client_id != settings.ZOOM_CLIENT_ID:
         raise Exception("Client ID mismatch")
 
-    # Usamos db.begin() y cargamos la relación user para extraer los datos personales de forma segura
+    # Mantenemos el joinedload(Enrollment.user) aquí dentro de db.begin() porque el endpoint
+    # /authorize es llamado por Zoom asíncronamente y necesitamos reconstruir el perfil completo (nombre, email)
     with db.begin():
         enrollment = (
             db.query(Enrollment)
@@ -71,7 +72,6 @@ def process_authorization(
         if not enrollment:
             raise Exception("Matrícula no encontrada para el flujo de autenticación.")
 
-        # Mapeo estricto basado en tu modelo (3: Docente, 4: Estudiante)
         if enrollment.role_id == 3:
             lti_roles = ["http://purl.imsglobal.org/vocab/lis/v2/membership#Instructor"]
         elif enrollment.role_id == 4:

@@ -9,6 +9,31 @@ PYTHONPATH=/app python -m app.scripts.create_tables
 docker exec -it fastapi_app_mdt_lms bash
 
 
+# Pasos
+mkdir -p /root/mdt_data/demo/uploads
+docker stop fastapi_app_mdt_lms
+docker rm fastapi_app_mdt_lms
+docker build -t mdt_lms-api .
+docker run -d \
+  --name fastapi_app_mdt_lms \
+  --restart unless-stopped \
+  -p 9002:9002 \
+  --env-file .env \
+  -v /root/mdt_data/demo/uploads:/app/uploads \
+  mdt_lms-api
+docker inspect fastapi_app_mdt_lms
+# Fin pasos
+
+mkdir -p /root/mdt_data/demo/uploads
+
+docker run -d \
+  --name fastapi_app_mdt_lms \
+  --restart unless-stopped \
+  -p 9002:9002 \
+  --env-file .env \
+  -v /root/mdt_data/demo/uploads:/app/uploads \
+  mdt_lms-api
+
 docker stop fastapi_app_mdt_lms
 docker rm fastapi_app_mdt_lms
 docker build -t mdt_lms-api .
@@ -19,6 +44,9 @@ docker run -d \
   --env-file .env \
   mdt_lms-api
   docker logs -f fastapi_app_mdt_lms
+
+
+  docker volume create mdt_demo_uploads
 
   # creacion de subdirectorios
 
