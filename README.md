@@ -21,6 +21,7 @@ docker run -d \
   -p 9002:9002 \
   --env-file .env \
   -v /root/mdt_data/demo/uploads:/app/uploads \
+  -v /opt/lmsbasicg/secrets:/opt/lmsbasicg/secrets:ro \
   mdt_lms-api
 docker inspect fastapi_app_mdt_lms
 # Fin pasos

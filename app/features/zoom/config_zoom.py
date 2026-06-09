@@ -24,7 +24,7 @@ class ZoomLTISettings(BaseSettings):
 
     LTI_KEY_ID: str = "gaia-lti-key-1"
 
-    LTI_PUBLIC_ROOT_URL: str = "https://demo-sva.gaiaecsa.com" "/api/v1/zoom/api/v1/lti"
+    LTI_PUBLIC_ROOT_URL: str = "https://demo-sva.gaiaecsa.com" "/api/v1/zoom"
 
     LTI_PRIVATE_KEY_PATH: str = "/opt/lmsbasicg/secrets/" "gaia-lti-private.pem"
 
