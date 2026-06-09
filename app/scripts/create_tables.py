@@ -23,6 +23,7 @@ from app.models.forum_response import ForumResponse
 from app.models.privacy_policy import PrivacyPolicy
 from app.models.user_privacy_policy import UserPrivacyPolicy
 from app.models.mdt_certificate import MdtCertificate
+from app.models.zoom_meeting import ZoomMeeting
 
 
 def create_tables():
