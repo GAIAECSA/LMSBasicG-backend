@@ -154,7 +154,7 @@ def initiate_launch(
         "lti_message_hint": str(
             enrollment.course_id,
         ),
-        "client_id": (settings.ZOOM_LTI_CLIENT_ID),
+        "client_id": settings.LMS_CLIENT_ID,
     }
 
     query_string = urlencode(
@@ -193,16 +193,16 @@ def process_authorization(
     formulario HTML autoenviado.
     """
 
-    if client_id != settings.ZOOM_LTI_CLIENT_ID:
+    if client_id != settings.LMS_CLIENT_ID:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="El client_id no coincide.",
         )
 
-    if redirect_uri.rstrip("/") != settings.ZOOM_OAUTH_REDIRECT_URI.rstrip("/"):
+    if redirect_uri.rstrip("/") != settings.ZOOM_TOOL_REDIRECT_URI.rstrip("/"):
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="El redirect_uri no está autorizado.",
+            detail=("El redirect_uri no está autorizado."),
         )
 
     if response_type != "id_token":
