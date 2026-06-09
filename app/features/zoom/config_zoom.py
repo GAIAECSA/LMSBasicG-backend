@@ -4,7 +4,7 @@ from pydantic import field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
-class ZoomLTISettings(BaseSettings):
+class ZoomSettings(BaseSettings):
     model_config = SettingsConfigDict(
         env_file=".env",
         env_file_encoding="utf-8",
@@ -13,132 +13,83 @@ class ZoomLTISettings(BaseSettings):
     )
 
     # ======================================
-    # ATHENA COMO PLATAFORMA LTI
+    # ZOOM SERVER-TO-SERVER OAUTH
     # ======================================
 
-    LMS_ISSUER: str = "https://demo-sva.gaiaecsa.com"
+    ZOOM_ACCOUNT_ID: str
+    ZOOM_CLIENT_ID: str
+    ZOOM_CLIENT_SECRET: str
 
-    LMS_CLIENT_ID: str = "gaia-academic-lms-zoom-lti"
+    # Email or Zoom user id of the real Zoom account that hosts meetings.
+    ZOOM_HOST_EMAIL: str
 
-    LTI_DEPLOYMENT_ID: str = "deployment-gaia-1"
+    ZOOM_API_BASE_URL: str = "https://api.zoom.us/v2"
+    ZOOM_OAUTH_TOKEN_URL: str = "https://zoom.us/oauth/token"
 
-    LTI_KEY_ID: str = "gaia-lti-key-1"
-
-    LTI_PUBLIC_ROOT_URL: str = "https://demo-sva.gaiaecsa.com" "/api/v1/zoom"
-
-    LTI_PRIVATE_KEY_PATH: str = "/opt/lmsbasicg/secrets/" "gaia-lti-private.pem"
-
-    LTI_INTERNAL_SIGNING_SECRET: str
-
-    # ======================================
-    # ZOOM COMO HERRAMIENTA EXTERNA
-    # ======================================
-
-    ZOOM_LTI_KEY: str
-    ZOOM_LTI_SECRET: str
-
-    ZOOM_TARGET_LINK_URI: str = "https://applications.zoom.us" "/lti/advantage"
-
-    ZOOM_TOOL_REDIRECT_URI: str = (
-        "https://applications.zoom.us" "/lti/advantage/oauth/complete"
-    )
-
-    ZOOM_LOGIN_INIT_URI: str
-
-    ZOOM_TOOL_JWKS_URL: str = "https://applications.zoom.us" "/lti/advantage/jwks"
-
-    ZOOM_RICH_OAUTH_REDIRECT_URI: str = (
-        "https://applications.zoom.us" "/lti/rich/oauth/complete"
-    )
+    # Refresh cached token a little before real expiration.
+    ZOOM_TOKEN_CACHE_SKEW_SECONDS: int = 60
 
     # ======================================
-    # DURACIONES Y SCOPES
+    # DEFAULT MEETING VALUES
     # ======================================
 
-    LTI_ALLOWED_SCOPES: str = ""
+    ZOOM_DEFAULT_TIMEZONE: str = "America/Guayaquil"
+    ZOOM_DEFAULT_DURATION_MINUTES: int = 60
 
-    LTI_LAUNCH_TICKET_TTL_SECONDS: int = 60
-    LTI_LOGIN_HINT_TTL_SECONDS: int = 300
-    LTI_SERVICE_ACCESS_TOKEN_TTL_SECONDS: int = 3600
+    # Your current LMS roles seem to use:
+    # 3 = teacher, 4 = student.
+    TEACHER_ROLE_ID: int = 3
+    STUDENT_ROLE_ID: int = 4
 
     @field_validator(
-        "LMS_ISSUER",
-        "LTI_PUBLIC_ROOT_URL",
-        "ZOOM_TARGET_LINK_URI",
-        "ZOOM_TOOL_REDIRECT_URI",
-        "ZOOM_LOGIN_INIT_URI",
-        "ZOOM_TOOL_JWKS_URL",
-        "ZOOM_RICH_OAUTH_REDIRECT_URI",
+        "ZOOM_ACCOUNT_ID",
+        "ZOOM_CLIENT_ID",
+        "ZOOM_CLIENT_SECRET",
+        "ZOOM_HOST_EMAIL",
     )
     @classmethod
-    def validate_url(
-        cls,
-        value: str,
-    ) -> str:
+    def validate_required_text(cls, value: str) -> str:
+        normalized_value = value.strip()
+
+        if not normalized_value:
+            raise ValueError("Este valor no puede estar vacío.")
+
+        return normalized_value
+
+    @field_validator("ZOOM_HOST_EMAIL")
+    @classmethod
+    def validate_host_email(cls, value: str) -> str:
+        normalized_value = value.strip()
+
+        if "@" not in normalized_value or "." not in normalized_value:
+            raise ValueError("ZOOM_HOST_EMAIL debe ser un correo válido.")
+
+        return normalized_value
+
+    @field_validator("ZOOM_API_BASE_URL", "ZOOM_OAUTH_TOKEN_URL")
+    @classmethod
+    def validate_url(cls, value: str) -> str:
         normalized_value = value.strip().rstrip("/")
 
-        parsed_url = urlparse(
-            normalized_value,
-        )
+        parsed_url = urlparse(normalized_value)
 
-        if (
-            parsed_url.scheme
-            not in {
-                "http",
-                "https",
-            }
-            or not parsed_url.netloc
-        ):
+        if parsed_url.scheme not in {"http", "https"} or not parsed_url.netloc:
             raise ValueError(f"La URL no es válida: {value}")
 
         return normalized_value
 
     @field_validator(
-        "LTI_INTERNAL_SIGNING_SECRET",
+        "ZOOM_TOKEN_CACHE_SKEW_SECONDS",
+        "ZOOM_DEFAULT_DURATION_MINUTES",
+        "TEACHER_ROLE_ID",
+        "STUDENT_ROLE_ID",
     )
     @classmethod
-    def validate_internal_secret(
-        cls,
-        value: str,
-    ) -> str:
-        normalized_value = value.strip()
+    def validate_positive_integer(cls, value: int) -> int:
+        if int(value) <= 0:
+            raise ValueError("El valor debe ser mayor a cero.")
 
-        if len(normalized_value) < 32:
-            raise ValueError(
-                "LTI_INTERNAL_SIGNING_SECRET "
-                "debe contener al menos "
-                "32 caracteres."
-            )
-
-        return normalized_value
-
-    @property
-    def lti_jwks_url(
-        self,
-    ) -> str:
-        return f"{self.LTI_PUBLIC_ROOT_URL}" "/jwks"
-
-    @property
-    def lti_authorize_url(
-        self,
-    ) -> str:
-        return f"{self.LTI_PUBLIC_ROOT_URL}" "/zoom/authorize"
-
-    @property
-    def lti_token_url(
-        self,
-    ) -> str:
-        return f"{self.LTI_PUBLIC_ROOT_URL}" "/token"
-
-    @property
-    def allowed_scopes(
-        self,
-    ) -> set[str]:
-        return {
-            scope.strip()
-            for scope in (self.LTI_ALLOWED_SCOPES.split())
-            if scope.strip()
-        }
+        return int(value)
 
 
-settings = ZoomLTISettings()
+settings = ZoomSettings()
