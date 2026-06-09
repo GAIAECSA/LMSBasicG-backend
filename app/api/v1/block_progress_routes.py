@@ -20,20 +20,6 @@ def get_db():
     finally:
         db.close()
 
-
-@router.put("/progress/{progress_id}", response_model=BlockProgressResponse)
-def update_block_progress(
-    progress_id: int,
-    data: BlockProgressUpdate,
-    db: Session = Depends(get_db),
-    user=Depends(get_current_user),
-):
-    try:
-        return block_progress_service.update_block_progress(db, progress_id, data)
-    except Exception as e:
-        raise HTTPException(status_code=400, detail=str(e))
-
-
 @router.get("/progress/{progress_id}", response_model=BlockProgressResponse)
 def get_block_progress(
     progress_id: int, db: Session = Depends(get_db), user=Depends(get_current_user)

@@ -10,8 +10,14 @@ def create(db: Session, progress: BlockProgress):
     return progress
 
 
+def create_no_flush(db: Session, progress: BlockProgress):
+    db.add(progress)
+    db.commit()
+    db.refresh(progress)
+    return progress
+
+
 def update(db: Session, progress: BlockProgress):
-    db.merge(progress)
     db.commit()
     db.refresh(progress)
     return progress
