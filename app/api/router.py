@@ -17,13 +17,16 @@ from app.api.v1 import mdt_certificate_routes as mdt_certificate
 from app.api.v1 import module_routes as module
 from app.api.v1 import privacy_policy_routes as privacy_policy
 from app.api.v1 import quizz_response_routes as quizz_response
-from app.reports import reports as reports
 from app.api.v1 import role_routes as role
 from app.api.v1 import subcategory_routes as subcategory
 from app.api.v1 import survey_response_router as survey_response
 from app.api.v1 import user_privacy_policy_routes as user_privacy_policy
 from app.api.v1 import user_routes as user
 from app.api.v1 import websocket_routes as websocket
+
+# features
+from app.features.zoom import zoom_routes as zoom
+from app.reports import reports as reports
 
 router = APIRouter()
 
@@ -106,3 +109,6 @@ router.include_router(
 # Websocket
 
 router.include_router(websocket.router, prefix="/websockets", tags=["websocket"])
+
+# Features
+router.include_router(zoom.router, prefix="/zoom", tags=["zoom"])

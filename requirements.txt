@@ -11,3 +11,7 @@ python-multipart==0.0.5
 Jinja2==3.1.6
 WeasyPrint==65.1
 sqlalchemy-utils==0.42.0
+PyJWT==2.8.0
+cryptography==42.0.2
+pydantic-settings==2.1.0
+requests==2.31.0
