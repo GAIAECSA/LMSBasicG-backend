@@ -4,10 +4,7 @@ from datetime import datetime, timezone
 
 from sqlalchemy import Boolean, Column, DateTime, Integer, String, Text, text
 
-try:
-    from app.db.base_class import Base
-except ImportError:
-    from app.db.session import Base
+from app.db.base import Base
 
 
 def utc_now() -> datetime:
