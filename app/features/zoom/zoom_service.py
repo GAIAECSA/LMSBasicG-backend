@@ -1,39 +1,19 @@
 from __future__ import annotations
 
-from datetime import datetime, timedelta, timezone
-from html import escape
-from urllib.parse import urlencode
-from uuid import uuid4
+from datetime import datetime, timezone
+from typing import Any
+from zoneinfo import ZoneInfo
 
 from fastapi import HTTPException, status
-from fastapi.responses import HTMLResponse, RedirectResponse
+from sqlalchemy import or_
 from sqlalchemy.orm import Session, joinedload
 
 from app.models.enrollment import Enrollment
+from app.models.zoom_meeting import ZoomMeeting
 
 from .config_zoom import settings
-from .security_zoom import (
-    CLIENT_ASSERTION_TYPE,
-    create_login_hint,
-    decode_login_hint,
-    get_jwks,
-    issue_service_access_token,
-    sign_lti_jwt,
-    validate_requested_scopes,
-    validate_zoom_client_assertion,
-)
-
-INSTRUCTOR_ROLE = "http://purl.imsglobal.org" "/vocab/lis/v2/membership#Instructor"
-
-LEARNER_ROLE = "http://purl.imsglobal.org" "/vocab/lis/v2/membership#Learner"
-
-MEMBER_ROLE = "http://purl.imsglobal.org" "/vocab/lis/v2/membership#Member"
-
-COURSE_SECTION_TYPE = "http://purl.imsglobal.org" "/vocab/lis/v2/course#CourseSection"
-
-
-def get_lti_jwks() -> dict:
-    return get_jwks()
+from .schemas_zoom import ZoomMeetingCreate, ZoomMeetingUpdate
+from .zoom_api_client import zoom_client
 
 
 def _validate_positive_integer(
@@ -56,18 +36,9 @@ def _get_active_enrollment(
     user_id: int,
     course_id: int,
 ) -> Enrollment | None:
-    """
-    Obtiene la matrícula activa real del usuario.
-    También carga el perfil requerido para crear claims.
-    """
-
     return (
         db.query(Enrollment)
-        .options(
-            joinedload(
-                Enrollment.user,
-            ),
-        )
+        .options(joinedload(Enrollment.user))
         .filter(
             Enrollment.user_id == user_id,
             Enrollment.course_id == course_id,
@@ -82,15 +53,8 @@ def validate_course_access(
     user_id: int,
     course_id: int,
 ) -> Enrollment:
-    valid_user_id = _validate_positive_integer(
-        user_id,
-        "Usuario",
-    )
-
-    valid_course_id = _validate_positive_integer(
-        course_id,
-        "Curso",
-    )
+    valid_user_id = _validate_positive_integer(user_id, "Usuario")
+    valid_course_id = _validate_positive_integer(course_id, "Curso")
 
     enrollment = _get_active_enrollment(
         db=db,
@@ -101,357 +65,358 @@ def validate_course_access(
     if not enrollment:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
-            detail=("No tienes una matrícula activa " "en este curso."),
+            detail="No tienes una matrícula activa en este curso.",
         )
 
     return enrollment
 
 
-def _get_lti_roles(
-    role_id: int,
-) -> list[str]:
-    if role_id == 3:
-        return [
-            INSTRUCTOR_ROLE,
-        ]
-
-    if role_id == 4:
-        return [
-            LEARNER_ROLE,
-        ]
-
-    return [
-        MEMBER_ROLE,
-    ]
-
-
-def initiate_launch(
+def validate_teacher_access(
     db: Session,
-    course_id: int,
     user_id: int,
-) -> RedirectResponse:
-    """
-    Paso inicial:
-    ATHENA redirige el navegador hacia el Login
-    Initiation URL entregado por Zoom LTI Pro.
-    """
-
+    course_id: int,
+) -> Enrollment:
     enrollment = validate_course_access(
         db=db,
         user_id=user_id,
         course_id=course_id,
     )
 
-    signed_login_hint = create_login_hint(
-        user_id=enrollment.user_id,
-        course_id=enrollment.course_id,
-    )
+    if enrollment.role_id != settings.TEACHER_ROLE_ID:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Solo el docente puede realizar esta acción.",
+        )
 
-    params = {
-        "iss": settings.LMS_ISSUER,
-        "target_link_uri": (settings.ZOOM_TARGET_LINK_URI),
-        "login_hint": signed_login_hint,
-        "lti_message_hint": str(
-            enrollment.course_id,
+    return enrollment
+
+
+def _to_utc(value: datetime) -> datetime:
+    return value.astimezone(timezone.utc)
+
+
+def _format_zoom_start_time(
+    start_time: datetime,
+    timezone_name: str,
+) -> str:
+    """
+    Zoom recibe start_time como fecha local y timezone separado.
+    Ejemplo: 2026-06-09T10:00:00 + America/Guayaquil.
+    """
+
+    local_timezone = ZoneInfo(timezone_name)
+
+    local_start_time = start_time.astimezone(local_timezone)
+
+    return local_start_time.replace(
+        tzinfo=None,
+        microsecond=0,
+    ).isoformat()
+
+
+def _build_zoom_create_payload(
+    payload: ZoomMeetingCreate,
+) -> dict[str, Any]:
+    zoom_payload: dict[str, Any] = {
+        "topic": payload.topic,
+        "type": 2,
+        "start_time": _format_zoom_start_time(
+            payload.start_time,
+            payload.timezone,
         ),
-        "client_id": settings.LMS_CLIENT_ID,
+        "duration": payload.duration,
+        "timezone": payload.timezone,
+        "settings": {
+            "join_before_host": False,
+            "waiting_room": True,
+            "mute_upon_entry": True,
+            "approval_type": 2,
+            "audio": "both",
+            "auto_recording": "none",
+        },
     }
 
-    query_string = urlencode(
-        params,
+    if payload.password:
+        zoom_payload["password"] = payload.password
+
+    return zoom_payload
+
+
+def _build_zoom_update_payload(
+    meeting: ZoomMeeting,
+    payload: ZoomMeetingUpdate,
+) -> dict[str, Any]:
+    zoom_payload: dict[str, Any] = {}
+
+    fields_set = payload.model_fields_set
+
+    next_timezone = (
+        payload.timezone
+        if "timezone" in fields_set and payload.timezone is not None
+        else meeting.timezone
     )
 
-    login_url = f"{settings.ZOOM_LOGIN_INIT_URI}" f"?{query_string}"
+    if "topic" in fields_set and payload.topic is not None:
+        zoom_payload["topic"] = payload.topic
 
-    return RedirectResponse(
-        url=login_url,
-        status_code=status.HTTP_302_FOUND,
-        headers={
-            "Cache-Control": "no-store",
-            "Pragma": "no-cache",
-        },
-    )
+    if "start_time" in fields_set and payload.start_time is not None:
+        zoom_payload["start_time"] = _format_zoom_start_time(
+            payload.start_time,
+            next_timezone,
+        )
+
+    if "duration" in fields_set and payload.duration is not None:
+        zoom_payload["duration"] = payload.duration
+
+    if "timezone" in fields_set and payload.timezone is not None:
+        zoom_payload["timezone"] = payload.timezone
+
+    if "password" in fields_set and payload.password is not None:
+        zoom_payload["password"] = payload.password
+
+    if not zoom_payload:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="No hay campos válidos para actualizar.",
+        )
+
+    return zoom_payload
 
 
-def process_authorization(
+def _get_meeting_or_404(
     db: Session,
-    client_id: str,
-    redirect_uri: str,
-    response_type: str,
-    state: str,
-    nonce: str,
-    login_hint: str,
-    lti_message_hint: str,
-    scope: str = "openid",
-    response_mode: str = "form_post",
-) -> HTMLResponse:
-    """
-    Zoom devuelve el control hacia ATHENA.
+    meeting_id: str,
+) -> ZoomMeeting:
+    cleaned_meeting_id = str(meeting_id).strip()
 
-    ATHENA valida la solicitud, firma el id_token y
-    lo publica nuevamente hacia Zoom usando un
-    formulario HTML autoenviado.
-    """
+    filters = [
+        ZoomMeeting.zoom_meeting_id == cleaned_meeting_id,
+    ]
 
-    if client_id != settings.LMS_CLIENT_ID:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="El client_id no coincide.",
+    if cleaned_meeting_id.isdigit():
+        filters.append(ZoomMeeting.id == int(cleaned_meeting_id))
+
+    meeting = (
+        db.query(ZoomMeeting)
+        .filter(
+            or_(*filters),
+            ZoomMeeting.deleted.is_(False),
         )
-
-    if redirect_uri.rstrip("/") != settings.ZOOM_TOOL_REDIRECT_URI.rstrip("/"):
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=("El redirect_uri no está autorizado."),
-        )
-
-    if response_type != "id_token":
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=("El response_type debe ser id_token."),
-        )
-
-    if scope != "openid":
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="El scope debe ser openid.",
-        )
-
-    if response_mode != "form_post":
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=("El response_mode debe ser form_post."),
-        )
-
-    if not state.strip() or not nonce.strip():
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="state y nonce son obligatorios.",
-        )
-
-    login_data = decode_login_hint(
-        login_hint,
+        .first()
     )
 
-    valid_course_id = _validate_positive_integer(
-        int(lti_message_hint),
-        "Curso",
-    )
-
-    if login_data.course_id != valid_course_id:
+    if not meeting:
         raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=("El contexto del curso fue modificado " "durante el lanzamiento."),
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="La reunión no existe.",
         )
 
-    enrollment = validate_course_access(
+    return meeting
+
+
+def create_meeting(
+    db: Session,
+    user_id: int,
+    payload: ZoomMeetingCreate,
+) -> ZoomMeeting:
+    enrollment = validate_teacher_access(
         db=db,
-        user_id=login_data.user_id,
-        course_id=login_data.course_id,
+        user_id=user_id,
+        course_id=payload.course_id,
     )
 
-    if not enrollment.user:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=("La matrícula no tiene un usuario asociado."),
-        )
+    zoom_payload = _build_zoom_create_payload(payload)
 
-    firstname = (enrollment.user.firstname or "").strip()
-
-    lastname = (enrollment.user.lastname or "").strip()
-
-    email = (enrollment.user.email or "").strip()
-
-    full_name = (f"{firstname} {lastname}").strip()
-
-    if not email:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=("El usuario debe tener un correo " "electrónico registrado."),
-        )
-
-    now = int(
-        datetime.now(
-            timezone.utc,
-        ).timestamp()
+    zoom_response = zoom_client.create_meeting(
+        user_id=settings.ZOOM_HOST_EMAIL,
+        payload=zoom_payload,
     )
 
-    payload = {
-        "iss": settings.LMS_ISSUER,
-        "aud": client_id,
-        "azp": client_id,
-        "exp": now
-        + int(
-            timedelta(
-                minutes=5,
-            ).total_seconds()
-        ),
-        "iat": now,
-        "sub": str(
-            enrollment.user.id,
-        ),
-        "nonce": nonce,
-        "name": full_name,
-        "given_name": firstname,
-        "family_name": lastname,
-        "email": email,
-        (
-            "https://purl.imsglobal.org" "/spec/lti/claim/message_type"
-        ): "LtiResourceLinkRequest",
-        ("https://purl.imsglobal.org" "/spec/lti/claim/version"): "1.3.0",
-        (
-            "https://purl.imsglobal.org" "/spec/lti/claim/deployment_id"
-        ): settings.LTI_DEPLOYMENT_ID,
-        (
-            "https://purl.imsglobal.org" "/spec/lti/claim/target_link_uri"
-        ): settings.ZOOM_TARGET_LINK_URI,
-        ("https://purl.imsglobal.org" "/spec/lti/claim/resource_link"): {
-            "id": ("zoom_course_" f"{enrollment.course_id}"),
-            "title": ("Sala de videoconferencia Zoom"),
-        },
-        ("https://purl.imsglobal.org" "/spec/lti/claim/roles"): _get_lti_roles(
-            enrollment.role_id,
-        ),
-        ("https://purl.imsglobal.org" "/spec/lti/claim/context"): {
-            "id": str(
-                enrollment.course_id,
-            ),
-            "label": (f"COURSE-{enrollment.course_id}"),
-            "title": (f"Curso ID {enrollment.course_id}"),
-            "type": [
-                COURSE_SECTION_TYPE,
-            ],
-        },
-        ("https://purl.imsglobal.org" "/spec/lti/claim/tool_platform"): {
-            "guid": "gaia-academic-platform",
-            "name": "Gaia Academic LMS",
-            "url": settings.LMS_ISSUER,
-        },
-        ("https://purl.imsglobal.org" "/spec/lti/claim/launch_presentation"): {
-            "locale": "es-EC",
-            "document_target": "window",
-        },
-        "jti": str(
-            uuid4(),
-        ),
+    zoom_meeting_id = zoom_response.get("id")
+    join_url = zoom_response.get("join_url")
+
+    if not zoom_meeting_id or not join_url:
+        raise HTTPException(
+            status_code=status.HTTP_502_BAD_GATEWAY,
+            detail="Zoom no devolvió id o join_url.",
+        )
+
+    meeting = ZoomMeeting(
+        course_id=enrollment.course_id,
+        teacher_id=enrollment.user_id,
+        zoom_meeting_id=str(zoom_meeting_id),
+        zoom_host_user_id=zoom_response.get("host_id"),
+        topic=payload.topic,
+        start_time=_to_utc(payload.start_time),
+        duration=payload.duration,
+        timezone=payload.timezone,
+        password=zoom_response.get("password") or payload.password,
+        join_url=join_url,
+    )
+
+    db.add(meeting)
+    db.commit()
+    db.refresh(meeting)
+
+    return meeting
+
+
+def list_course_meetings(
+    db: Session,
+    user_id: int,
+    course_id: int,
+) -> list[ZoomMeeting]:
+    validate_course_access(
+        db=db,
+        user_id=user_id,
+        course_id=course_id,
+    )
+
+    return (
+        db.query(ZoomMeeting)
+        .filter(
+            ZoomMeeting.course_id == course_id,
+            ZoomMeeting.deleted.is_(False),
+        )
+        .order_by(
+            ZoomMeeting.start_time.asc(),
+            ZoomMeeting.id.asc(),
+        )
+        .all()
+    )
+
+
+def get_meeting(
+    db: Session,
+    user_id: int,
+    meeting_id: str,
+) -> ZoomMeeting:
+    meeting = _get_meeting_or_404(
+        db=db,
+        meeting_id=meeting_id,
+    )
+
+    validate_course_access(
+        db=db,
+        user_id=user_id,
+        course_id=meeting.course_id,
+    )
+
+    return meeting
+
+
+def get_start_url(
+    db: Session,
+    user_id: int,
+    meeting_id: str,
+) -> dict[str, Any]:
+    meeting = _get_meeting_or_404(
+        db=db,
+        meeting_id=meeting_id,
+    )
+
+    validate_teacher_access(
+        db=db,
+        user_id=user_id,
+        course_id=meeting.course_id,
+    )
+
+    zoom_response = zoom_client.get_meeting(
+        meeting.zoom_meeting_id,
+    )
+
+    start_url = zoom_response.get("start_url")
+
+    if not start_url:
+        raise HTTPException(
+            status_code=status.HTTP_502_BAD_GATEWAY,
+            detail="Zoom no devolvió start_url.",
+        )
+
+    return {
+        "meeting_id": meeting.id,
+        "zoom_meeting_id": meeting.zoom_meeting_id,
+        "start_url": start_url,
     }
 
-    id_token = sign_lti_jwt(
-        payload,
+
+def update_meeting(
+    db: Session,
+    user_id: int,
+    meeting_id: str,
+    payload: ZoomMeetingUpdate,
+) -> ZoomMeeting:
+    meeting = _get_meeting_or_404(
+        db=db,
+        meeting_id=meeting_id,
     )
 
-    safe_redirect_uri = escape(
-        redirect_uri,
-        quote=True,
+    validate_teacher_access(
+        db=db,
+        user_id=user_id,
+        course_id=meeting.course_id,
     )
 
-    safe_id_token = escape(
-        id_token,
-        quote=True,
+    zoom_payload = _build_zoom_update_payload(
+        meeting=meeting,
+        payload=payload,
     )
 
-    safe_state = escape(
-        state,
-        quote=True,
+    zoom_response = zoom_client.update_meeting(
+        meeting_id=meeting.zoom_meeting_id,
+        payload=zoom_payload,
     )
 
-    html_form = f"""
-    <!doctype html>
-    <html lang="es">
-        <head>
-            <meta charset="utf-8" />
-            <meta
-                name="viewport"
-                content="width=device-width, initial-scale=1"
-            />
-            <title>Conectando con Zoom</title>
-        </head>
-        <body
-            onload="document.forms['ltiLaunchForm'].submit();"
-            style="
-                min-height: 100vh;
-                display: grid;
-                place-items: center;
-                margin: 0;
-                padding: 24px;
-                box-sizing: border-box;
-                font-family: Arial, sans-serif;
-                background: #f8fafc;
-                color: #172861;
-            "
-        >
-            <main style="text-align: center;">
-                <h2 style="margin: 0 0 8px;">
-                    Conectando con Zoom...
-                </h2>
+    fields_set = payload.model_fields_set
 
-                <p style="margin: 0;">
-                    Validando el acceso seguro al curso.
-                </p>
+    if "topic" in fields_set and payload.topic is not None:
+        meeting.topic = payload.topic
 
-                <form
-                    name="ltiLaunchForm"
-                    method="POST"
-                    action="{safe_redirect_uri}"
-                >
-                    <input
-                        type="hidden"
-                        name="id_token"
-                        value="{safe_id_token}"
-                    />
+    if "start_time" in fields_set and payload.start_time is not None:
+        meeting.start_time = _to_utc(payload.start_time)
 
-                    <input
-                        type="hidden"
-                        name="state"
-                        value="{safe_state}"
-                    />
-                </form>
-            </main>
-        </body>
-    </html>
-    """
+    if "duration" in fields_set and payload.duration is not None:
+        meeting.duration = payload.duration
 
-    return HTMLResponse(
-        content=html_form,
-        headers={
-            "Cache-Control": "no-store",
-            "Pragma": "no-cache",
-        },
+    if "timezone" in fields_set and payload.timezone is not None:
+        meeting.timezone = payload.timezone
+
+    if "password" in fields_set and payload.password is not None:
+        meeting.password = zoom_response.get("password") or payload.password
+
+    if zoom_response.get("join_url"):
+        meeting.join_url = zoom_response["join_url"]
+
+    db.commit()
+    db.refresh(meeting)
+
+    return meeting
+
+
+def delete_meeting(
+    db: Session,
+    user_id: int,
+    meeting_id: str,
+) -> None:
+    meeting = _get_meeting_or_404(
+        db=db,
+        meeting_id=meeting_id,
     )
 
+    validate_teacher_access(
+        db=db,
+        user_id=user_id,
+        course_id=meeting.course_id,
+    )
 
-def generate_access_token(
-    grant_type: str,
-    client_assertion_type: str,
-    client_assertion: str,
-    scope: str,
-) -> dict:
-    """
-    OAuth 2.0 Client Credentials para servicios LTI
-    Advantage. No se utiliza durante el lanzamiento
-    básico, pero debe quedar protegido correctamente.
-    """
-
-    if grant_type != "client_credentials":
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="grant_type no válido.",
+    try:
+        zoom_client.delete_meeting(
+            meeting.zoom_meeting_id,
         )
+    except HTTPException as exc:
+        if exc.status_code != status.HTTP_404_NOT_FOUND:
+            raise
 
-    if client_assertion_type != CLIENT_ASSERTION_TYPE:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=("client_assertion_type no válido."),
-        )
+    meeting.deleted = True
 
-    validate_zoom_client_assertion(
-        client_assertion,
-    )
-
-    normalized_scope = validate_requested_scopes(
-        scope,
-    )
-
-    return issue_service_access_token(
-        normalized_scope,
-    )
+    db.commit()
