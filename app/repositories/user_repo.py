@@ -35,11 +35,15 @@ def get_all(db: Session):
     return db.query(User).filter(User.deleted == False).all()
 
 
-def get_by_email_or_idnumber_hash(db: Session, email: str, id_number_hash: str):
+def get_by_email_or_idnumber_hash_or_username(
+    db: Session, email: str, id_number_hash: str, username: str
+):
     return (
         db.query(User)
         .filter(
-            (User.email == email) | (User.idnumber_hash == id_number_hash),
+            (User.email == email)
+            | (User.idnumber_hash == id_number_hash)
+            | (User.username == username),
             User.deleted == False,
         )
         .first()

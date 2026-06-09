@@ -159,10 +159,11 @@ def create_massive_enrollments(
                     )
 
                     # 2. Buscar usando el hash (NO el texto plano)
-                    existing_user = user_repo.get_by_email_or_idnumber_hash(
+                    existing_user = user_repo.get_by_email_or_idnumber_hash_or_username(
                         db,
                         user_data.email,
                         current_idnumber_hash,
+                        user_data.username
                     )
 
                     if not existing_user:
