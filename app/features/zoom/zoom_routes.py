@@ -3,16 +3,14 @@ from __future__ import annotations
 import logging
 from typing import Any
 
-from fastapi import APIRouter, Depends, Form, HTTPException, Query, status
-from fastapi.responses import HTMLResponse, RedirectResponse
+from fastapi import APIRouter, Depends, HTTPException, Response, status
 from sqlalchemy.orm import Session
 
 from app.db.session import SessionLocal
 from app.utils.jwt import get_current_user
 
 from . import zoom_service
-from .config_zoom import settings
-from .security_zoom import consume_launch_ticket, create_launch_ticket
+from .schemas_zoom import ZoomMeetingCreate, ZoomMeetingOut, ZoomMeetingUpdate, ZoomStartUrlOut
 
 logger = logging.getLogger(__name__)
 
@@ -38,13 +36,10 @@ def _extract_user_id(user: Any) -> int:
 
     try:
         user_id = int(raw_user_id)
-    except (
-        TypeError,
-        ValueError,
-    ) as exc:
+    except (TypeError, ValueError) as exc:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail=("No fue posible identificar " "al usuario autenticado."),
+            detail="No fue posible identificar al usuario autenticado.",
         ) from exc
 
     if user_id <= 0:
@@ -56,230 +51,217 @@ def _extract_user_id(user: Any) -> int:
     return user_id
 
 
-@router.get("/jwks")
-def jwks():
+@router.post(
+    "/meetings",
+    response_model=ZoomMeetingOut,
+    status_code=status.HTTP_201_CREATED,
+)
+def create_zoom_meeting(
+    payload: ZoomMeetingCreate,
+    db: Session = Depends(get_db),
+    user: dict = Depends(get_current_user),
+):
     """
-    Zoom consulta este endpoint para validar
-    las firmas JWT emitidas por ATHENA.
+    POST /api/v1/zoom/meetings
+
+    Solo docente.
+    Crea reunión en Zoom y guarda join_url en la base.
+    No guarda start_url.
     """
+
+    user_id = _extract_user_id(user)
 
     try:
-        return zoom_service.get_lti_jwks()
-
+        return zoom_service.create_meeting(
+            db=db,
+            user_id=user_id,
+            payload=payload,
+        )
     except HTTPException:
         raise
-
     except Exception as exc:
-        logger.exception("Error generando JWKS.")
+        logger.exception("Error creando reunión Zoom.")
 
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="No fue posible generar el JWKS.",
+            detail="No fue posible crear la reunión Zoom.",
         ) from exc
 
 
-@router.get("/zoom/launch/{course_id}")
-def launch_tool(
+@router.get(
+    "/courses/{course_id}/meetings",
+    response_model=list[ZoomMeetingOut],
+)
+def list_zoom_meetings_by_course(
     course_id: int,
     db: Session = Depends(get_db),
     user: dict = Depends(get_current_user),
 ):
     """
-    Lanzamiento directo usando JWT.
+    GET /api/v1/zoom/courses/{course_id}/meetings
+
+    Docente y estudiantes matriculados.
+    Los estudiantes usan join_url para entrar.
     """
 
     user_id = _extract_user_id(user)
 
     try:
-        return zoom_service.initiate_launch(
+        return zoom_service.list_course_meetings(
             db=db,
-            course_id=course_id,
             user_id=user_id,
+            course_id=course_id,
         )
-
+    except HTTPException:
+        raise
     except Exception as exc:
-        logger.exception("Error iniciando Zoom.")
+        logger.exception("Error listando reuniones Zoom.")
 
         raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail=str(exc),
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="No fue posible listar las reuniones Zoom.",
         ) from exc
 
 
-@router.post("/zoom/launch-ticket/{course_id}")
-def create_zoom_launch_ticket(
-    course_id: int,
+@router.get(
+    "/meetings/{meeting_id}",
+    response_model=ZoomMeetingOut,
+)
+def get_zoom_meeting(
+    meeting_id: str,
     db: Session = Depends(get_db),
     user: dict = Depends(get_current_user),
 ):
     """
-    Genera ticket temporal para abrir Zoom
-    en una pestaña nueva sin exponer JWT.
+    GET /api/v1/zoom/meetings/{meeting_id}
+
+    meeting_id puede ser el id interno o zoom_meeting_id.
     """
 
     user_id = _extract_user_id(user)
 
     try:
-        zoom_service.validate_course_access(
+        return zoom_service.get_meeting(
             db=db,
             user_id=user_id,
-            course_id=course_id,
+            meeting_id=meeting_id,
         )
-
-        ticket = create_launch_ticket(
-            user_id=user_id,
-            course_id=course_id,
-        )
-
-        launch_url = (
-            f"{settings.LTI_PUBLIC_ROOT_URL}" f"/zoom/launch-by-ticket/{ticket}"
-        )
-
-        return {
-            "launch_url": launch_url,
-            "expires_in": settings.LTI_LAUNCH_TICKET_TTL_SECONDS,
-        }
-
+    except HTTPException:
+        raise
     except Exception as exc:
-        logger.exception("Error creando launch ticket.")
+        logger.exception("Error obteniendo reunión Zoom.")
 
         raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail=str(exc),
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="No fue posible obtener la reunión Zoom.",
         ) from exc
 
 
 @router.get(
-    "/zoom/launch-by-ticket/{ticket}",
-    response_class=RedirectResponse,
+    "/meetings/{meeting_id}/start",
+    response_model=ZoomStartUrlOut,
 )
-def launch_zoom_by_ticket(
-    ticket: str,
+def start_zoom_meeting(
+    meeting_id: str,
     db: Session = Depends(get_db),
+    user: dict = Depends(get_current_user),
 ):
     """
-    Consume ticket temporal.
+    GET /api/v1/zoom/meetings/{meeting_id}/start
+
+    Solo docente.
+    Consulta Zoom en tiempo real y devuelve start_url actualizado.
     """
 
+    user_id = _extract_user_id(user)
+
     try:
-        ticket_data = consume_launch_ticket(
-            ticket,
-        )
-
-        return zoom_service.initiate_launch(
+        return zoom_service.get_start_url(
             db=db,
-            course_id=ticket_data.course_id,
-            user_id=ticket_data.user_id,
+            user_id=user_id,
+            meeting_id=meeting_id,
         )
-
+    except HTTPException:
+        raise
     except Exception as exc:
-        logger.exception("Error consumiendo ticket.")
+        logger.exception("Error obteniendo start_url Zoom.")
 
         raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail=str(exc),
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="No fue posible obtener el enlace de inicio Zoom.",
         ) from exc
 
 
-@router.get("/zoom/login")
-def lti_login_init(
-    iss: str,
-    login_hint: str,
-    target_link_uri: str,
-    lti_message_hint: str | None = None,
-    client_id: str | None = None,
-):
-    """
-    Endpoint requerido por LTI 1.3.
-    """
-
-    return {
-        "status": "ready",
-        "issuer": iss,
-        "target_link_uri": target_link_uri,
-        "has_login_hint": bool(login_hint),
-        "lti_message_hint": lti_message_hint,
-        "client_id": client_id,
-    }
-
-
-@router.get(
-    "/zoom/authorize",
-    response_class=HTMLResponse,
+@router.put(
+    "/meetings/{meeting_id}",
+    response_model=ZoomMeetingOut,
 )
-def lti_authorize(
-    client_id: str,
-    redirect_uri: str,
-    response_type: str,
-    state: str,
-    nonce: str,
-    login_hint: str,
-    lti_message_hint: str,
-    scope: str = Query(
-        default="openid",
-    ),
-    response_mode: str = Query(
-        default="form_post",
-    ),
-    prompt: str = Query(
-        default="none",
-    ),
+def update_zoom_meeting(
+    meeting_id: str,
+    payload: ZoomMeetingUpdate,
     db: Session = Depends(get_db),
+    user: dict = Depends(get_current_user),
 ):
     """
-    Zoom retorna aquí para solicitar
-    el id_token firmado.
+    PUT /api/v1/zoom/meetings/{meeting_id}
+
+    Tu backend expone PUT, pero internamente Zoom usa PATCH.
+    Solo docente.
     """
 
-    del prompt
+    user_id = _extract_user_id(user)
 
     try:
-        return zoom_service.process_authorization(
+        return zoom_service.update_meeting(
             db=db,
-            client_id=client_id,
-            redirect_uri=redirect_uri,
-            response_type=response_type,
-            state=state,
-            nonce=nonce,
-            login_hint=login_hint,
-            lti_message_hint=lti_message_hint,
-            scope=scope,
-            response_mode=response_mode,
+            user_id=user_id,
+            meeting_id=meeting_id,
+            payload=payload,
         )
-
+    except HTTPException:
+        raise
     except Exception as exc:
-        logger.exception("Error en authorize.")
+        logger.exception("Error actualizando reunión Zoom.")
 
         raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=str(exc),
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="No fue posible actualizar la reunión Zoom.",
         ) from exc
 
 
-@router.post("/token")
-def lti_token(
-    grant_type: str = Form(...),
-    client_assertion_type: str = Form(...),
-    client_assertion: str = Form(...),
-    scope: str = Form(""),
+@router.delete(
+    "/meetings/{meeting_id}",
+    status_code=status.HTTP_204_NO_CONTENT,
+)
+def delete_zoom_meeting(
+    meeting_id: str,
+    db: Session = Depends(get_db),
+    user: dict = Depends(get_current_user),
 ):
     """
-    Endpoint OAuth2 para servicios
-    LTI Advantage.
+    DELETE /api/v1/zoom/meetings/{meeting_id}
+
+    Solo docente.
+    Elimina en Zoom y marca deleted=True en la base.
     """
 
+    user_id = _extract_user_id(user)
+
     try:
-        return zoom_service.generate_access_token(
-            grant_type=grant_type,
-            client_assertion_type=client_assertion_type,
-            client_assertion=client_assertion,
-            scope=scope,
+        zoom_service.delete_meeting(
+            db=db,
+            user_id=user_id,
+            meeting_id=meeting_id,
         )
 
+        return Response(status_code=status.HTTP_204_NO_CONTENT)
+
+    except HTTPException:
+        raise
     except Exception as exc:
-        logger.exception("Error generando token.")
+        logger.exception("Error eliminando reunión Zoom.")
 
         raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=str(exc),
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="No fue posible eliminar la reunión Zoom.",
         ) from exc
