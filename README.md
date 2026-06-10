@@ -24,6 +24,7 @@ docker run -d \
   -v /opt/lmsbasicg/secrets:/opt/lmsbasicg/secrets:ro \
   mdt_lms-api
 docker inspect fastapi_app_mdt_lms
+docker logs -f fastapi_app_mdt_lms
 # Fin pasos
 
 mkdir -p /root/mdt_data/demo/uploads
