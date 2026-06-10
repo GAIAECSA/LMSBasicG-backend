@@ -29,10 +29,23 @@ def generate_course_final_quizzes_pdf(db: Session, course_id: int):
 
     # 2. Columnas de Quizzes (count_towards_grade = True)
     quizz_blocks = get_final_quizzes_headers(db=db, course_id=course_id)
-    headers = [
-        QuizzHeaderSchema(id=b.id, title=b.content or f"Quiz {b.id}")
-        for b in quizz_blocks
-    ]
+    headers = []
+
+    for b in quizz_blocks:
+        title = f"Quiz {b.id}"
+
+        if b.content:
+            if isinstance(b.content, dict):
+                title = b.content.get("title", title)
+            elif isinstance(b.content, str):
+                title = b.content
+
+        headers.append(
+            QuizzHeaderSchema(
+                id=b.id,
+                title=title,
+            )
+        )
 
     # 3. Datos crudos de la matriz
     raw_matrix = get_students_final_quizzes_matrix(db=db, course_id=course_id)
