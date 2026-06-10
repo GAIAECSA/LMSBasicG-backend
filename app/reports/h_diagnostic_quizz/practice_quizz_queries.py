@@ -29,15 +29,30 @@ def get_practice_quizzes_headers(db: Session, course_id: int):
 def get_students_practice_quizzes_matrix(db: Session, course_id: int):
     """
     Obtiene la lista de estudiantes matriculados junto con el score y estado de aprobación
-    de los quizzes que no cuentan para la nota final.
+    de los quizzes que no cuentan para la nota final, controlando intentos múltiples.
     """
+    # 1. Subconsulta para aislar el mejor intento (o el más reciente) por cada inscripción y bloque
+    best_quizz_responses = (
+        db.query(QuizzResponse)
+        .distinct(QuizzResponse.enrollment_id, QuizzResponse.lesson_block_id)
+        .filter(QuizzResponse.deleted.is_(False))
+        .order_by(
+            QuizzResponse.enrollment_id,
+            QuizzResponse.lesson_block_id,
+            QuizzResponse.score.desc(),  # PRIORIDAD: Trae el intento con la nota más alta.
+            QuizzResponse.id.desc(),  # Desempate: El intento más reciente si las notas son iguales.
+        )
+        .subquery()
+    )
+
+    # 2. Consulta principal unida a la subconsulta limpia
     return (
         db.query(
             User.id.label("student_id"),
             func.concat(User.firstname, " ", User.lastname).label("student_name"),
             LessonBlock.id.label("block_id"),
-            QuizzResponse.score.label("score"),
-            QuizzResponse.is_passed.label("is_passed"),
+            best_quizz_responses.c.score.label("score"),
+            best_quizz_responses.c.is_passed.label("is_passed"),
         )
         .select_from(Enrollment)
         .join(User, and_(User.id == Enrollment.user_id, User.deleted.is_(False)))
@@ -51,11 +66,10 @@ def get_students_practice_quizzes_matrix(db: Session, course_id: int):
             ),
         )
         .outerjoin(
-            QuizzResponse,
+            best_quizz_responses,
             and_(
-                QuizzResponse.enrollment_id == Enrollment.id,
-                QuizzResponse.lesson_block_id == LessonBlock.id,
-                QuizzResponse.deleted.is_(False),
+                best_quizz_responses.c.enrollment_id == Enrollment.id,
+                best_quizz_responses.c.lesson_block_id == LessonBlock.id,
             ),
         )
         .filter(
