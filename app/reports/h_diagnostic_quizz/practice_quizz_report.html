@@ -5,10 +5,10 @@
     <meta charset="UTF-8">
     <title>Seguimiento de Quizzes de Práctica</title>
     <style>
-        /* Configuración de Página Horizontal para WeasyPrint */
+        /* Configuración de Página para WeasyPrint (Mantenemos Landscape para la matriz) */
         @page {
             size: A4 landscape;
-            margin: 15mm 15mm 15mm 15mm;
+            margin: 20mm 15mm 20mm 15mm;
 
             @bottom-right {
                 content: "Página " counter(page) " de " counter(pages);
@@ -23,15 +23,15 @@
             color: #1e293b;
             margin: 0;
             padding: 0;
-            font-size: 12px;
-            line-height: 1.4;
+            font-size: 14px;
+            line-height: 1.5;
         }
 
-        /* Encabezado Principal Unificado */
+        /* Encabezado Principal Unificado (Estilo Reporte 1) */
         .header {
             border-bottom: 2px solid #e2e8f0;
-            padding-bottom: 12px;
-            margin-bottom: 20px;
+            padding-bottom: 15px;
+            margin-bottom: 25px;
         }
 
         .header-table {
@@ -45,12 +45,12 @@
         }
 
         .logo {
-            width: 75px;
+            width: 80px;
             height: auto;
             display: block;
         }
 
-        .institution-title {
+        .institution-name {
             font-size: 18px;
             font-weight: bold;
             color: #0f172a;
@@ -58,134 +58,151 @@
         }
 
         .institution-sub {
-            font-size: 11px;
+            font-size: 12px;
             color: #64748b;
             margin-left: 15px;
         }
 
         .meta-info {
             text-align: right;
-            font-size: 10px;
+            font-size: 11px;
             color: #64748b;
             line-height: 1.4;
         }
 
-        /* Contenedor de Información de Contexto */
-        .info-box {
+        /* Contenedor de Información de Contexto (Estilo Reporte 1) */
+        .course-title-container {
             background-color: #f8fafc;
-            border-left: 4px solid #2563eb;
-            padding: 12px 15px;
-            margin-bottom: 20px;
-            border-radius: 0 4px 4px 0;
+            border-left: 4px solid #3b82f6;
+            padding: 15px;
+            margin-bottom: 30px;
+            border-radius: 0 6px 6px 0;
         }
 
-        .info-label {
-            font-size: 10px;
+        .label-curso {
+            font-size: 11px;
             text-transform: uppercase;
             letter-spacing: 1px;
-            color: #2563eb;
+            color: #3b82f6;
             font-weight: bold;
             margin-bottom: 4px;
         }
 
-        .info-value {
-            font-size: 20px;
+        .course-name {
+            font-size: 22px;
             color: #0f172a;
             margin: 0;
             font-weight: 700;
         }
 
-        /* Secciones Globales */
+        /* Secciones Globales (Estilo Reporte 1) */
         .section-title {
-            font-size: 13px;
+            font-size: 14px;
             text-transform: uppercase;
             letter-spacing: 0.5px;
             color: #475569;
             font-weight: bold;
             border-bottom: 1px solid #cbd5e1;
-            padding-bottom: 5px;
-            margin-top: 20px;
-            margin-bottom: 12px;
+            padding-bottom: 6px;
+            margin-top: 25px;
+            margin-bottom: 15px;
             page-break-after: avoid;
         }
 
-        /* Tabla de Matriz de Calificaciones Extendida */
-        .matrix-table {
+        /* Tabla de Reporte Adaptada al Estilo Oficial */
+        .report-table {
             width: 100%;
             border-collapse: collapse;
-            margin-top: 5px;
+            margin-top: 15px;
             page-break-inside: auto;
         }
 
-        .matrix-table tr {
+        .report-table tr {
             page-break-inside: avoid;
             page-break-after: auto;
         }
 
-        .matrix-table th {
+        .report-table th {
             background-color: #2563eb;
-            /* Azul Institucional Unificado */
             color: #ffffff;
             font-weight: 600;
             text-align: left;
-            padding: 8px 10px;
-            font-size: 10px;
-            text-transform: uppercase;
-            letter-spacing: 0.3px;
-            border: 1px solid #1d4ed8;
-        }
-
-        .matrix-table th.center-th,
-        .matrix-table td.center-td {
-            text-align: center;
-        }
-
-        .matrix-table td {
-            padding: 8px 10px;
-            border: 1px solid #e2e8f0;
+            padding: 10px 12px;
             font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            border-bottom: 2px solid #1d4ed8;
+            border-right: 1px solid #3b82f6;
+        }
+
+        .report-table th:last-child {
+            border-right: none;
+            background-color: #1e3a8a;
+            /* Azul más oscuro para destacar la columna de promedios */
+            border-bottom: 2px solid #1e3a8a;
+        }
+
+        .report-table td {
+            padding: 10px 12px;
+            border-bottom: 1px solid #e2e8f0;
+            border-right: 1px solid #e2e8f0;
+            font-size: 12px;
+            /* Un poco más pequeño que el reporte 1 para ajustar múltiples columnas */
             color: #334155;
             vertical-align: middle;
         }
 
-        .matrix-table tr:nth-child(even) {
+        .report-table td:last-child {
+            border-right: none;
+        }
+
+        .report-table tr:nth-child(even) {
             background-color: #f8fafc;
         }
 
-        .not-attempted {
-            color: #94a3b8;
-            font-style: italic;
-            font-size: 10px;
+        /* Alineaciones específicas para la matriz */
+        .center-text {
+            text-align: center !important;
         }
 
-        .score-container {
+        /* Estados e Indicadores */
+        .score-text {
             font-weight: 600;
             color: #0f172a;
+            font-size: 13px;
         }
 
-        /* Indicadores de Aprobación Individual */
+        .text-muted {
+            color: #94a3b8;
+            font-style: italic;
+            font-size: 11px;
+        }
+
         .passed-dot {
-            color: #16a34a;
-            font-size: 12px;
-            margin-left: 3px;
+            color: #15803d;
+            /* Verde institucional estilo badge-success */
+            font-size: 13px;
+            margin-left: 4px;
             font-weight: bold;
         }
 
         .failed-dot {
-            color: #dc2626;
-            font-size: 12px;
-            margin-left: 3px;
+            color: #b91c1c;
+            /* Rojo institucional estilo badge-danger */
+            font-size: 13px;
+            margin-left: 4px;
             font-weight: bold;
         }
 
         .avg-highlight {
             font-weight: bold;
-            color: #1e293b;
-            background-color: #f1f5f9;
+            color: #0f172a;
+            background-color: #eff6ff;
+            /* Fondo azul muy claro */
         }
 
-        /* Footer Fijo Transparente */
-        .footer {
+        /* Footer Fijo Transparente (Estilo Reporte 1) */
+        .footer-text {
             position: fixed;
             bottom: 0;
             left: 0;
@@ -197,10 +214,10 @@
             padding-top: 6px;
         }
 
-        /* Bloque de Cierre Obligatorio */
+        /* Bloque de Cierre Obligatorio (Estilo Reporte 1) */
         .platform-closure {
-            margin-top: 40px;
-            padding-top: 15px;
+            margin-top: 50px;
+            padding-top: 20px;
             border-top: 1px dashed #e2e8f0;
             text-align: center;
             page-break-inside: avoid;
@@ -210,7 +227,7 @@
             width: 110px;
             height: auto;
             display: inline-block;
-            margin-bottom: 6px;
+            margin-bottom: 8px;
         }
 
         .platform-info {
@@ -223,57 +240,54 @@
 
 <body>
 
-    <!-- Encabezado Estilo Gaia Academic -->
     <div class="header">
         <table class="header-table">
             <tr>
-                <td style="width: 75px;">
+                <td style="width: 80px;">
                     <img src="{{ logo_path }}" class="logo" alt="Logo Institución">
                 </td>
                 <td>
-                    <div class="institution-title">Gaia Academic</div>
+                    <div class="institution-name">Gaia Academic</div>
                     <div class="institution-sub">Monitoreo de Evaluaciones Formativas (No Influyen en Nota Final)</div>
                 </td>
                 <td class="meta-info">
                     <strong>Reporte de Quizzes de Práctica</strong><br>
-                    Fecha de Impresión: {{ generated_at }}
+                    Fecha de emisión: {{ generated_at }}
                 </td>
             </tr>
         </table>
     </div>
 
-    <!-- Contenedor del Título del Curso -->
-    <div class="info-box">
-        <div class="info-label">Curso Académico</div>
-        <h1 class="info-value">{{ report.course_name }}</h1>
+    <div class="course-title-container">
+        <div class="label-curso">Curso Académico</div>
+        <h1 class="course-name">{{ report.course_name }}</h1>
     </div>
 
     <div class="section-title">Matriz de Rendimiento Formativo</div>
 
-    <!-- Tabla de Matriz Horizontal -->
-    <table class="matrix-table">
+    <table class="report-table">
         <thead>
             <tr>
                 <th style="width: 4%; text-align: center;">#</th>
-                <th style="width: 24%;">Estudiante</th>
+                <th style="width: 22%;">Estudiante</th>
                 {% for header in report.headers %}
-                <th class="center-th" style="font-size: 9px;">{{ header.title }}</th>
+                <th class="center-text">{{ header.title }}</th>
                 {% endfor %}
-                <th class="center-th" style="width: 12%; background-color: #1e293b;">Promedio Prácticas</th>
+                <th class="center-text" style="width: 12%;">Promedio Prácticas</th>
             </tr>
         </thead>
         <tbody>
             {% for row in report.rows %}
             <tr>
-                <td class="center-td">{{ loop.index }}</td>
+                <td class="center-text">{{ loop.index }}</td>
                 <td><strong>{{ row.student_name }}</strong></td>
 
                 {% for quizz in row.quizzes %}
-                <td class="center-td">
+                <td class="center-text">
                     {% if quizz.score == 'Sin intentar' %}
-                    <span class="not-attempted">—</span>
+                    <span class="text-muted">NO REALIZADO</span>
                     {% else %}
-                    <span class="score-container">
+                    <span class="score-text">
                         {{ quizz.score }}
                         {% if quizz.is_passed == True %}
                         <span class="passed-dot">✓</span>
@@ -285,14 +299,14 @@
                 </td>
                 {% endfor %}
 
-                <td class="center-td avg-highlight">
+                <td class="center-text avg-highlight">
                     {{ row.average }}
                 </td>
             </tr>
             {% else %}
             <tr>
                 <td colspan="{{ report.headers|length + 3 }}"
-                    style="text-align: center; padding: 25px; color: #64748b; font-style: italic;">
+                    style="text-align: center; color: #64748b; font-style: italic; padding: 20px;">
                     No se registran cuestionarios de práctica o alumnos matriculados en este curso.
                 </td>
             </tr>
@@ -300,7 +314,6 @@
         </tbody>
     </table>
 
-    <!-- Bloque de Cierre: Logo de la Plataforma al Final del Contenido -->
     <div class="platform-closure">
         <img src="{{ logo_plataform }}" class="platform-logo" alt="Logo Plataforma">
         <div class="platform-info">
@@ -309,10 +322,9 @@
         </div>
     </div>
 
-    <!-- Footer de Confidencialidad -->
-    <div class="footer">
-        Este documento es un reporte formativo e interno emitido por Gaia Academic LMS. Las notas expresadas aquí no
-        alteran los promedios ponderados finales del estudiante.
+    <div class="footer-text">
+        Gaia Academic &copy; 2026 - Este documento es un reporte formativo e interno. Las notas expresadas aquí no
+        alteran los promedios ponderados finales.
     </div>
 
 </body>
