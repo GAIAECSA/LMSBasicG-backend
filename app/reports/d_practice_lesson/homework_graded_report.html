@@ -249,45 +249,37 @@
     <table class="report-table">
         <thead>
             <tr>
-                <th style="width: 7%;">#</th>
-                <th style="width: 33%;">Estudiante</th>
-                <th style="width: 30%;">Tarea / Actividad (Lesson Block)</th>
-                <th style="width: 12%; text-align: center;">Estado</th>
-                <th style="width: 8%; text-align: center;">Score</th>
-                <th style="width: 10%; text-align: right;">Fecha</th>
+                <th style="width: 5%;">#</th>
+                <th style="width: 25%;">Estudiante</th>
+                {% for header in report.headers %}
+                <th style="text-align: center;">{{ header.title }}</th>
+                {% endfor %}
+                <th style="width: 10%; text-align: center; background-color: #1e3a8a;">Promedio</th>
             </tr>
         </thead>
         <tbody>
-            {% for record in report.records %}
+            {% for row in report.rows %}
             <tr>
                 <td>{{ loop.index }}</td>
-                <td>{{ record.student_name }}</td>
-                <td><strong>{{ record.activity_title }}</strong></td>
+                <td><strong>{{ row.student_name }}</strong></td>
+
+                {% for cell in row.homeworks %}
                 <td style="text-align: center;">
-                    {% if record.has_submitted %}
-                    <span class="badge badge-success">{{ record.status_label }}</span>
+                    {% if cell.submitted %}
+                    <span class="score-text">{{ cell.score }}</span>
                     {% else %}
-                    <span class="badge badge-danger">{{ record.status_label }}</span>
+                    <span class="badge badge-danger" style="font-size: 9px;">N/E</span>
                     {% endif %}
                 </td>
-                <td style="text-align: center;">
-                    {% if record.score is not none %}
-                    <span class="score-text">{{ record.score }}</span>
-                    {% else %}
-                    <span class="text-muted">—</span>
-                    {% endif %}
-                </td>
-                <td style="text-align: right;">
-                    {% if record.submitted_at %}
-                    {{ record.submitted_at }}
-                    {% else %}
-                    <span class="text-muted">—</span>
-                    {% endif %}
+                {% endfor %}
+
+                <td style="text-align: center; font-weight: bold; background-color: #f1f5f9;">
+                    {{ row.average }}
                 </td>
             </tr>
             {% else %}
             <tr>
-                <td colspan="6" style="text-align: center; color: #64748b; font-style: italic; padding: 20px;">
+                <td colspan="100%" style="text-align: center; color: #64748b; font-style: italic; padding: 20px;">
                     No se registran tareas calificables configuradas o alumnos matriculados en este curso.
                 </td>
             </tr>

@@ -59,6 +59,7 @@ def get_all_graded_homeworks_matrix(
                 LessonBlock.is_active.is_(True),
                 LessonBlock.deleted.is_(False),
                 LessonBlock.default.is_(False),
+                LessonBlock.block_type_id == 6,
             ),
         )
         .outerjoin(

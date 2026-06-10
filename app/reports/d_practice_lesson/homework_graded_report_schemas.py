@@ -3,17 +3,24 @@ from decimal import Decimal
 from pydantic import BaseModel
 
 
-class GradedHomeworkRow(BaseModel):
-    student_id: int
+class HomeworkHeaderSchema(BaseModel):
+    id: int
+    title: str
+
+
+class HomeworkCellSchema(BaseModel):
+    score: str
+    submitted: bool
+
+
+class StudentHomeworkRowSchema(BaseModel):
     student_name: str
-    activity_title: str
-    has_submitted: bool
-    score: Decimal | None
-    submitted_at: str | None
-    status_label: str
+    homeworks: list[HomeworkCellSchema]
+    average: str
 
 
-class GradedHomeworkReport(BaseModel):
+class HomeworkMatrixReportSchema(BaseModel):
     course_id: int
     course_name: str
-    records: list[GradedHomeworkRow]
+    headers: list[HomeworkHeaderSchema]
+    rows: list[StudentHomeworkRowSchema]
