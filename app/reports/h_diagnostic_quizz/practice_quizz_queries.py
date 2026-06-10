@@ -2,7 +2,9 @@ from sqlalchemy import and_, func
 from sqlalchemy.orm import Session
 
 from app.models.enrollment import Enrollment
+from app.models.lesson import Lesson  # IMPORTANTE: Agregar esta importación
 from app.models.lesson_block import LessonBlock
+from app.models.module import Module  # IMPORTANTE: Agregar esta importación
 from app.models.quizz_response import QuizzResponse
 from app.models.user import User
 
@@ -12,16 +14,25 @@ STUDENT_ROLE_ID = 4
 def get_practice_quizzes_headers(db: Session, course_id: int):
     """
     Recupera los bloques de cuestionarios del curso que NO entran en la nota final.
+    Navega a través de Module y Lesson para evitar problemas con LessonBlock.course_id nulo.
     """
     return (
         db.query(LessonBlock)
+        .join(Lesson, Lesson.id == LessonBlock.lesson_id)
+        .join(Module, Module.id == Lesson.module_id)
         .filter(
-            LessonBlock.course_id == course_id,
+            Module.course_id == course_id,
+            LessonBlock.block_type_id
+            == 2,  # Especificamos que el tipo de bloque sea Quizz
             LessonBlock.counts_toward_grade.is_(False),
             LessonBlock.is_active.is_(True),
             LessonBlock.deleted.is_(False),
+            Lesson.deleted.is_(
+                False
+            ),  # Buena práctica: asegurar que el padre no esté borrado
+            Module.deleted.is_(False),
         )
-        .order_by(LessonBlock.order.asc())
+        .order_by(Module.order.asc(), Lesson.order.asc(), LessonBlock.order.asc())
         .all()
     )
 
@@ -56,10 +67,17 @@ def get_students_practice_quizzes_matrix(db: Session, course_id: int):
         )
         .select_from(Enrollment)
         .join(User, and_(User.id == Enrollment.user_id, User.deleted.is_(False)))
+        # Navegamos Enrollment -> Module -> Lesson para llegar al LessonBlock de forma segura
+        .join(
+            Module,
+            and_(Module.course_id == Enrollment.course_id, Module.deleted.is_(False)),
+        )
+        .join(Lesson, and_(Lesson.module_id == Module.id, Lesson.deleted.is_(False)))
         .join(
             LessonBlock,
             and_(
-                LessonBlock.course_id == Enrollment.course_id,
+                LessonBlock.lesson_id == Lesson.id,
+                LessonBlock.block_type_id == 2,  # Filtro estricto de Quizz
                 LessonBlock.counts_toward_grade.is_(False),
                 LessonBlock.is_active.is_(True),
                 LessonBlock.deleted.is_(False),
@@ -80,6 +98,8 @@ def get_students_practice_quizzes_matrix(db: Session, course_id: int):
         .order_by(
             User.lastname.asc(),
             User.firstname.asc(),
+            Module.order.asc(),
+            Lesson.order.asc(),
             LessonBlock.order.asc(),
         )
         .all()
