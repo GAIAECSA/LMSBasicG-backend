@@ -2,18 +2,18 @@ from sqlalchemy import and_, func
 from sqlalchemy.orm import Session
 
 from app.models.enrollment import Enrollment
-from app.models.lesson import Lesson  # IMPORTANTE: Agregar esta importación
+from app.models.lesson import Lesson
 from app.models.lesson_block import LessonBlock
-from app.models.module import Module  # IMPORTANTE: Agregar esta importación
+from app.models.module import Module
 from app.models.quizz_response import QuizzResponse
 from app.models.user import User
 
 STUDENT_ROLE_ID = 4
 
 
-def get_practice_quizzes_headers(db: Session, course_id: int):
+def get_final_quizzes_headers(db: Session, course_id: int):
     """
-    Recupera los bloques de cuestionarios del curso que NO entran en la nota final.
+    Recupera los bloques de cuestionarios del curso que SÍ entran en la nota final.
     Navega a través de Module y Lesson para evitar problemas con LessonBlock.course_id nulo.
     """
     return (
@@ -22,14 +22,11 @@ def get_practice_quizzes_headers(db: Session, course_id: int):
         .join(Module, Module.id == Lesson.module_id)
         .filter(
             Module.course_id == course_id,
-            LessonBlock.block_type_id
-            == 2,  # Especificamos que el tipo de bloque sea Quizz
-            LessonBlock.counts_toward_grade.is_(True),
+            LessonBlock.block_type_id == 2,  # Tipo de bloque: Quizz
+            LessonBlock.counts_toward_grade.is_(True),  # SÍ cuenta para la nota final
             LessonBlock.is_active.is_(True),
             LessonBlock.deleted.is_(False),
-            Lesson.deleted.is_(
-                False
-            ),  # Buena práctica: asegurar que el padre no esté borrado
+            Lesson.deleted.is_(False),
             Module.deleted.is_(False),
         )
         .order_by(Module.order.asc(), Lesson.order.asc(), LessonBlock.order.asc())
@@ -37,12 +34,12 @@ def get_practice_quizzes_headers(db: Session, course_id: int):
     )
 
 
-def get_students_practice_quizzes_matrix(db: Session, course_id: int):
+def get_students_final_quizzes_matrix(db: Session, course_id: int):
     """
     Obtiene la lista de estudiantes matriculados junto con el score y estado de aprobación
-    de los quizzes que no cuentan para la nota final, controlando intentos múltiples.
+    de los quizzes finales (calificables), controlando intentos múltiples.
     """
-    # 1. Subconsulta para aislar el mejor intento (o el más reciente) por cada inscripción y bloque
+    # 1. Subconsulta para aislar el mejor intento por cada inscripción y bloque
     best_quizz_responses = (
         db.query(QuizzResponse)
         .distinct(QuizzResponse.enrollment_id, QuizzResponse.lesson_block_id)
@@ -50,8 +47,8 @@ def get_students_practice_quizzes_matrix(db: Session, course_id: int):
         .order_by(
             QuizzResponse.enrollment_id,
             QuizzResponse.lesson_block_id,
-            QuizzResponse.score.desc(),  # PRIORIDAD: Trae el intento con la nota más alta.
-            QuizzResponse.id.desc(),  # Desempate: El intento más reciente si las notas son iguales.
+            QuizzResponse.score.desc(),  # PRIORIDAD: Nota más alta
+            QuizzResponse.id.desc(),  # Desempate: El más reciente
         )
         .subquery()
     )
@@ -67,7 +64,6 @@ def get_students_practice_quizzes_matrix(db: Session, course_id: int):
         )
         .select_from(Enrollment)
         .join(User, and_(User.id == Enrollment.user_id, User.deleted.is_(False)))
-        # Navegamos Enrollment -> Module -> Lesson para llegar al LessonBlock de forma segura
         .join(
             Module,
             and_(Module.course_id == Enrollment.course_id, Module.deleted.is_(False)),
@@ -77,8 +73,10 @@ def get_students_practice_quizzes_matrix(db: Session, course_id: int):
             LessonBlock,
             and_(
                 LessonBlock.lesson_id == Lesson.id,
-                LessonBlock.block_type_id == 2,  # Filtro estricto de Quizz
-                LessonBlock.counts_toward_grade.is_(True),
+                LessonBlock.block_type_id == 2,
+                LessonBlock.counts_toward_grade.is_(
+                    True
+                ),  # Filtro estricto de Quizz Calificable
                 LessonBlock.is_active.is_(True),
                 LessonBlock.deleted.is_(False),
             ),
