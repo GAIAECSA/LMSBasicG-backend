@@ -5,7 +5,12 @@ from sqlalchemy.orm import Session
 from app.models.course import Course
 
 from .final_grade_report_pdf import export_final_grade_report_pdf
-from .final_grade_report_queries import get_evaluable_blocks, get_students_grades_matrix
+from .final_grade_report_queries import (
+    get_course_students,
+    get_evaluable_blocks,
+    get_homework_scores,
+    get_quizz_scores,
+)
 from .final_grade_report_schemas import (
     BlockHeaderSchema,
     FinalGradeReportSchema,
@@ -30,33 +35,21 @@ def generate_course_final_grades_pdf(
     if not course:
         raise ValueError("Curso no encontrado")
 
-    # 2. Obtener bloques evaluables
-    evaluable_blocks = get_evaluable_blocks(
-        db=db,
-        course_id=course_id,
-    )
+    # 2. Obtener bloques evaluables (Headers)
+    evaluable_blocks = get_evaluable_blocks(db=db, course_id=course_id)
 
-    # 3. Construir headers de forma robusta
     headers = []
-
     for block in evaluable_blocks:
         title = f"Bloque {block.id}"
-
         try:
             if isinstance(block.content, dict):
-                title = block.content.get(
-                    "title",
-                    f"Bloque {block.id}",
-                )
-
+                title = block.content.get("title", f"Bloque {block.id}")
             elif isinstance(block.content, str):
                 title = block.content
-
             elif block.content is not None:
                 title = str(block.content)
-
         except Exception:
-            title = f"Bloque {block.id}"
+            pass
 
         headers.append(
             BlockHeaderSchema(
@@ -65,58 +58,60 @@ def generate_course_final_grades_pdf(
             )
         )
 
-    # 4. Obtener matriz plana de notas
-    raw_matrix = get_students_grades_matrix(
-        db=db,
-        course_id=course_id,
-    )
+    # 3. Obtener Estudiantes (Filas)
+    students = get_course_students(db=db, course_id=course_id)
 
-    # 5. Agrupar por estudiante
-    students_data = {}
+    # 4. Obtener Notas y armar mapa en memoria: mapa[enrollment_id][block_id] = score
+    hw_scores = get_homework_scores(db=db, course_id=course_id)
+    qz_scores = get_quizz_scores(db=db, course_id=course_id)
 
-    for row in raw_matrix:
-        if row.student_id not in students_data:
-            students_data[row.student_id] = {
-                "name": row.student_name,
-                "grades_map": {},
-            }
+    scores_map = {student.enrollment_id: {} for student in students}
 
-        students_data[row.student_id]["grades_map"][row.block_id] = row.score
+    for hw in hw_scores:
+        if hw.enrollment_id in scores_map:
+            scores_map[hw.enrollment_id][hw.lesson_block_id] = hw.score
 
-    # 6. Construir filas del reporte
+    for qz in qz_scores:
+        if qz.enrollment_id in scores_map:
+            scores_map[qz.enrollment_id][qz.lesson_block_id] = qz.score
+
+    # 5. Construir filas del reporte evaluando condiciones de entrega
     report_rows = []
     total_blocks_count = len(headers)
 
-    for student_id, student_info in students_data.items():
+    for student in students:
         grades = []
         total_score = 0.0
+        student_scores = scores_map[student.enrollment_id]
 
-        for header in headers:
-            score = student_info["grades_map"].get(header.id)
-
-            if score is not None:
-                score_float = float(score)
-
-                grades.append(f"{score_float:.2f}")
-
-                total_score += score_float
+        for block in evaluable_blocks:
+            if block.id not in student_scores:
+                # No existe el registro en HomeworkResponse ni QuizzResponse
+                grades.append("No entregado")
             else:
-                grades.append("Sin entrega")
+                score = student_scores[block.id]
+                if score is None:
+                    # Existe el registro pero el campo score es nulo
+                    grades.append("Sin calificación")
+                else:
+                    # Tiene calificación
+                    score_float = float(score)
+                    grades.append(f"{score_float:.2f}")
+                    total_score += score_float
 
         average = total_score / total_blocks_count if total_blocks_count > 0 else 0.0
-
         status = "PASÓ" if average >= 7.0 else "NO PASÓ"
 
         report_rows.append(
             StudentGradeRowSchema(
-                student_name=student_info["name"],
+                student_name=student.student_name,
                 grades=grades,
                 average=f"{average:.2f}",
                 status=status,
             )
         )
 
-    # 7. Construir DTO final
+    # 6. Construir DTO final
     report_data = FinalGradeReportSchema(
         course_id=course_id,
         course_name=course.name,
@@ -124,7 +119,7 @@ def generate_course_final_grades_pdf(
         rows=report_rows,
     )
 
-    # 8. Exportar PDF
+    # 7. Exportar PDF
     return export_final_grade_report_pdf(
         report=report_data,
         generated_at=datetime.now().strftime("%d/%m/%Y %H:%M"),

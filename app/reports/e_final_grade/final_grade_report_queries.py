@@ -49,86 +49,64 @@ def get_evaluable_blocks(db: Session, course_id: int):
     )
 
 
-def get_students_grades_matrix(db: Session, course_id: int):
+def get_course_students(db: Session, course_id: int):
     """
-    Obtiene la matriz completa:
-    estudiante × bloque evaluable
-
-    La nota puede provenir de HomeworkResponse o QuizzResponse.
+    Obtiene todos los estudiantes matriculados en el curso.
     """
     return (
         db.query(
+            Enrollment.id.label("enrollment_id"),
             User.id.label("student_id"),
-            func.concat(
-                User.firstname,
-                " ",
-                User.lastname,
-            ).label("student_name"),
-            LessonBlock.id.label("block_id"),
-            func.coalesce(
-                HomeworkResponse.score,
-                QuizzResponse.score,
-            ).label("score"),
+            func.concat(User.firstname, " ", User.lastname).label("student_name"),
         )
-        .select_from(Enrollment)
-        .join(
-            User,
-            and_(
-                User.id == Enrollment.user_id,
-                User.deleted.is_(False),
-            ),
-        )
-        .join(
-            Module,
-            and_(
-                Module.course_id == Enrollment.course_id,
-                Module.deleted.is_(False),
-            ),
-        )
-        .join(
-            Lesson,
-            and_(
-                Lesson.module_id == Module.id,
-                Lesson.deleted.is_(False),
-            ),
-        )
-        .join(
-            LessonBlock,
-            and_(
-                LessonBlock.lesson_id == Lesson.id,
-                LessonBlock.counts_toward_grade.is_(True),
-                LessonBlock.is_active.is_(True),
-                LessonBlock.deleted.is_(False),
-                LessonBlock.default.is_(False),
-            ),
-        )
-        .outerjoin(
-            HomeworkResponse,
-            and_(
-                HomeworkResponse.enrollment_id == Enrollment.id,
-                HomeworkResponse.lesson_block_id == LessonBlock.id,
-                HomeworkResponse.deleted.is_(False),
-            ),
-        )
-        .outerjoin(
-            QuizzResponse,
-            and_(
-                QuizzResponse.enrollment_id == Enrollment.id,
-                QuizzResponse.lesson_block_id == LessonBlock.id,
-                QuizzResponse.deleted.is_(False),
-            ),
-        )
+        .join(User, User.id == Enrollment.user_id)
         .filter(
             Enrollment.course_id == course_id,
             Enrollment.role_id == STUDENT_ROLE_ID,
             Enrollment.deleted.is_(False),
+            User.deleted.is_(False),
         )
         .order_by(
             User.lastname.asc(),
             User.firstname.asc(),
-            Module.order.asc(),
-            Lesson.order.asc(),
-            LessonBlock.order.asc(),
+        )
+        .all()
+    )
+
+
+def get_homework_scores(db: Session, course_id: int):
+    """
+    Obtiene todas las calificaciones de tareas para un curso específico.
+    """
+    return (
+        db.query(
+            HomeworkResponse.enrollment_id,
+            HomeworkResponse.lesson_block_id,
+            HomeworkResponse.score,
+        )
+        .join(Enrollment, Enrollment.id == HomeworkResponse.enrollment_id)
+        .filter(
+            Enrollment.course_id == course_id,
+            HomeworkResponse.deleted.is_(False),
+        )
+        .all()
+    )
+
+
+def get_quizz_scores(db: Session, course_id: int):
+    """
+    Obtiene todas las calificaciones de cuestionarios para un curso específico.
+    """
+    return (
+        db.query(
+            QuizzResponse.enrollment_id,
+            QuizzResponse.lesson_block_id,
+            QuizzResponse.score,
+        )
+        .join(Enrollment, Enrollment.id == QuizzResponse.enrollment_id)
+        .filter(
+            Enrollment.course_id == course_id,
+            QuizzResponse.deleted.is_(False),
         )
         .all()
     )

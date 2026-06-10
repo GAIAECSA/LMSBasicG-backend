@@ -124,7 +124,6 @@
 
         .matrix-table th {
             background-color: #2563eb;
-            /* Azul Institucional */
             color: #ffffff;
             font-weight: 600;
             text-align: left;
@@ -153,9 +152,19 @@
         }
 
         .no-submission {
-            color: #94a3b8;
-            font-style: italic;
-            font-size: 10px;
+            color: #ef4444;
+            /* Rojo suave para destacar que falta */
+            font-size: 8.5px;
+            font-weight: bold;
+            text-transform: uppercase;
+        }
+
+        .no-grade {
+            color: #f59e0b;
+            /* Naranja para pendiente de calificación */
+            font-size: 8.5px;
+            font-weight: bold;
+            text-transform: uppercase;
         }
 
         .score-text {
@@ -224,7 +233,6 @@
 
 <body>
 
-    <!-- Encabezado Estilo Gaia Academic -->
     <div class="header">
         <table class="header-table">
             <tr>
@@ -243,7 +251,6 @@
         </table>
     </div>
 
-    <!-- Contenedor del Título del Curso -->
     <div class="course-title-container">
         <div class="label-curso">Curso Académico</div>
         <h1 class="course-name">{{ report.course_name }}</h1>
@@ -251,7 +258,6 @@
 
     <div class="section-title">Matriz Consolidada de Evaluaciones y Estados Académicos</div>
 
-    <!-- Tabla Oficial de Estilo Matriz Horizontal -->
     <table class="matrix-table">
         <thead>
             <tr>
@@ -272,8 +278,10 @@
 
                 {% for grade in row.grades %}
                 <td class="center-td">
-                    {% if grade == 'Sin entrega' %}
-                    <span class="no-submission">—</span>
+                    {% if grade == 'No entregado' %}
+                    <span class="no-submission">No entregado</span>
+                    {% elif grade == 'Sin calificación' %}
+                    <span class="no-grade">Sin calificación</span>
                     {% else %}
                     <span class="score-text">{{ grade }}</span>
                     {% endif %}
@@ -304,7 +312,6 @@
         </tbody>
     </table>
 
-    <!-- Bloque de Cierre: Logo de la Plataforma al Final del Contenido -->
     <div class="platform-closure">
         <img src="{{ logo_plataform }}" class="platform-logo" alt="Logo Plataforma">
         <div class="platform-info">
@@ -313,7 +320,6 @@
         </div>
     </div>
 
-    <!-- Footer de Confidencialidad -->
     <div class="footer-text">
         Gaia Academic &copy; 2026 - Reporte Confidencial de Gestión Curricular
     </div>
