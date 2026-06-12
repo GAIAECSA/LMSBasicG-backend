@@ -2,7 +2,7 @@ from fastapi import APIRouter
 
 from app.api.v1 import attendance_routes as attendance
 from app.api.v1 import block_progress_routes as block_progress
-from app.api.v1 import business_lms_config_routes as business_lms_config_service
+from app.api.v1 import business_lms_config_routes as business_lms_config
 from app.api.v1 import category_routes as category
 from app.api.v1 import certificate_routes as certificate
 from app.api.v1 import certificate_template_routes as certificate_template
@@ -116,7 +116,7 @@ router.include_router(zoom.router, prefix="/zoom", tags=["zoom"])
 
 # Business
 router.include_router(
-    business_lms_config_service.router,
+    business_lms_config.router,
     prefix="/business-lms-config",
     tags=["business-lms-config"],
 )
