@@ -1,5 +1,6 @@
-from pydantic import BaseModel, field_validator, EmailStr, ConfigDict
 from typing import Optional
+
+from pydantic import BaseModel, ConfigDict, EmailStr, field_validator
 
 
 class UserCreate(BaseModel):
@@ -135,6 +136,7 @@ class UserUpdate(BaseModel):
 class UserLogin(BaseModel):
     username: str
     password: str
+    domain: str
 
 
 class UserResponse(BaseModel):

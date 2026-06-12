@@ -5,11 +5,11 @@ from app.repositories import business_lms_config_repo
 
 def get_enabled_configs(
     db: Session,
-    business_id: int,
+    domain: str,
 ):
     configs = business_lms_config_repo.get_enabled_configs(
         db,
-        business_id,
+        domain,
     )
 
     return [

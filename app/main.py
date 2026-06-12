@@ -7,7 +7,6 @@ from fastapi.staticfiles import StaticFiles
 
 from app import models
 from app.api.router import router as api_router
-from app.middlewares.business_middleware import BusinessMiddleware
 
 app = FastAPI(
     title="Backend API MDT LMS",
@@ -23,7 +22,6 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-app.add_middleware(BusinessMiddleware)
 
 logging.basicConfig(level=logging.INFO)
 
