@@ -23,6 +23,7 @@ from app.api.v1 import survey_response_router as survey_response
 from app.api.v1 import user_privacy_policy_routes as user_privacy_policy
 from app.api.v1 import user_routes as user
 from app.api.v1 import websocket_routes as websocket
+from app.api.v1.business import router as business_router
 
 # features
 from app.features.zoom import zoom_routes as zoom
@@ -112,3 +113,6 @@ router.include_router(websocket.router, prefix="/websockets", tags=["websocket"]
 
 # Features
 router.include_router(zoom.router, prefix="/zoom", tags=["zoom"])
+
+# Business
+router.include_router(business_router, prefix="/business", tags=["business"])
