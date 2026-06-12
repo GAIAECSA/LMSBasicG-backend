@@ -2,6 +2,7 @@ from fastapi import APIRouter
 
 from app.api.v1 import attendance_routes as attendance
 from app.api.v1 import block_progress_routes as block_progress
+from app.api.v1 import business_lms_config_routes as business_lms_config_service
 from app.api.v1 import category_routes as category
 from app.api.v1 import certificate_routes as certificate
 from app.api.v1 import certificate_template_routes as certificate_template
@@ -23,7 +24,6 @@ from app.api.v1 import survey_response_router as survey_response
 from app.api.v1 import user_privacy_policy_routes as user_privacy_policy
 from app.api.v1 import user_routes as user
 from app.api.v1 import websocket_routes as websocket
-from app.api.v1.business_lms_config import business_lms_config_service
 
 # features
 from app.features.zoom import zoom_routes as zoom

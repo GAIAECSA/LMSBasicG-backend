@@ -17,7 +17,6 @@ def get_enabled_configs(
             "id": cfg.lms_config.id,
             "name": cfg.lms_config.name,
             "description": cfg.lms_config.description,
-            "category": getattr(cfg.lms_config, "category", None),
             "config": cfg.config,
         }
         for cfg in configs
