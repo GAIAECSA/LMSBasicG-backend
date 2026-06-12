@@ -5,6 +5,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 
+from app import models
 from app.api.router import router as api_router
 from app.middlewares.business_middleware import BusinessMiddleware
 
