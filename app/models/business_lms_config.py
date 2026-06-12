@@ -46,4 +46,3 @@ class BusinessLmsConfig(Base):
         "LmsConfig",
         back_populates="business_configs",
     )
-w
