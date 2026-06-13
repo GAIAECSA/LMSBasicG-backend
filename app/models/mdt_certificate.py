@@ -23,62 +23,32 @@ SECRET_KEY = os.getenv("ENCRYPTION_KEY")
 class MdtCertificate(Base):
     __tablename__ = "mdt_certificates"
 
+    id = Column(Integer, primary_key=True, index=True)
+
+    file_url = Column(String, nullable=False)
+    file_name = Column(String, nullable=False)
+    id_number = Column(EncryptedType(String, SECRET_KEY, AesEngine, "pkcs5"), nullable=False)
+    id_number_hash = Column(String, nullable=False, index=True)
+    certificate_type = Column(String(20), nullable=False)
+
+    # Claves foráneas (con index=True)
+    course_id = Column(Integer, ForeignKey("courses.id"), nullable=False, index=True)
+    business_id = Column(Integer, ForeignKey("businesses.id"), nullable=False, index=True)
+
+    deleted = Column(Boolean, default=False, nullable=False)
+    visited_at = Column(DateTime(timezone=True), nullable=True, server_default=None)
+    created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+    updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False)
+
+    # Relaciones
+    course = relationship("Course", back_populates="mdt_certificates")
+    business = relationship("Business", back_populates="mdt_certificates")
+
     __table_args__ = (
         CheckConstraint(
             "certificate_type IN ('MDT', 'INSTITUTIONAL')",
             name="ck_mdt_certificate_type",
         ),
-    )
-
-    id = Column(Integer, primary_key=True, index=True)
-
-    course_id = Column(
-        Integer,
-        ForeignKey("courses.id"),
-        nullable=False,
-        index=True,
-    )
-
-    file_url = Column(String, nullable=False)
-    file_name = Column(String, nullable=False)
-
-    id_number = Column(
-        EncryptedType(String, SECRET_KEY, AesEngine, "pkcs5"),
-        nullable=False,
-    )
-
-    id_number_hash = Column(
-        String,
-        nullable=False,
-        index=True,
-    )
-
-    certificate_type = Column(String(20), nullable=False)
-
-    deleted = Column(Boolean, default=False, nullable=False)
-
-    visited_at = Column(
-        DateTime(timezone=True),
-        nullable=True,
-        server_default=None,
-    )
-
-    created_at = Column(
-        DateTime(timezone=True),
-        server_default=func.now(),
-        nullable=False,
-    )
-
-    updated_at = Column(
-        DateTime(timezone=True),
-        server_default=func.now(),
-        onupdate=func.now(),
-        nullable=False,
-    )
-
-    course = relationship(
-        "Course",
-        back_populates="mdt_certificates",
     )
 
     def mark_as_visited(self) -> None:

@@ -1,5 +1,8 @@
-from sqlalchemy import Column, Integer, String, DateTime, Boolean, func, CheckConstraint
+from sqlalchemy import Boolean, CheckConstraint, Column, DateTime, Integer, String, func
+from sqlalchemy.orm import relationship
+
 from app.db.base import Base
+
 
 class Role(Base):
     __tablename__ = "roles"
@@ -11,6 +14,7 @@ class Role(Base):
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), onupdate=func.now())
 
-    __table_args__ = (
-        CheckConstraint("trim(name) <> ''", name="name_not_blank"),
-    )
+    enrollments = relationship("Enrollment", back_populates="role")
+    users = relationship("User", back_populates="role")
+
+    __table_args__ = (CheckConstraint("trim(name) <> ''", name="name_not_blank"),)
