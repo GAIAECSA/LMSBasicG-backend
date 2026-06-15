@@ -6,10 +6,12 @@ from sqlalchemy import (
     Column,
     DateTime,
     ForeignKey,
+    Index,
     Integer,
     String,
-    UniqueConstraint,
+    Text,
     func,
+    text,
 )
 from sqlalchemy.orm import relationship
 from sqlalchemy_utils import EncryptedType
@@ -145,15 +147,19 @@ class User(Base):
     # =========================
 
     __table_args__ = (
-        UniqueConstraint(
+        Index(
+            "uq_user_business_username_active",
             "business_id",
             "username",
-            name="uq_user_business_username",
+            unique=True,
+            postgresql_where=text("deleted = false"),
         ),
-        UniqueConstraint(
+        Index(
+            "uq_user_business_email_active",
             "business_id",
             "email",
-            name="uq_user_business_email",
+            unique=True,
+            postgresql_where=text("deleted = false"),
         ),
         CheckConstraint(
             "email IS NULL OR trim(email) <> ''",

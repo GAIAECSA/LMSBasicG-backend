@@ -6,11 +6,13 @@ from sqlalchemy import (
     DateTime,
     Enum,
     ForeignKey,
+    Index,          # Importado para el índice parcial
     Integer,
     Numeric,
     String,
     Text,
     func,
+    text,           # Importado para la condición SQL
 )
 from sqlalchemy.orm import relationship
 
@@ -64,4 +66,16 @@ class Course(Base):
         CheckConstraint("price >= 0", name="price_positive"),
         CheckConstraint("duration_hours >= 0", name="duration_non_negative"),
         CheckConstraint("total_lessons >= 0", name="lessons_non_negative"),
+        
+        # --- NUEVO ÍNDICE PARCIAL ---
+        # Solo permite 1 registro activo con el mismo nombre, subcategoría y negocio.
+        # Permite múltiples registros eliminados (deleted = true).
+        Index(
+            "ix_uq_active_course_name_sub_bus",
+            "name",
+            "subcategory_id",
+            "business_id",
+            unique=True,
+            postgresql_where=text("deleted = false") 
+        ),
     )

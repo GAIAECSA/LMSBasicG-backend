@@ -26,59 +26,73 @@ def create_bulk(db: Session, course_attendances: list[CourseAttendance]):
 # --- Eliminaciones (Updates/Deletes masivos) ---
 
 
-def delete_soft_by_id(db: Session, course_attendance_id: int):
+def delete_soft_by_id(db: Session, course_attendance_id: int, business_id: int):
     db.query(CourseAttendance).filter(
-        CourseAttendance.id == course_attendance_id
+        CourseAttendance.id == course_attendance_id,
+        CourseAttendance.business_id == business_id,
     ).update({"deleted": True}, synchronize_session=False)
 
 
-def delete_soft_by_course(db: Session, course_id: int):
-    db.query(CourseAttendance).filter(CourseAttendance.course_id == course_id).update(
-        {"deleted": True}, synchronize_session=False
-    )
-
-
-def delete_soft_by_subcategory(db: Session, subcategory_id: int) -> None:
+def delete_soft_by_course(db: Session, course_id: int, business_id: int):
     db.query(CourseAttendance).filter(
-        CourseAttendance.course_id.in_(
-            db.query(Course.id).filter(Course.subcategory_id == subcategory_id)
-        )
+        CourseAttendance.course_id == course_id,
+        CourseAttendance.business_id == business_id,
     ).update({"deleted": True}, synchronize_session=False)
 
 
-def delete_soft_by_category(db: Session, category_id: int) -> None:
+def delete_soft_by_subcategory(
+    db: Session, subcategory_id: int, business_id: int
+) -> None:
     db.query(CourseAttendance).filter(
+        CourseAttendance.business_id == business_id,
         CourseAttendance.course_id.in_(
             db.query(Course.id).filter(
+                Course.subcategory_id == subcategory_id,
+                Course.business_id == business_id,
+            )
+        ),
+    ).update({"deleted": True}, synchronize_session=False)
+
+
+def delete_soft_by_category(db: Session, category_id: int, business_id: int) -> None:
+    db.query(CourseAttendance).filter(
+        CourseAttendance.business_id == business_id,
+        CourseAttendance.course_id.in_(
+            db.query(Course.id).filter(
+                Course.business_id == business_id,
                 Course.subcategory_id.in_(
                     db.query(Subcategory.id).filter(
-                        Subcategory.category_id == category_id
+                        Subcategory.category_id == category_id,
+                        Subcategory.business_id == business_id,
                     )
-                )
+                ),
             )
-        )
+        ),
     ).update({"deleted": True}, synchronize_session=False)
 
 
 # --- Consultas (Lectura) ---
 
 
-def get_by_id(db: Session, course_attendance_id: int):
+def get_by_id(db: Session, course_attendance_id: int, business_id: int):
     return (
         db.query(CourseAttendance)
         .filter(
             CourseAttendance.id == course_attendance_id,
+            CourseAttendance.business_id == business_id,
             CourseAttendance.deleted == False,
         )
         .first()
     )
 
 
-def get_by_course(db: Session, course_id: int):
+def get_by_course(db: Session, course_id: int, business_id: int):
     return (
         db.query(CourseAttendance)
         .filter(
-            CourseAttendance.course_id == course_id, CourseAttendance.deleted == False
+            CourseAttendance.course_id == course_id,
+            CourseAttendance.business_id == business_id,
+            CourseAttendance.deleted == False,
         )
         .all()
     )

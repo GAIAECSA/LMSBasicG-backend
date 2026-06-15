@@ -4,10 +4,11 @@ from sqlalchemy import (
     Column,
     DateTime,
     ForeignKey,
+    Index,
     Integer,
     String,
-    UniqueConstraint,
     func,
+    text,
 )
 from sqlalchemy.orm import relationship
 
@@ -18,22 +19,88 @@ class Subcategory(Base):
     __tablename__ = "subcategories"
 
     id = Column(Integer, primary_key=True, index=True)
-    name = Column(String, index=True, nullable=False)
-    is_mdt = Column(Boolean, nullable=False, default=False)
-    deleted = Column(Boolean, default=False, nullable=False)
-    created_at = Column(DateTime(timezone=True), server_default=func.now())
-    updated_at = Column(DateTime(timezone=True), onupdate=func.now())
 
+    name = Column(
+        String,
+        index=True,
+        nullable=False,
+    )
+
+    is_mdt = Column(
+        Boolean,
+        nullable=False,
+        default=False,
+    )
+
+    deleted = Column(
+        Boolean,
+        default=False,
+        nullable=False,
+    )
+
+    created_at = Column(
+        DateTime(timezone=True),
+        server_default=func.now(),
+    )
+
+    updated_at = Column(
+        DateTime(timezone=True),
+        onupdate=func.now(),
+    )
+
+    # =========================
     # Claves foráneas
-    category_id = Column(Integer, ForeignKey("categories.id"), nullable=False, index=True)
-    business_id = Column(Integer, ForeignKey("businesses.id"), nullable=False, index=True)
+    # =========================
 
+    category_id = Column(
+        Integer,
+        ForeignKey("categories.id"),
+        nullable=False,
+        index=True,
+    )
+
+    business_id = Column(
+        Integer,
+        ForeignKey("businesses.id"),
+        nullable=False,
+        index=True,
+    )
+
+    # =========================
     # Relaciones
-    category = relationship("Category", back_populates="subcategories")
-    business = relationship("Business", back_populates="subcategories")
-    courses = relationship("Course", back_populates="subcategory", cascade="all, delete-orphan")
+    # =========================
+
+    category = relationship(
+        "Category",
+        back_populates="subcategories",
+    )
+
+    business = relationship(
+        "Business",
+        back_populates="subcategories",
+    )
+
+    courses = relationship(
+        "Course",
+        back_populates="subcategory",
+        cascade="all, delete-orphan",
+    )
+
+    # =========================
+    # Restricciones
+    # =========================
 
     __table_args__ = (
-        UniqueConstraint("business_id", "category_id", "name", name="uq_subcategory_business_category_name"),
-        CheckConstraint("trim(name) <> ''", name="name_not_blank"),
+        Index(
+            "uq_subcategory_business_category_name_active",
+            "business_id",
+            "category_id",
+            "name",
+            unique=True,
+            postgresql_where=text("deleted = false"),
+        ),
+        CheckConstraint(
+            "trim(name) <> ''",
+            name="subcategory_name_not_blank",
+        ),
     )

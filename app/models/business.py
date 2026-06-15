@@ -35,6 +35,7 @@ class Business(Base):
     homework_responses = relationship("HomeworkResponse", back_populates="business", cascade="all, delete-orphan")
     mdt_certificates = relationship("MdtCertificate", back_populates="business", cascade="all, delete-orphan")
     privacy_policies = relationship("PrivacyPolicy", back_populates="business", cascade="all, delete-orphan")
+    user_privacy_policies = relationship("UserPrivacyPolicy", back_populates="business", cascade="all, delete-orphan")
     quizz_responses = relationship("QuizzResponse", back_populates="business", cascade="all, delete-orphan")
     survey_responses = relationship("SurveyResponse", back_populates="business", cascade="all, delete-orphan")
     block_progresses = relationship("BlockProgress", back_populates="business", cascade="all, delete-orphan")

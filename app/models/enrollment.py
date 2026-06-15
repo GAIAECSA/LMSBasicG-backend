@@ -3,13 +3,14 @@ from sqlalchemy import (
     Column,
     DateTime,
     ForeignKey,
+    Index,          # Importado para el índice parcial
     Integer,
     String,
     Text,
     func,
+    text,           # Importado para la condición SQL
 )
 from sqlalchemy.orm import relationship
-from sqlalchemy import UniqueConstraint
 from app.db.base import Base
 
 
@@ -47,9 +48,15 @@ class Enrollment(Base):
     block_progresses = relationship("BlockProgress", back_populates="enrollment", cascade="all, delete-orphan")
 
     __table_args__ = (
-        UniqueConstraint(
+        # --- NUEVO ÍNDICE PARCIAL ---
+        # Solo permite 1 registro activo para el mismo usuario, curso y negocio.
+        # Permite múltiples registros eliminados (deleted = true).
+        Index(
+            "ix_uq_active_enrollment_user_course_bus",
             "user_id",
             "course_id",
-            name="uq_user_course"
+            "business_id",
+            unique=True,
+            postgresql_where=text("deleted = false")
         ),
     )
