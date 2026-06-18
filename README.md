@@ -18,6 +18,7 @@ docker build -t mdt_lms-api .
 docker run -d \
   --name fastapi_app_mdt_lms \
   --restart unless-stopped \
+  --network postgresql_default \
   -p 9002:9002 \
   --env-file .env \
   -v /root/mdt_data/demo/uploads:/app/uploads \
@@ -25,6 +26,10 @@ docker run -d \
   mdt_lms-api
 docker inspect fastapi_app_mdt_lms
 docker logs -f fastapi_app_mdt_lms
+
+# RED
+docker network connect postgresql_default fastapi_app_mdt_lms
+docker restart fastapi_app_mdt_lms
 # Fin pasos
 
 mkdir -p /root/mdt_data/demo/uploads
