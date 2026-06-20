@@ -7,6 +7,7 @@ from app.schemas.lesson_block import (
     LessonBlockResponse,
     LessonBlockUpdate,
 )
+from app.schemas.others.auth import UserSession
 from app.services import lesson_block_service
 from app.utils.jwt import get_current_user
 
@@ -21,6 +22,115 @@ def get_db():
         db.close()
 
 
+@router.post("/lesson-blocks")
+def create_lesson_block(
+    data: LessonBlockCreate = Depends(LessonBlockCreate.as_form),
+    file: UploadFile = File(None),
+    db: Session = Depends(get_db),
+    current_user: UserSession = Depends(get_current_user),
+):
+    try:
+        return lesson_block_service.create_lesson_block(
+            db, data, current_user.business_id, file
+        )
+    except lesson_block_service.LessonNotFoundError as e:
+        raise HTTPException(status_code=404, detail=str(e))
+    except lesson_block_service.CourseNotFoundError as e:
+        raise HTTPException(status_code=404, detail=str(e))
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+
+@router.put("/lesson-blocks/{lesson_block_id}", response_model=LessonBlockResponse)
+def update_lesson_block(
+    lesson_block_id: int,
+    data: LessonBlockUpdate = Depends(LessonBlockUpdate.as_form),
+    file: UploadFile = File(None),
+    db: Session = Depends(get_db),
+    current_user: UserSession = Depends(get_current_user),
+):
+    try:
+        return lesson_block_service.update_lesson_block(
+            db, lesson_block_id, data, current_user.business_id, file
+        )
+    except lesson_block_service.LessonBlockNotFoundError as e:
+        raise HTTPException(status_code=404, detail=str(e))
+    except lesson_block_service.CourseNotFoundError as e:
+        raise HTTPException(status_code=404, detail=str(e))
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+
+@router.delete("/lesson-blocks/{lesson_block_id}")
+def delete_lesson_block(
+    lesson_block_id: int,
+    db: Session = Depends(get_db),
+    current_user: UserSession = Depends(get_current_user),
+):
+    try:
+        lesson_block_service.delete_lesson_block(
+            db, lesson_block_id, current_user.business_id
+        )
+        return {"detail": "Bloque eliminado"}
+    except lesson_block_service.LessonBlockNotFoundError as e:
+        raise HTTPException(status_code=404, detail=str(e))
+    except lesson_block_service.CourseNotFoundError as e:
+        raise HTTPException(status_code=404, detail=str(e))
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+
+@router.get("/lesson-blocks/{lesson_block_id}", response_model=LessonBlockResponse)
+def get_lesson_block(
+    lesson_block_id: int,
+    db: Session = Depends(get_db),
+    current_user: UserSession = Depends(get_current_user),
+):
+    try:
+        return lesson_block_service.get_lesson_block(
+            db, lesson_block_id, current_user.business_id
+        )
+    except lesson_block_service.LessonBlockNotFoundError as e:
+        raise HTTPException(status_code=404, detail=str(e))
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+
+@router.get(
+    "/lesson/{lesson_id}/lesson-blocks", response_model=list[LessonBlockResponse]
+)
+def get_by_lesson(
+    lesson_id: int,
+    db: Session = Depends(get_db),
+    current_user: UserSession = Depends(get_current_user),
+):
+    try:
+        return lesson_block_service.get_by_lesson(
+            db, lesson_id, current_user.business_id
+        )
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+
+@router.get(
+    "/lesson-blocks/default/",
+    response_model=list[LessonBlockResponse],
+)
+def get_all_default_blocks_by_course_and_block_type(
+    block_type_id: int = Query(...),
+    course_id: int = Query(...),
+    db: Session = Depends(get_db),
+    current_user: UserSession = Depends(get_current_user),
+):
+    try:
+        return lesson_block_service.get_all_default_blocks_by_course_and_block_type(
+            db, course_id, block_type_id, current_user.business_id
+        )
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+
+"""
 @router.post("/lesson-blocks")
 def create_lesson_block(
     data: LessonBlockCreate = Depends(LessonBlockCreate.as_form),
@@ -99,3 +209,4 @@ def get_all_default_blocks_by_course_and_block_type(
         )
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
+"""

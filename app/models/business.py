@@ -39,3 +39,6 @@ class Business(Base):
     quizz_responses = relationship("QuizzResponse", back_populates="business", cascade="all, delete-orphan")
     survey_responses = relationship("SurveyResponse", back_populates="business", cascade="all, delete-orphan")
     block_progresses = relationship("BlockProgress", back_populates="business", cascade="all, delete-orphan")
+
+    # Features
+    zoom_meetings = relationship("ZoomMeeting", back_populates="business", cascade="all, delete-orphan")

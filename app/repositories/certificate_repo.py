@@ -1,6 +1,8 @@
 from sqlalchemy.orm import Session
 
 from app.models.certificate import Certificate
+from app.models.course import Course
+from app.models.subcategory import Subcategory
 
 # =====================================================================
 # CÓDIGO REFACTORIZADO Y OPTIMIZADO
@@ -15,6 +17,13 @@ def create(db: Session, certificate_template: Certificate) -> Certificate:
 
 
 # --- Eliminaciones (Updates/Deletes masivos) ---
+def delete_soft_by_id(db: Session, certificate_id: int, business_id: int):
+    db.query(Certificate).filter(
+        Certificate.id == certificate_id,
+        Certificate.business_id == business_id,
+    ).update({"deleted": True}, synchronize_session=False)
+
+
 def delete_soft_by_course(db: Session, course_id: int, business_id: int):
     db.query(Certificate).filter(
         Certificate.course_id == course_id, Certificate.business_id == business_id
@@ -25,6 +34,56 @@ def delete_soft_by_user(db: Session, user_id: int, business_id: int):
     db.query(Certificate).filter(
         Certificate.user_id == user_id, Certificate.business_id == business_id
     ).update({"deleted": True}, synchronize_session=False)
+
+
+def delete_soft_by_subcategory(
+    db: Session,
+    subcategory_id: int,
+    business_id: int,
+):
+    return (
+        db.query(Certificate)
+        .join(
+            Course,
+            Certificate.course_id == Course.id,
+        )
+        .filter(
+            Course.subcategory_id == subcategory_id,
+            Certificate.business_id == business_id,
+            Certificate.deleted == False,
+        )
+        .update(
+            {"deleted": True},
+            synchronize_session=False,
+        )
+    )
+
+
+def delete_soft_by_category(
+    db: Session,
+    category_id: int,
+    business_id: int,
+):
+    return (
+        db.query(Certificate)
+        .join(
+            Course,
+            Certificate.course_id == Course.id,
+        )
+        .join(
+            Subcategory,
+            Course.subcategory_id == Subcategory.id,
+        )
+        .filter(
+            Subcategory.category_id == category_id,
+            Certificate.business_id == business_id,
+            Certificate.deleted == False,
+        )
+        .update(
+            {"deleted": True},
+            synchronize_session=False,
+        )
+    )
 
 
 # --- Consultas (Lectura) ---

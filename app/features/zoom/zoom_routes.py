@@ -10,7 +10,16 @@ from app.db.session import SessionLocal
 from app.utils.jwt import get_current_user
 
 from . import zoom_service
-from .schemas_zoom import ZoomMeetingCreate, ZoomMeetingOut, ZoomMeetingUpdate, ZoomStartUrlOut
+from .schemas_zoom import (
+    ZoomMeetingCreate,
+    ZoomMeetingOut,
+    ZoomMeetingUpdate,
+    ZoomStartUrlOut,
+)
+
+# Asegúrate de importar el tipo de tu sesión. Ajusta la ruta si es necesario.
+# from app.schemas.auth import UserSession
+
 
 logger = logging.getLogger(__name__)
 
@@ -26,29 +35,16 @@ def get_db():
         db.close()
 
 
-def _extract_user_id(user: Any) -> int:
-    raw_user_id = None
+def _extract_session_data(current_user: Any) -> tuple[int, int]:
+    business_id = getattr(current_user, "business_id", None)
+    user_id = getattr(current_user, "user_id", getattr(current_user, "id", None))
 
-    if isinstance(user, dict):
-        raw_user_id = user.get("user_id") or user.get("id")
-    else:
-        raw_user_id = getattr(user, "user_id", None) or getattr(user, "id", None)
-
-    try:
-        user_id = int(raw_user_id)
-    except (TypeError, ValueError) as exc:
+    if not business_id or not user_id:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="No fue posible identificar al usuario autenticado.",
-        ) from exc
-
-    if user_id <= 0:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Usuario inválido.",
+            detail="No fue posible identificar la sesión del usuario o el negocio.",
         )
-
-    return user_id
+    return int(business_id), int(user_id)
 
 
 @router.post(
@@ -59,7 +55,7 @@ def _extract_user_id(user: Any) -> int:
 def create_zoom_meeting(
     payload: ZoomMeetingCreate,
     db: Session = Depends(get_db),
-    user: dict = Depends(get_current_user),
+    current_user: Any = Depends(get_current_user),  # current_user: UserSession
 ):
     """
     POST /api/v1/zoom/meetings
@@ -68,12 +64,12 @@ def create_zoom_meeting(
     Crea reunión en Zoom y guarda join_url en la base.
     No guarda start_url.
     """
-
-    user_id = _extract_user_id(user)
+    business_id, user_id = _extract_session_data(current_user)
 
     try:
         return zoom_service.create_meeting(
             db=db,
+            business_id=business_id,
             user_id=user_id,
             payload=payload,
         )
@@ -95,7 +91,7 @@ def create_zoom_meeting(
 def list_zoom_meetings_by_course(
     course_id: int,
     db: Session = Depends(get_db),
-    user: dict = Depends(get_current_user),
+    current_user: Any = Depends(get_current_user),
 ):
     """
     GET /api/v1/zoom/courses/{course_id}/meetings
@@ -103,12 +99,12 @@ def list_zoom_meetings_by_course(
     Docente y estudiantes matriculados.
     Los estudiantes usan join_url para entrar.
     """
-
-    user_id = _extract_user_id(user)
+    business_id, user_id = _extract_session_data(current_user)
 
     try:
         return zoom_service.list_course_meetings(
             db=db,
+            business_id=business_id,
             user_id=user_id,
             course_id=course_id,
         )
@@ -130,19 +126,19 @@ def list_zoom_meetings_by_course(
 def get_zoom_meeting(
     meeting_id: str,
     db: Session = Depends(get_db),
-    user: dict = Depends(get_current_user),
+    current_user: Any = Depends(get_current_user),
 ):
     """
     GET /api/v1/zoom/meetings/{meeting_id}
 
     meeting_id puede ser el id interno o zoom_meeting_id.
     """
-
-    user_id = _extract_user_id(user)
+    business_id, user_id = _extract_session_data(current_user)
 
     try:
         return zoom_service.get_meeting(
             db=db,
+            business_id=business_id,
             user_id=user_id,
             meeting_id=meeting_id,
         )
@@ -164,7 +160,7 @@ def get_zoom_meeting(
 def start_zoom_meeting(
     meeting_id: str,
     db: Session = Depends(get_db),
-    user: dict = Depends(get_current_user),
+    current_user: Any = Depends(get_current_user),
 ):
     """
     GET /api/v1/zoom/meetings/{meeting_id}/start
@@ -172,12 +168,12 @@ def start_zoom_meeting(
     Solo docente.
     Consulta Zoom en tiempo real y devuelve start_url actualizado.
     """
-
-    user_id = _extract_user_id(user)
+    business_id, user_id = _extract_session_data(current_user)
 
     try:
         return zoom_service.get_start_url(
             db=db,
+            business_id=business_id,
             user_id=user_id,
             meeting_id=meeting_id,
         )
@@ -200,7 +196,7 @@ def update_zoom_meeting(
     meeting_id: str,
     payload: ZoomMeetingUpdate,
     db: Session = Depends(get_db),
-    user: dict = Depends(get_current_user),
+    current_user: Any = Depends(get_current_user),
 ):
     """
     PUT /api/v1/zoom/meetings/{meeting_id}
@@ -208,12 +204,12 @@ def update_zoom_meeting(
     Tu backend expone PUT, pero internamente Zoom usa PATCH.
     Solo docente.
     """
-
-    user_id = _extract_user_id(user)
+    business_id, user_id = _extract_session_data(current_user)
 
     try:
         return zoom_service.update_meeting(
             db=db,
+            business_id=business_id,
             user_id=user_id,
             meeting_id=meeting_id,
             payload=payload,
@@ -236,7 +232,7 @@ def update_zoom_meeting(
 def delete_zoom_meeting(
     meeting_id: str,
     db: Session = Depends(get_db),
-    user: dict = Depends(get_current_user),
+    current_user: Any = Depends(get_current_user),
 ):
     """
     DELETE /api/v1/zoom/meetings/{meeting_id}
@@ -244,12 +240,12 @@ def delete_zoom_meeting(
     Solo docente.
     Elimina en Zoom y marca deleted=True en la base.
     """
-
-    user_id = _extract_user_id(user)
+    business_id, user_id = _extract_session_data(current_user)
 
     try:
         zoom_service.delete_meeting(
             db=db,
+            business_id=business_id,
             user_id=user_id,
             meeting_id=meeting_id,
         )

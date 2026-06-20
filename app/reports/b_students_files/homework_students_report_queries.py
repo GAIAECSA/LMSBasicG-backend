@@ -8,13 +8,14 @@ from app.models.user import User
 
 
 def get_homework_block_id_by_title(
-    db: Session, course_id: int, title: str
+    db: Session, course_id: int, title: str, business_id: int
 ) -> int | None:
     """Busca el ID del bloque de lección por curso y título dentro de su contenido JSONB."""
     row = (
         db.query(LessonBlock.id)
         .filter(
             LessonBlock.course_id == course_id,
+            LessonBlock.business_id == business_id,
             LessonBlock.content["title"].astext == title,
             LessonBlock.deleted.is_(False),
         )
@@ -24,7 +25,7 @@ def get_homework_block_id_by_title(
 
 
 def get_students_homework_submissions(
-    db: Session, course_id: int, lesson_block_id: int | None
+    db: Session, course_id: int, lesson_block_id: int | None, business_id: int
 ):
     """Obtiene la lista de todos los estudiantes y sus estados de entrega para un bloque específico."""
     return (
@@ -40,6 +41,7 @@ def get_students_homework_submissions(
             and_(
                 Enrollment.user_id == User.id,
                 Enrollment.course_id == course_id,
+                Enrollment.business_id == business_id,
                 Enrollment.role_id == 4,  # Estudiante
                 Enrollment.deleted.is_(False),
             ),
@@ -49,10 +51,14 @@ def get_students_homework_submissions(
             and_(
                 HomeworkResponse.enrollment_id == Enrollment.id,
                 HomeworkResponse.lesson_block_id == lesson_block_id,
+                HomeworkResponse.business_id == business_id,
                 HomeworkResponse.deleted.is_(False),
             ),
         )
-        .filter(User.deleted.is_(False))
+        .filter(
+            User.deleted.is_(False),
+            User.business_id == business_id,
+        )
         .order_by(
             User.lastname.asc(),
             User.firstname.asc(),

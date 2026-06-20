@@ -2,7 +2,9 @@
 
 from sqlalchemy.orm import Session
 
+from app.models.course import Course
 from app.models.mdt_certificate import MdtCertificate
+from app.models.subcategory import Subcategory
 
 # =====================================================================
 # CÓDIGO REFACTORIZADO Y OPTIMIZADO
@@ -41,6 +43,56 @@ def delete_soft_by_course(db: Session, course_id: int, business_id: int):
     db.query(MdtCertificate).filter(
         MdtCertificate.course_id == course_id, MdtCertificate.business_id == business_id
     ).update({"deleted": True}, synchronize_session=False)
+
+
+def delete_soft_by_subcategory(
+    db: Session,
+    subcategory_id: int,
+    business_id: int,
+):
+    return (
+        db.query(MdtCertificate)
+        .join(
+            Course,
+            MdtCertificate.course_id == Course.id,
+        )
+        .filter(
+            Course.subcategory_id == subcategory_id,
+            MdtCertificate.business_id == business_id,
+            MdtCertificate.deleted == False,
+        )
+        .update(
+            {"deleted": True},
+            synchronize_session=False,
+        )
+    )
+
+
+def delete_soft_by_category(
+    db: Session,
+    category_id: int,
+    business_id: int,
+):
+    return (
+        db.query(MdtCertificate)
+        .join(
+            Course,
+            MdtCertificate.course_id == Course.id,
+        )
+        .join(
+            Subcategory,
+            Course.subcategory_id == Subcategory.id,
+        )
+        .filter(
+            Subcategory.category_id == category_id,
+            MdtCertificate.business_id == business_id,
+            MdtCertificate.deleted == False,
+        )
+        .update(
+            {"deleted": True},
+            synchronize_session=False,
+        )
+    )
 
 
 # --- Consultas (Lectura) ---

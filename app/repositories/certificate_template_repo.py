@@ -1,6 +1,8 @@
 from sqlalchemy.orm import Session
 
 from app.models.certificate_template import CertificateTemplate
+from app.models.course import Course
+from app.models.subcategory import Subcategory
 
 # =====================================================================
 # CÓDIGO REFACTORIZADO Y OPTIMIZADO
@@ -18,11 +20,70 @@ def create(
 
 
 # --- Eliminaciones (Updates/Deletes masivos) ---
+
+
+def delete_soft_by_id(db: Session, certificate_template_id: int, business_id: int):
+    db.query(CertificateTemplate).filter(
+        CertificateTemplate.id == certificate_template_id,
+        CertificateTemplate.business_id == business_id,
+    ).update({"deleted": True}, synchronize_session=False)
+
+
 def delete_soft_by_course(db: Session, course_id: int, business_id: int) -> None:
     db.query(CertificateTemplate).filter(
         CertificateTemplate.course_id == course_id,
         CertificateTemplate.business_id == business_id,
     ).update({"deleted": True}, synchronize_session=False)
+
+
+def delete_soft_by_subcategory(
+    db: Session,
+    subcategory_id: int,
+    business_id: int,
+):
+    return (
+        db.query(CertificateTemplate)
+        .join(
+            Course,
+            CertificateTemplate.course_id == Course.id,
+        )
+        .filter(
+            Course.subcategory_id == subcategory_id,
+            CertificateTemplate.business_id == business_id,
+            CertificateTemplate.deleted == False,
+        )
+        .update(
+            {"deleted": True},
+            synchronize_session=False,
+        )
+    )
+
+
+def delete_soft_by_category(
+    db: Session,
+    category_id: int,
+    business_id: int,
+):
+    return (
+        db.query(CertificateTemplate)
+        .join(
+            Course,
+            CertificateTemplate.course_id == Course.id,
+        )
+        .join(
+            Subcategory,
+            Course.subcategory_id == Subcategory.id,
+        )
+        .filter(
+            Subcategory.category_id == category_id,
+            CertificateTemplate.business_id == business_id,
+            CertificateTemplate.deleted == False,
+        )
+        .update(
+            {"deleted": True},
+            synchronize_session=False,
+        )
+    )
 
 
 # --- Consultas (Lectura) ---

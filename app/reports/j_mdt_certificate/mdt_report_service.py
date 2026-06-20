@@ -10,30 +10,45 @@ from .mdt_report_schemas import MdtReportResponseSchema, MdtReportRowSchema
 
 
 def generate_mdt_certificates_report_pdf(
-    db: Session, course_id: int, certificate_type: str
+    db: Session,
+    course_id: int,
+    certificate_type: str,
+    business_id: int,
+    domain: str,
 ):
     # 1. Validar la existencia del curso
     course = (
         db.query(Course)
-        .filter(Course.id == course_id, Course.deleted.is_(False))
+        .filter(
+            Course.id == course_id,
+            Course.deleted.is_(False),
+            Course.business_id == business_id,
+        )
         .first()
     )
+
     if not course:
         raise ValueError("Curso no encontrado")
 
     # 2. Recuperar registros cruzados de la base de datos
     raw_data = get_mdt_certificates_report_data(
-        db=db, course_id=course_id, certificate_type=certificate_type
+        db=db,
+        course_id=course_id,
+        certificate_type=certificate_type,
+        business_id=business_id,
     )
 
     # 3. Construir filas estructuradas para la plantilla
     report_rows = []
+
     for row in raw_data:
         # Resolver nombre del alumno o fallback al documento si no hay match exacto
         if row.student_firstname and row.student_lastname:
-            student_name = f"{row.student_lastname} {row.student_firstname}"
+            student_name = f"{row.student_lastname} " f"{row.student_firstname}"
         else:
-            student_name = f"Usuario no emparejado (Doc: {row.certificate_id_number})"
+            student_name = (
+                f"Usuario no emparejado " f"(Doc: {row.certificate_id_number})"
+            )
 
         # Determinar estado de visualización (visited_at)
         if row.visited_at:
@@ -61,5 +76,7 @@ def generate_mdt_certificates_report_pdf(
     )
 
     return export_mdt_certificate_report_pdf(
-        report=report_payload, generated_at=datetime.now().strftime("%d/%m/%Y %H:%M")
+        report=report_payload,
+        domain=domain,
+        generated_at=datetime.now().strftime("%d/%m/%Y %H:%M"),
     )

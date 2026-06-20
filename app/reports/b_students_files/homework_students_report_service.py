@@ -15,13 +15,20 @@ from .homework_students_report_schemas import (
 )
 
 
-def generate_homework_students_report(db: Session, course_id: int, title: str):
+def generate_homework_students_report(
+    db: Session,
+    course_id: int,
+    title: str,
+    business_id: int,
+    domain: str,
+):
     # 1. Validar la existencia del curso
     course = (
         db.query(Course)
         .filter(
             Course.id == course_id,
             Course.deleted.is_(False),
+            Course.business_id == business_id,
         )
         .first()
     )
@@ -35,10 +42,12 @@ def generate_homework_students_report(db: Session, course_id: int, title: str):
         course_id=course_id,
         course_name=course.name,
         title=title,
+        business_id=business_id,
     )
 
     # 3. Compilar a formato PDF binario
     pdf = export_homework_report_pdf(
+        domain=domain,
         report=report_data,
         generated_at=datetime.now().strftime("%d/%m/%Y %H:%M"),
     )
@@ -51,16 +60,21 @@ def format_homework_report_data(
     course_id: int,
     course_name: str,
     title: str,
+    business_id: int,
 ) -> HomeworkStudentsReport:
     # Buscar el bloque usando el título dinámico mandado desde el Router
     lesson_block_id = get_homework_block_id_by_title(
-        db=db, course_id=course_id, title=title
+        db=db,
+        course_id=course_id,
+        title=title,
+        business_id=business_id,
     )
 
     rows = get_students_homework_submissions(
         db=db,
         course_id=course_id,
         lesson_block_id=lesson_block_id,
+        business_id=business_id,
     )
 
     students_list = []

@@ -43,25 +43,9 @@ class User(Base):
     # Datos sensibles cifrados
     # =========================
 
-    idnumber = Column(
-        EncryptedType(
-            String,
-            SECRET_KEY,
-            AesEngine,
-            "pkcs5",
-        ),
-        nullable=True,
-    )
+    idnumber = Column(EncryptedType(String,SECRET_KEY,AesEngine,"pkcs5",),nullable=True,)
 
-    phone_number = Column(
-        EncryptedType(
-            String,
-            SECRET_KEY,
-            AesEngine,
-            "pkcs5",
-        ),
-        nullable=True,
-    )
+    phone_number = Column(EncryptedType(String,SECRET_KEY,AesEngine,"pkcs5",),nullable=True,)
 
     # Hashes para búsquedas
     idnumber_hash = Column(String, index=True, nullable=True)
@@ -74,73 +58,33 @@ class User(Base):
     # Auditoría
     # =========================
 
-    deleted = Column(
-        Boolean,
-        index=True,
-        default=False,
-        nullable=False,
-    )
+    deleted = Column(Boolean,index=True,default=False,nullable=False,)
 
-    created_at = Column(
-        DateTime(timezone=True),
-        server_default=func.now(),
-    )
+    created_at = Column(DateTime(timezone=True),server_default=func.now(),)
 
-    updated_at = Column(
-        DateTime(timezone=True),
-        server_default=func.now(),
-        onupdate=func.now(),
-    )
+    updated_at = Column(DateTime(timezone=True),server_default=func.now(),onupdate=func.now(),)
 
     # =========================
     # Claves foráneas
     # =========================
 
-    role_id = Column(
-        Integer,
-        ForeignKey("roles.id"),
-        nullable=False,
-        index=True,
-    )
+    role_id = Column(Integer,ForeignKey("roles.id"),nullable=False,index=True,)
 
-    business_id = Column(
-        Integer,
-        ForeignKey("businesses.id"),
-        nullable=False,
-        index=True,
-    )
+    business_id = Column(Integer,ForeignKey("businesses.id"),nullable=False,index=True,)
 
     # =========================
     # Relaciones
     # =========================
 
-    business = relationship(
-        "Business",
-        back_populates="users",
-    )
+    business = relationship("Business",back_populates="users",)
 
-    role = relationship(
-        "Role",
-        back_populates="users",
-    )
+    role = relationship("Role",back_populates="users",)
 
-    certificates = relationship(
-        "Certificate",
-        back_populates="user",
-        cascade="all, delete-orphan",
-    )
+    certificates = relationship("Certificate",back_populates="user",cascade="all, delete-orphan",)
 
-    enrollments = relationship(
-        "Enrollment",
-        back_populates="user",
-        cascade="all, delete-orphan",
-    )
+    enrollments = relationship("Enrollment",back_populates="user",cascade="all, delete-orphan",)
 
-    privacy_policies = relationship(
-        "UserPrivacyPolicy",
-        back_populates="user",
-        cascade="all, delete-orphan",
-    )
+    privacy_policies = relationship("UserPrivacyPolicy",back_populates="user",cascade="all, delete-orphan",)
 
     # =========================
     # Restricciones

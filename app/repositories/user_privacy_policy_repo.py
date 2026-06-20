@@ -18,6 +18,18 @@ def create(db: Session, user_privacy_policy: UserPrivacyPolicy):
 # --- Eliminaciones (Updates/Deletes masivos) ---
 
 
+def delete_soft_by_user(db: Session, user_id: int, business_id: int):
+    (
+        db.query(UserPrivacyPolicy)
+        .filter(
+            UserPrivacyPolicy.id == user_id,
+            UserPrivacyPolicy.business_id == business_id,
+            UserPrivacyPolicy.deleted.is_(False),
+        )
+        .update({"deleted": True}, synchronize_session=False)
+    )
+
+
 # --- Consultas (Lectura) ---
 
 

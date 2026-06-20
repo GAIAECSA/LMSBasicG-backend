@@ -17,20 +17,34 @@ from .practice_quizz_schemas import (
 )
 
 
-def generate_course_practice_quizzes_pdf(db: Session, course_id: int):
+def generate_course_practice_quizzes_pdf(
+    db: Session,
+    course_id: int,
+    business_id: int,
+    domain: str,
+):
     # 1. Validar curso
     course = (
         db.query(Course)
-        .filter(Course.id == course_id, Course.deleted.is_(False))
+        .filter(
+            Course.id == course_id,
+            Course.deleted.is_(False),
+            Course.business_id == business_id,
+        )
         .first()
     )
+
     if not course:
         raise ValueError("Curso no encontrado")
 
     # 2. Columnas de Quizzes (count_towards_grade = False)
-    quizz_blocks = get_practice_quizzes_headers(db=db, course_id=course_id)
-    headers = []
+    quizz_blocks = get_practice_quizzes_headers(
+        db=db,
+        course_id=course_id,
+        business_id=business_id,
+    )
 
+    headers = []
 
     for b in quizz_blocks:
         title = f"Quiz {b.id}"
@@ -49,13 +63,22 @@ def generate_course_practice_quizzes_pdf(db: Session, course_id: int):
         )
 
     # 3. Datos crudos de la matriz
-    raw_matrix = get_students_practice_quizzes_matrix(db=db, course_id=course_id)
+    raw_matrix = get_students_practice_quizzes_matrix(
+        db=db,
+        course_id=course_id,
+        business_id=business_id,
+    )
 
     # 4. Agrupar por estudiante
     students_map = {}
+
     for row in raw_matrix:
         if row.student_id not in students_map:
-            students_map[row.student_id] = {"name": row.student_name, "quizzes": {}}
+            students_map[row.student_id] = {
+                "name": row.student_name,
+                "quizzes": {},
+            }
+
         students_map[row.student_id]["quizzes"][row.block_id] = {
             "score": row.score,
             "is_passed": row.is_passed,
@@ -64,28 +87,37 @@ def generate_course_practice_quizzes_pdf(db: Session, course_id: int):
     # 5. Estructurar filas y promedios formativos
     report_rows = []
 
-    for s_id, s_info in students_map.items():
+    for _, s_info in students_map.items():
         quizzes_results = []
+
         total_score_sum = 0.0
         attempts_count = 0
 
         for header in headers:
             attempt = s_info["quizzes"].get(header.id)
+
             if attempt and attempt["score"] is not None:
                 float_score = float(attempt["score"])
+
                 quizzes_results.append(
                     QuizzDetailSchema(
-                        score=f"{float_score:.2f}", is_passed=attempt["is_passed"]
+                        score=f"{float_score:.2f}",
+                        is_passed=attempt["is_passed"],
                     )
                 )
+
                 total_score_sum += float_score
                 attempts_count += 1
+
             else:
                 quizzes_results.append(
-                    QuizzDetailSchema(score="Sin intentar", is_passed=None)
+                    QuizzDetailSchema(
+                        score="Sin intentar",
+                        is_passed=None,
+                    )
                 )
 
-        # El promedio formativo se calcula sobre los quizzes que sí intentó el alumno
+        # Promedio sobre quizzes intentados
         average = total_score_sum / attempts_count if attempts_count > 0 else 0.0
 
         report_rows.append(
@@ -97,9 +129,14 @@ def generate_course_practice_quizzes_pdf(db: Session, course_id: int):
         )
 
     report_data = PracticeQuizzReportSchema(
-        course_id=course_id, course_name=course.name, headers=headers, rows=report_rows
+        course_id=course_id,
+        course_name=course.name,
+        headers=headers,
+        rows=report_rows,
     )
 
     return export_practice_quizz_pdf(
-        report=report_data, generated_at=datetime.now().strftime("%d/%m/%Y %H:%M")
+        report=report_data,
+        domain=domain,
+        generated_at=datetime.now().strftime("%d/%m/%Y %H:%M"),
     )

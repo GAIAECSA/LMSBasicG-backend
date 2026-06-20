@@ -11,17 +11,23 @@ from app.models.user import User
 STUDENT_ROLE_ID = 4
 
 
-def get_final_quizzes_headers(db: Session, course_id: int):
+def get_final_quizzes_headers(db: Session, course_id: int, business_id: int):
     """
-    Recupera los bloques de cuestionarios del curso que SÍ entran en la nota final.
-    Navega a través de Module y Lesson para evitar problemas con LessonBlock.course_id nulo.
+    Recupera los bloques de cuestionarios del curso que SÍ entran en la nota final,
+    filtrados por business_id.
     """
     return (
         db.query(LessonBlock)
-        .join(Lesson, Lesson.id == LessonBlock.lesson_id)
-        .join(Module, Module.id == Lesson.module_id)
+        .join(
+            Lesson,
+            and_(Lesson.id == LessonBlock.lesson_id, Lesson.business_id == business_id),
+        )
+        .join(
+            Module, and_(Module.id == Lesson.module_id, Module.course_id == course_id)
+        )
         .filter(
-            Module.course_id == course_id,
+            LessonBlock.business_id == business_id,
+            Module.business_id == business_id,
             LessonBlock.block_type_id == 2,  # Tipo de bloque: Quizz
             LessonBlock.counts_toward_grade.is_(True),  # SÍ cuenta para la nota final
             LessonBlock.is_active.is_(True),
@@ -34,26 +40,28 @@ def get_final_quizzes_headers(db: Session, course_id: int):
     )
 
 
-def get_students_final_quizzes_matrix(db: Session, course_id: int):
+def get_students_final_quizzes_matrix(db: Session, course_id: int, business_id: int):
     """
     Obtiene la lista de estudiantes matriculados junto con el score y estado de aprobación
-    de los quizzes finales (calificables), controlando intentos múltiples.
+    de los quizzes finales, filtrando por business_id.
     """
-    # 1. Subconsulta para aislar el mejor intento por cada inscripción y bloque
+    # 1. Subconsulta para aislar el mejor intento
     best_quizz_responses = (
         db.query(QuizzResponse)
         .distinct(QuizzResponse.enrollment_id, QuizzResponse.lesson_block_id)
-        .filter(QuizzResponse.deleted.is_(False))
+        .filter(
+            QuizzResponse.business_id == business_id, QuizzResponse.deleted.is_(False)
+        )
         .order_by(
             QuizzResponse.enrollment_id,
             QuizzResponse.lesson_block_id,
-            QuizzResponse.score.desc(),  # PRIORIDAD: Nota más alta
-            QuizzResponse.id.desc(),  # Desempate: El más reciente
+            QuizzResponse.score.desc(),
+            QuizzResponse.id.desc(),
         )
         .subquery()
     )
 
-    # 2. Consulta principal unida a la subconsulta limpia
+    # 2. Consulta principal
     return (
         db.query(
             User.id.label("student_id"),
@@ -63,20 +71,37 @@ def get_students_final_quizzes_matrix(db: Session, course_id: int):
             best_quizz_responses.c.is_passed.label("is_passed"),
         )
         .select_from(Enrollment)
-        .join(User, and_(User.id == Enrollment.user_id, User.deleted.is_(False)))
+        .join(
+            User,
+            and_(
+                User.id == Enrollment.user_id,
+                User.business_id == business_id,
+                User.deleted.is_(False),
+            ),
+        )
         .join(
             Module,
-            and_(Module.course_id == Enrollment.course_id, Module.deleted.is_(False)),
+            and_(
+                Module.course_id == Enrollment.course_id,
+                Module.business_id == business_id,
+                Module.deleted.is_(False),
+            ),
         )
-        .join(Lesson, and_(Lesson.module_id == Module.id, Lesson.deleted.is_(False)))
+        .join(
+            Lesson,
+            and_(
+                Lesson.module_id == Module.id,
+                Lesson.business_id == business_id,
+                Lesson.deleted.is_(False),
+            ),
+        )
         .join(
             LessonBlock,
             and_(
                 LessonBlock.lesson_id == Lesson.id,
+                LessonBlock.business_id == business_id,
                 LessonBlock.block_type_id == 2,
-                LessonBlock.counts_toward_grade.is_(
-                    True
-                ),  # Filtro estricto de Quizz Calificable
+                LessonBlock.counts_toward_grade.is_(True),
                 LessonBlock.is_active.is_(True),
                 LessonBlock.deleted.is_(False),
             ),
@@ -90,6 +115,7 @@ def get_students_final_quizzes_matrix(db: Session, course_id: int):
         )
         .filter(
             Enrollment.course_id == course_id,
+            Enrollment.business_id == business_id,
             Enrollment.role_id == STUDENT_ROLE_ID,
             Enrollment.deleted.is_(False),
         )

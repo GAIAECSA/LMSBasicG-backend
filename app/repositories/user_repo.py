@@ -1,3 +1,4 @@
+from sqlalchemy import or_
 from sqlalchemy.orm import Session
 
 from app.models.user import User
@@ -62,7 +63,7 @@ def get_by_username(db: Session, username: str, business_id: int):
     )
 
 
-def get_user_by_email(db: Session, email: str, business_id: int):
+def get_by_email(db: Session, email: str, business_id: int):
     return (
         db.query(User)
         .filter(
@@ -71,6 +72,26 @@ def get_user_by_email(db: Session, email: str, business_id: int):
             User.deleted.is_(False),
         )
         .first()
+    )
+
+
+def get_by_username_or_email(
+    db: Session,
+    username: str,
+    email: str,
+    business_id: int,
+) -> list[User]:
+    return (
+        db.query(User)
+        .filter(
+            User.business_id == business_id,
+            User.deleted.is_(False),
+            or_(
+                User.username == username,
+                User.email == email,
+            ),
+        )
+        .all()
     )
 
 

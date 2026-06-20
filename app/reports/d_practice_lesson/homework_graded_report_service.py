@@ -34,12 +34,15 @@ def extract_title(content):
 def generate_course_graded_pdf(
     db: Session,
     course_id: int,
+    business_id: int,
+    domain: str,
 ):
     course = (
         db.query(Course)
         .filter(
             Course.id == course_id,
             Course.deleted.is_(False),
+            Course.business_id == business_id,
         )
         .first()
     )
@@ -50,6 +53,7 @@ def generate_course_graded_pdf(
     rows = get_all_graded_homeworks_matrix(
         db=db,
         course_id=course_id,
+        business_id=business_id,
     )
 
     headers_dict = OrderedDict()
@@ -66,7 +70,6 @@ def generate_course_graded_pdf(
     students = OrderedDict()
 
     for row in rows:
-
         if row.student_id not in students:
             students[row.student_id] = {
                 "student_name": row.student_name,
@@ -74,7 +77,6 @@ def generate_course_graded_pdf(
             }
 
         if row.response_id:
-
             score_value = str(row.score) if row.score is not None else "0"
 
             students[row.student_id]["scores"][row.block_id] = score_value
@@ -82,26 +84,20 @@ def generate_course_graded_pdf(
     report_rows = []
 
     for _, student_data in students.items():
-
         cells = []
-
         numeric_scores = []
 
         for header in headers:
-
             score = student_data["scores"].get(header.id)
 
             if score is None:
-
                 cells.append(
                     HomeworkCellSchema(
                         score="No entregado",
                         submitted=False,
                     )
                 )
-
             else:
-
                 cells.append(
                     HomeworkCellSchema(
                         score=score,
@@ -141,5 +137,6 @@ def generate_course_graded_pdf(
 
     return export_graded_homework_report_pdf(
         report=report,
+        domain=domain,
         generated_at=datetime.now().strftime("%d/%m/%Y %H:%M"),
     )

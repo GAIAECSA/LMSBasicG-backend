@@ -2,13 +2,12 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
 from app.db.session import SessionLocal
-
 from app.schemas.course_attendance import (
     CourseAttendanceCreate,
-    CourseAttendanceUpdate,
     CourseAttendanceResponse,
+    CourseAttendanceUpdate,
 )
-
+from app.schemas.others.auth import UserSession
 from app.services import course_attendance_service
 from app.utils.jwt import get_current_user
 
@@ -23,6 +22,92 @@ def get_db():
         db.close()
 
 
+@router.post("/course-attendance", response_model=CourseAttendanceResponse)
+def create_course_attendance(
+    data: CourseAttendanceCreate,
+    db: Session = Depends(get_db),
+    current_user: UserSession = Depends(get_current_user),
+):
+    try:
+        return course_attendance_service.create_course_attendance(
+            db, data, current_user.business_id
+        )
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+
+@router.put(
+    "/course-attendance/{attendance_id}", response_model=CourseAttendanceResponse
+)
+def update_course_attendance(
+    attendance_id: int,
+    data: CourseAttendanceUpdate,
+    db: Session = Depends(get_db),
+    current_user: UserSession = Depends(get_current_user),
+):
+    try:
+        return course_attendance_service.update_course_attendance(
+            db, attendance_id, data, current_user.business_id
+        )
+    except course_attendance_service.CourseAttendanceNotFoundError as e:
+        raise HTTPException(status_code=404, detail=str(e))
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.delete("/course-attendance/{attendance_id}")
+def delete_course_attendance(
+    attendance_id: int,
+    db: Session = Depends(get_db),
+    current_user: UserSession = Depends(get_current_user),
+):
+    try:
+        course_attendance_service.delete_course_attendance(
+            db, attendance_id, current_user.business_id
+        )
+        return {"detail": "Asistencia eliminada"}
+    except course_attendance_service.CourseAttendanceNotFoundError as e:
+        raise HTTPException(status_code=404, detail=str(e))
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.get(
+    "/course-attendance/{attendance_id}", response_model=CourseAttendanceResponse
+)
+def get_course_attendance(
+    attendance_id: int,
+    db: Session = Depends(get_db),
+    current_user: UserSession = Depends(get_current_user),
+):
+    try:
+        return course_attendance_service.get_course_attendance(
+            db, attendance_id, current_user.business_id
+        )
+
+    except Exception as e:
+        raise HTTPException(status_code=404, detail=str(e))
+
+
+@router.get(
+    "/course-attendance/course/{course_id}",
+    response_model=list[CourseAttendanceResponse],
+)
+def get_all_course_attendance(
+    course_id: int,
+    db: Session = Depends(get_db),
+    current_user: UserSession = Depends(get_current_user),
+):
+    try:
+        return course_attendance_service.get_course_attendances_by_course(
+            db, course_id, current_user.business_id
+        )
+
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+
+"""
 @router.post("/course-attendance", response_model=CourseAttendanceResponse)
 def create_course_attendance(
     data: CourseAttendanceCreate,
@@ -86,3 +171,4 @@ def get_all_course_attendance(course_id: int, db: Session = Depends(get_db)):
 
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
+"""

@@ -1,11 +1,14 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
+
 from app.db.session import SessionLocal
-from app.schemas.category import CategoryCreate, CategoryUpdate, CategoryResponse
+from app.schemas.category import CategoryCreate, CategoryResponse, CategoryUpdate
+from app.schemas.others.auth import UserSession
 from app.services import category_service
-from app.utils.jwt import require_admin
+from app.utils.jwt import get_current_user, require_admin
 
 router = APIRouter()
+
 
 def get_db():
     db = SessionLocal()
@@ -14,6 +17,81 @@ def get_db():
     finally:
         db.close()
 
+
+@router.post("/categories", response_model=CategoryResponse)
+def create_category(
+    data: CategoryCreate,
+    db: Session = Depends(get_db),
+    current_user: UserSession = Depends(require_admin),
+):
+    try:
+        return category_service.create_category(db, data, current_user.business_id)
+    except category_service.CategoryAlreadyExistsError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    except Exception as e:
+        raise HTTPException(status_code=500, detail="Error interno del servidor")
+
+
+@router.put("/categories/{category_id}", response_model=CategoryResponse)
+def update_category(
+    category_id: int,
+    data: CategoryUpdate,
+    db: Session = Depends(get_db),
+    current_user: UserSession = Depends(require_admin),
+):
+    try:
+        return category_service.update_category(
+            db, category_id, data, current_user.business_id
+        )
+    except category_service.CategoryNotFoundError as e:
+        raise HTTPException(status_code=404, detail=str(e))
+    except category_service.CategoryAlreadyExistsError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    except Exception:
+        raise HTTPException(status_code=500, detail="Error interno del servidor")
+
+
+@router.delete("/categories/{category_id}")
+def delete_category(
+    category_id: int,
+    db: Session = Depends(get_db),
+    current_user: UserSession = Depends(require_admin),
+):
+    try:
+        category_service.delete_category(db, category_id, current_user.business_id)
+        return {"detail": "Categoría eliminada"}
+    except category_service.CategoryNotFoundError as e:
+        raise HTTPException(status_code=404, detail=str(e))
+    except Exception:
+        raise HTTPException(status_code=500, detail="Error interno del servidor")
+
+
+@router.get("/categories/{category_id}", response_model=CategoryResponse)
+def get_category(
+    category_id: int,
+    db: Session = Depends(get_db),
+    current_user: UserSession = Depends(get_current_user),
+):
+    try:
+        return category_service.get_category(db, category_id, current_user.business_id)
+    except category_service.CategoryNotFoundError as e:
+        raise HTTPException(status_code=404, detail=str(e))
+    except Exception:
+        raise HTTPException(status_code=500, detail="Error interno del servidor")
+
+
+@router.get("/categories", response_model=list[CategoryResponse])
+def get_all_categories(
+    db: Session = Depends(get_db),
+    current_user: UserSession = Depends(get_current_user),
+):
+    try:
+        return category_service.get_all_categories(db, current_user.business_id)
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+
+"""
 @router.post("/categories", response_model=CategoryResponse)
 def create_category(data: CategoryCreate, db: Session = Depends(get_db), user=Depends(require_admin)):
     try:
@@ -49,3 +127,4 @@ def get_all_categories(db: Session = Depends(get_db)):
         return category_service.get_all_categories(db)
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
+"""

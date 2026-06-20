@@ -12,7 +12,7 @@ from app.models.user import User
 STUDENT_ROLE_ID = 4
 
 
-def get_evaluable_blocks(db: Session, course_id: int):
+def get_evaluable_blocks(db: Session, course_id: int, business_id: int):
     """
     Obtiene todos los bloques evaluables del curso respetando la jerarquía:
     Course -> Module -> Lesson -> LessonBlock
@@ -23,6 +23,7 @@ def get_evaluable_blocks(db: Session, course_id: int):
             Lesson,
             and_(
                 Lesson.id == LessonBlock.lesson_id,
+                Lesson.business_id == business_id,
                 Lesson.deleted.is_(False),
             ),
         )
@@ -31,10 +32,12 @@ def get_evaluable_blocks(db: Session, course_id: int):
             and_(
                 Module.id == Lesson.module_id,
                 Module.course_id == course_id,
+                Module.business_id == business_id,
                 Module.deleted.is_(False),
             ),
         )
         .filter(
+            LessonBlock.business_id == business_id,
             LessonBlock.counts_toward_grade.is_(True),
             LessonBlock.is_active.is_(True),
             LessonBlock.deleted.is_(False),
@@ -49,7 +52,7 @@ def get_evaluable_blocks(db: Session, course_id: int):
     )
 
 
-def get_course_students(db: Session, course_id: int):
+def get_course_students(db: Session, course_id: int, business_id: int):
     """
     Obtiene todos los estudiantes matriculados en el curso.
     """
@@ -59,9 +62,12 @@ def get_course_students(db: Session, course_id: int):
             User.id.label("student_id"),
             func.concat(User.firstname, " ", User.lastname).label("student_name"),
         )
-        .join(User, User.id == Enrollment.user_id)
+        .join(
+            User, and_(User.id == Enrollment.user_id, User.business_id == business_id)
+        )
         .filter(
             Enrollment.course_id == course_id,
+            Enrollment.business_id == business_id,
             Enrollment.role_id == STUDENT_ROLE_ID,
             Enrollment.deleted.is_(False),
             User.deleted.is_(False),
@@ -74,7 +80,7 @@ def get_course_students(db: Session, course_id: int):
     )
 
 
-def get_homework_scores(db: Session, course_id: int):
+def get_homework_scores(db: Session, course_id: int, business_id: int):
     """
     Obtiene todas las calificaciones de tareas para un curso específico.
     """
@@ -84,16 +90,23 @@ def get_homework_scores(db: Session, course_id: int):
             HomeworkResponse.lesson_block_id,
             HomeworkResponse.score,
         )
-        .join(Enrollment, Enrollment.id == HomeworkResponse.enrollment_id)
+        .join(
+            Enrollment,
+            and_(
+                Enrollment.id == HomeworkResponse.enrollment_id,
+                Enrollment.business_id == business_id,
+            ),
+        )
         .filter(
             Enrollment.course_id == course_id,
+            HomeworkResponse.business_id == business_id,
             HomeworkResponse.deleted.is_(False),
         )
         .all()
     )
 
 
-def get_quizz_scores(db: Session, course_id: int):
+def get_quizz_scores(db: Session, course_id: int, business_id: int):
     """
     Obtiene todas las calificaciones de cuestionarios para un curso específico.
     """
@@ -103,9 +116,16 @@ def get_quizz_scores(db: Session, course_id: int):
             QuizzResponse.lesson_block_id,
             QuizzResponse.score,
         )
-        .join(Enrollment, Enrollment.id == QuizzResponse.enrollment_id)
+        .join(
+            Enrollment,
+            and_(
+                Enrollment.id == QuizzResponse.enrollment_id,
+                Enrollment.business_id == business_id,
+            ),
+        )
         .filter(
             Enrollment.course_id == course_id,
+            QuizzResponse.business_id == business_id,
             QuizzResponse.deleted.is_(False),
         )
         .all()

@@ -103,9 +103,7 @@ def _format_zoom_start_time(
     Zoom recibe start_time como fecha local y timezone separado.
     Ejemplo: 2026-06-09T10:00:00 + America/Guayaquil.
     """
-
     local_timezone = ZoneInfo(timezone_name)
-
     local_start_time = start_time.astimezone(local_timezone)
 
     return local_start_time.replace(
@@ -185,6 +183,7 @@ def _build_zoom_update_payload(
 
 def _get_meeting_or_404(
     db: Session,
+    business_id: int,
     meeting_id: str,
 ) -> ZoomMeeting:
     cleaned_meeting_id = str(meeting_id).strip()
@@ -199,6 +198,7 @@ def _get_meeting_or_404(
     meeting = (
         db.query(ZoomMeeting)
         .filter(
+            ZoomMeeting.business_id == business_id,
             or_(*filters),
             ZoomMeeting.deleted.is_(False),
         )
@@ -216,207 +216,220 @@ def _get_meeting_or_404(
 
 def create_meeting(
     db: Session,
+    business_id: int,
     user_id: int,
     payload: ZoomMeetingCreate,
 ) -> ZoomMeeting:
-    enrollment = validate_teacher_access(
-        db=db,
-        user_id=user_id,
-        course_id=payload.course_id,
-    )
-
-    zoom_payload = _build_zoom_create_payload(payload)
-
-    zoom_response = zoom_client.create_meeting(
-        user_id=settings.ZOOM_HOST_EMAIL,
-        payload=zoom_payload,
-    )
-
-    zoom_meeting_id = zoom_response.get("id")
-    join_url = zoom_response.get("join_url")
-
-    if not zoom_meeting_id or not join_url:
-        raise HTTPException(
-            status_code=status.HTTP_502_BAD_GATEWAY,
-            detail="Zoom no devolvió id o join_url.",
+    with db.begin():
+        enrollment = validate_teacher_access(
+            db=db,
+            user_id=user_id,
+            course_id=payload.course_id,
         )
 
-    meeting = ZoomMeeting(
-        course_id=enrollment.course_id,
-        teacher_id=enrollment.user_id,
-        zoom_meeting_id=str(zoom_meeting_id),
-        zoom_host_user_id=zoom_response.get("host_id"),
-        topic=payload.topic,
-        start_time=_to_utc(payload.start_time),
-        duration=payload.duration,
-        timezone=payload.timezone,
-        password=zoom_response.get("password") or payload.password,
-        join_url=join_url,
-    )
+        zoom_payload = _build_zoom_create_payload(payload)
 
-    db.add(meeting)
-    db.commit()
+        zoom_response = zoom_client.create_meeting(
+            user_id=settings.ZOOM_HOST_EMAIL,
+            payload=zoom_payload,
+        )
+
+        zoom_meeting_id = zoom_response.get("id")
+        join_url = zoom_response.get("join_url")
+
+        if not zoom_meeting_id or not join_url:
+            raise HTTPException(
+                status_code=status.HTTP_502_BAD_GATEWAY,
+                detail="Zoom no devolvió id o join_url.",
+            )
+
+        meeting = ZoomMeeting(
+            business_id=business_id,
+            course_id=enrollment.course_id,
+            teacher_id=enrollment.user_id,
+            zoom_meeting_id=str(zoom_meeting_id),
+            zoom_host_user_id=zoom_response.get("host_id"),
+            topic=payload.topic,
+            start_time=_to_utc(payload.start_time),
+            duration=payload.duration,
+            timezone=payload.timezone,
+            password=zoom_response.get("password") or payload.password,
+            join_url=join_url,
+        )
+
+        db.add(meeting)
+
     db.refresh(meeting)
-
     return meeting
 
 
 def list_course_meetings(
     db: Session,
+    business_id: int,
     user_id: int,
     course_id: int,
 ) -> list[ZoomMeeting]:
-    validate_course_access(
-        db=db,
-        user_id=user_id,
-        course_id=course_id,
-    )
+    with db.begin():
+        validate_course_access(
+            db=db,
+            user_id=user_id,
+            course_id=course_id,
+        )
 
-    return (
-        db.query(ZoomMeeting)
-        .filter(
-            ZoomMeeting.course_id == course_id,
-            ZoomMeeting.deleted.is_(False),
+        return (
+            db.query(ZoomMeeting)
+            .filter(
+                ZoomMeeting.business_id == business_id,
+                ZoomMeeting.course_id == course_id,
+                ZoomMeeting.deleted.is_(False),
+            )
+            .order_by(
+                ZoomMeeting.start_time.asc(),
+                ZoomMeeting.id.asc(),
+            )
+            .all()
         )
-        .order_by(
-            ZoomMeeting.start_time.asc(),
-            ZoomMeeting.id.asc(),
-        )
-        .all()
-    )
 
 
 def get_meeting(
     db: Session,
+    business_id: int,
     user_id: int,
     meeting_id: str,
 ) -> ZoomMeeting:
-    meeting = _get_meeting_or_404(
-        db=db,
-        meeting_id=meeting_id,
-    )
+    with db.begin():
+        meeting = _get_meeting_or_404(
+            db=db,
+            business_id=business_id,
+            meeting_id=meeting_id,
+        )
 
-    validate_course_access(
-        db=db,
-        user_id=user_id,
-        course_id=meeting.course_id,
-    )
+        validate_course_access(
+            db=db,
+            user_id=user_id,
+            course_id=meeting.course_id,
+        )
 
-    return meeting
+        return meeting
 
 
 def get_start_url(
     db: Session,
+    business_id: int,
     user_id: int,
     meeting_id: str,
 ) -> dict[str, Any]:
-    meeting = _get_meeting_or_404(
-        db=db,
-        meeting_id=meeting_id,
-    )
-
-    validate_teacher_access(
-        db=db,
-        user_id=user_id,
-        course_id=meeting.course_id,
-    )
-
-    zoom_response = zoom_client.get_meeting(
-        meeting.zoom_meeting_id,
-    )
-
-    start_url = zoom_response.get("start_url")
-
-    if not start_url:
-        raise HTTPException(
-            status_code=status.HTTP_502_BAD_GATEWAY,
-            detail="Zoom no devolvió start_url.",
+    with db.begin():
+        meeting = _get_meeting_or_404(
+            db=db,
+            business_id=business_id,
+            meeting_id=meeting_id,
         )
 
-    return {
-        "meeting_id": meeting.id,
-        "zoom_meeting_id": meeting.zoom_meeting_id,
-        "start_url": start_url,
-    }
+        validate_teacher_access(
+            db=db,
+            user_id=user_id,
+            course_id=meeting.course_id,
+        )
+
+        zoom_response = zoom_client.get_meeting(
+            meeting.zoom_meeting_id,
+        )
+
+        start_url = zoom_response.get("start_url")
+
+        if not start_url:
+            raise HTTPException(
+                status_code=status.HTTP_502_BAD_GATEWAY,
+                detail="Zoom no devolvió start_url.",
+            )
+
+        return {
+            "meeting_id": meeting.id,
+            "zoom_meeting_id": meeting.zoom_meeting_id,
+            "start_url": start_url,
+        }
 
 
 def update_meeting(
     db: Session,
+    business_id: int,
     user_id: int,
     meeting_id: str,
     payload: ZoomMeetingUpdate,
 ) -> ZoomMeeting:
-    meeting = _get_meeting_or_404(
-        db=db,
-        meeting_id=meeting_id,
-    )
+    with db.begin():
+        meeting = _get_meeting_or_404(
+            db=db,
+            business_id=business_id,
+            meeting_id=meeting_id,
+        )
 
-    validate_teacher_access(
-        db=db,
-        user_id=user_id,
-        course_id=meeting.course_id,
-    )
+        validate_teacher_access(
+            db=db,
+            user_id=user_id,
+            course_id=meeting.course_id,
+        )
 
-    zoom_payload = _build_zoom_update_payload(
-        meeting=meeting,
-        payload=payload,
-    )
+        zoom_payload = _build_zoom_update_payload(
+            meeting=meeting,
+            payload=payload,
+        )
 
-    zoom_response = zoom_client.update_meeting(
-        meeting_id=meeting.zoom_meeting_id,
-        payload=zoom_payload,
-    )
+        zoom_response = zoom_client.update_meeting(
+            meeting_id=meeting.zoom_meeting_id,
+            payload=zoom_payload,
+        )
 
-    fields_set = payload.model_fields_set
+        fields_set = payload.model_fields_set
 
-    if "topic" in fields_set and payload.topic is not None:
-        meeting.topic = payload.topic
+        if "topic" in fields_set and payload.topic is not None:
+            meeting.topic = payload.topic
 
-    if "start_time" in fields_set and payload.start_time is not None:
-        meeting.start_time = _to_utc(payload.start_time)
+        if "start_time" in fields_set and payload.start_time is not None:
+            meeting.start_time = _to_utc(payload.start_time)
 
-    if "duration" in fields_set and payload.duration is not None:
-        meeting.duration = payload.duration
+        if "duration" in fields_set and payload.duration is not None:
+            meeting.duration = payload.duration
 
-    if "timezone" in fields_set and payload.timezone is not None:
-        meeting.timezone = payload.timezone
+        if "timezone" in fields_set and payload.timezone is not None:
+            meeting.timezone = payload.timezone
 
-    if "password" in fields_set and payload.password is not None:
-        meeting.password = zoom_response.get("password") or payload.password
+        if "password" in fields_set and payload.password is not None:
+            meeting.password = zoom_response.get("password") or payload.password
 
-    if zoom_response.get("join_url"):
-        meeting.join_url = zoom_response["join_url"]
+        if zoom_response.get("join_url"):
+            meeting.join_url = zoom_response["join_url"]
 
-    db.commit()
     db.refresh(meeting)
-
     return meeting
 
 
 def delete_meeting(
     db: Session,
+    business_id: int,
     user_id: int,
     meeting_id: str,
 ) -> None:
-    meeting = _get_meeting_or_404(
-        db=db,
-        meeting_id=meeting_id,
-    )
-
-    validate_teacher_access(
-        db=db,
-        user_id=user_id,
-        course_id=meeting.course_id,
-    )
-
-    try:
-        zoom_client.delete_meeting(
-            meeting.zoom_meeting_id,
+    with db.begin():
+        meeting = _get_meeting_or_404(
+            db=db,
+            business_id=business_id,
+            meeting_id=meeting_id,
         )
-    except HTTPException as exc:
-        if exc.status_code != status.HTTP_404_NOT_FOUND:
-            raise
 
-    meeting.deleted = True
+        validate_teacher_access(
+            db=db,
+            user_id=user_id,
+            course_id=meeting.course_id,
+        )
 
-    db.commit()
+        try:
+            zoom_client.delete_meeting(
+                meeting.zoom_meeting_id,
+            )
+        except HTTPException as exc:
+            if exc.status_code != status.HTTP_404_NOT_FOUND:
+                raise
+
+        meeting.deleted = True

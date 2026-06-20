@@ -27,9 +27,7 @@ class ZoomApiClient:
         if self._token is None:
             return False
 
-        refresh_before = (
-            self._token.expires_at - settings.ZOOM_TOKEN_CACHE_SKEW_SECONDS
-        )
+        refresh_before = self._token.expires_at - settings.ZOOM_TOKEN_CACHE_SKEW_SECONDS
 
         return time.time() < refresh_before
 

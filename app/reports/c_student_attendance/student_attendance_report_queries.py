@@ -9,6 +9,7 @@ from app.models.user import User
 def get_course_student_attendance_report(
     db: Session,
     course_id: int,
+    business_id: int,
 ):
 
     query = (
@@ -58,10 +59,13 @@ def get_course_student_attendance_report(
         )
         .filter(
             Enrollment.course_id == course_id,
-            Enrollment.deleted == False,
+            Enrollment.business_id == business_id,
+            Enrollment.deleted.is_(False),
             Enrollment.role_id == 4,
-            Attendance.deleted == False,
-            User.deleted == False,
+            Attendance.business_id == business_id,
+            Attendance.deleted.is_(False),
+            User.business_id == business_id,
+            User.deleted.is_(False),
         )
         .group_by(
             User.id,

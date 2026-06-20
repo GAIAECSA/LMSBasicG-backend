@@ -124,6 +124,7 @@ class ZoomMeetingUpdate(BaseModel):
 
 class ZoomMeetingOut(BaseModel):
     id: int
+    business_id: int
     course_id: int
     teacher_id: int
 

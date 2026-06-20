@@ -11,6 +11,7 @@ from app.models.module import Module
 def get_course_structure_rows(
     db: Session,
     course_id: int,
+    business_id: int,
 ):
     return (
         db.query(
@@ -55,6 +56,7 @@ def get_course_structure_rows(
         )
         .filter(
             Course.id == course_id,
+            Course.business_id == business_id,
             Course.deleted.is_(False),
         )
         .order_by(
@@ -69,6 +71,7 @@ def get_course_structure_rows(
 def get_default_course_blocks(
     db: Session,
     course_id: int,
+    business_id: int,
 ):
     return (
         db.query(
@@ -83,6 +86,7 @@ def get_default_course_blocks(
         )
         .filter(
             LessonBlock.course_id == course_id,
+            LessonBlock.business_id == business_id,
             LessonBlock.default.is_(True),
             LessonBlock.deleted.is_(False),
         )

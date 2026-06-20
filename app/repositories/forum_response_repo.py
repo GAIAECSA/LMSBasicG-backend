@@ -1,6 +1,7 @@
 from sqlalchemy.orm import Session
 
 from app.models.course import Course
+from app.models.enrollment import Enrollment
 from app.models.forum_response import ForumResponse
 from app.models.lesson import Lesson
 from app.models.lesson_block import LessonBlock
@@ -60,6 +61,28 @@ def delete_soft_by_enrollment(
             ForumResponse.enrollment_id == enrollment_id,
             ForumResponse.business_id == business_id,
             ForumResponse.deleted.is_(False),
+        )
+        .update({"deleted": True}, synchronize_session=False)
+    )
+
+
+def delete_soft_by_user(
+    db: Session,
+    user_id: int,
+    business_id: int,
+) -> None:
+    (
+        db.query(ForumResponse)
+        .join(
+            Enrollment,
+            ForumResponse.enrollment_id == Enrollment.id,
+        )
+        .filter(
+            ForumResponse.business_id == business_id,
+            ForumResponse.deleted.is_(False),
+            Enrollment.user_id == user_id,
+            Enrollment.business_id == business_id,
+            Enrollment.deleted.is_(False),
         )
         .update({"deleted": True}, synchronize_session=False)
     )

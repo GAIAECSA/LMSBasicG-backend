@@ -18,8 +18,7 @@ from .course_structure_report_schemas import (
 
 
 def generate_course_structure_report(
-    db: Session,
-    course_id: int,
+    db: Session, course_id: int, business_id: int, domain: str
 ):
     # Validar existencia del curso base
     course = (
@@ -27,6 +26,7 @@ def generate_course_structure_report(
         .filter(
             Course.id == course_id,
             Course.deleted == False,
+            Course.business_id == business_id,
         )
         .first()
     )
@@ -34,15 +34,15 @@ def generate_course_structure_report(
     if not course:
         raise Exception("Curso no encontrado")
 
-    # Formatear la data plana estructurándola en esquemas Pydantic
     report = generate_course_structure_report_data(
         db=db,
         course_id=course_id,
         course_name=course.name,
+        business_id=business_id,
     )
 
-    # Exportar el binario final
     pdf = export_course_structure_pdf(
+        domain=domain,
         report=report,
         generated_at=datetime.now().strftime("%d/%m/%Y %H:%M"),
     )
@@ -57,9 +57,14 @@ def generate_course_structure_report_data(
     db: Session,
     course_id: int,
     course_name: str,
+    business_id: int,
 ):
-    rows = get_course_structure_rows(db=db, course_id=course_id)
-    default_rows = get_default_course_blocks(db=db, course_id=course_id)
+    rows = get_course_structure_rows(
+        db=db, course_id=course_id, business_id=business_id
+    )
+    default_rows = get_default_course_blocks(
+        db=db, course_id=course_id, business_id=business_id
+    )
 
     # 1. Mapear bloques globales por defecto
     default_blocks = []

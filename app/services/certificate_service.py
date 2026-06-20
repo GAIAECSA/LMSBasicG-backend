@@ -5,17 +5,168 @@ import uuid
 from fastapi import UploadFile
 from sqlalchemy.orm import Session
 
-from app.helpers.recalculate_enrollment_certificate import (
-    recalculate_enrollment_certificate,
-)
 from app.models.certificate import Certificate
-from app.repositories import certificate_repo, enrollment_repo
+from app.repositories import business_repo, certificate_repo
 from app.schemas.certificate import CertificateCreate, CertificateUpdate
+from app.services import business_service
 from app.utils.file_upload import save_certificate
 
 logger = logging.getLogger(__name__)
+# =====================================================================
+# EXCEPCIONES PERSONALIZADAS
+# =====================================================================
 
 
+class CertificateNotFoundError(Exception):
+    pass
+
+
+class CertificateAlreadyExistsError(Exception):
+    pass
+
+
+class CertificateInvalidError(Exception):
+    pass
+
+
+# =====================================================================
+# SERVICIOS
+# =====================================================================
+
+
+def create_certificate(
+    db: Session,
+    data: CertificateCreate,
+    business_id: int,
+    file: UploadFile | None,
+):
+    with db.begin():
+        existing = certificate_repo.get_by_user_and_course(
+            db, data.user_id, data.course_id, business_id
+        )
+        if existing:
+            raise CertificateAlreadyExistsError("El registro ya existe")
+
+        certificate_code = f"CERT-{uuid.uuid4().hex[:10].upper()}"
+
+        file_url = None
+        if file:
+            file_url = save_certificate(file, business_id)
+
+        certificate = Certificate(
+            **data.model_dump(exclude={"certificate_code", "file_url"}),
+            certificate_code=certificate_code,
+            file_url=file_url,
+            business_id=business_id,
+        )
+
+        return certificate_repo.create(db, certificate)
+
+
+def update_certificate(
+    db: Session,
+    certificate_id: int,
+    data: CertificateUpdate,
+    business_id: int,
+    file: UploadFile | None,
+):
+    with db.begin():
+        certificate = certificate_repo.get_by_id(db, certificate_id, business_id)
+        if not certificate:
+            raise CertificateNotFoundError("Certificado no encontrado")
+
+        update_data = data.model_dump(exclude_unset=True)
+
+        old_file_path = None
+
+        if file:
+            if certificate.file_url:
+                old_file_path = certificate.file_url.lstrip("/")
+
+            saved_file = save_certificate(file, business_id)
+
+            if saved_file:
+                update_data["file_url"] = saved_file
+
+        for key, value in update_data.items():
+            setattr(certificate, key, value)
+
+        if file and old_file_path and os.path.exists(old_file_path):
+            try:
+                os.remove(old_file_path)
+            except Exception as e:
+                logger.warning(f"No se pudo eliminar archivo viejo: {e}")
+
+        return certificate
+
+
+def delete_certificate(db: Session, certificate_id: int, business_id: int):
+    with db.begin():
+        certificate = certificate_repo.get_by_id(db, certificate_id, business_id)
+        if not certificate:
+            raise CertificateNotFoundError("Certificado no encontrado")
+
+        return certificate_repo.delete_soft_by_id(db, certificate_id, business_id)
+
+
+def get_certificate(db: Session, certificate_id: int, business_id: int):
+    certificate = certificate_repo.get_by_id(db, certificate_id, business_id)
+    if not certificate:
+        raise CertificateNotFoundError("Certificado no encontrado")
+    return certificate
+
+
+def get_certificate_by_code(db: Session, code: str, domain: int):
+    business = business_repo.get_by_domain(domain)
+
+    if not business:
+        raise business_service.BusinessNotFoundError("Empresa no encontrada")
+
+    certificate = certificate_repo.get_by_code(db, code, business.id)
+    if not certificate:
+        raise CertificateNotFoundError("Certificado no encontrado")
+    return certificate
+
+
+def get_certificate_by_user_and_course(
+    db: Session, user_id: int, course_id: int, business_id: int
+):
+    certificate = certificate_repo.get_by_user_and_course(
+        db, user_id, course_id, business_id
+    )
+    if not certificate:
+        raise CertificateNotFoundError("Certificado no encontrado")
+    return certificate
+
+
+def get_certificates_by_user(db: Session, user_id: int, business_id: int):
+    certificates = certificate_repo.get_all_by_user(db, user_id, business_id)
+    return certificates
+
+
+def get_all_certificates(db: Session, business_id: int):
+    return certificate_repo.get_all(db, business_id)
+
+
+def verify_certificate(db: Session, code: str, domain: int):
+
+    business = business_repo.get_by_domain(domain)
+
+    if not business:
+        raise business_service.BusinessNotFoundError("Empresa no encontrada")
+
+    certificate = certificate_repo.get_by_code(db, code, business.id)
+
+    if not certificate:
+        raise CertificateNotFoundError("Certificado no válido")
+
+    if not certificate.is_valid:
+        raise CertificateInvalidError("Certificado inválido")
+
+    return certificate
+
+
+"""
 def create_certificate(db: Session, data: CertificateCreate, file: UploadFile | None):
 
     existing = certificate_repo.get_by_user_and_course(db, data.user_id, data.course_id)
@@ -130,3 +281,4 @@ def verify_certificate(db: Session, code: str):
         raise Exception("Certificado inválido")
 
     return certificate
+"""

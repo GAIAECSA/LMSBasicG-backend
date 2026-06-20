@@ -1,6 +1,8 @@
 from sqlalchemy.orm import Session, joinedload
 
+from app.models.course import Course
 from app.models.enrollment import Enrollment
+from app.models.subcategory import Subcategory
 
 # =====================================================================
 # CÓDIGO REFACTORIZADO Y OPTIMIZADO
@@ -39,6 +41,56 @@ def delete_soft_by_course(db: Session, course_id: int, business_id: int):
     db.query(Enrollment).filter(
         Enrollment.course_id == course_id, Enrollment.business_id == business_id
     ).update({"deleted": True}, synchronize_session=False)
+
+
+def delete_soft_by_subcategory(
+    db: Session,
+    subcategory_id: int,
+    business_id: int,
+):
+    return (
+        db.query(Enrollment)
+        .join(
+            Course,
+            Enrollment.course_id == Course.id,
+        )
+        .filter(
+            Course.subcategory_id == subcategory_id,
+            Enrollment.business_id == business_id,
+            Enrollment.deleted == False,
+        )
+        .update(
+            {"deleted": True},
+            synchronize_session=False,
+        )
+    )
+
+
+def delete_soft_by_category(
+    db: Session,
+    category_id: int,
+    business_id: int,
+):
+    return (
+        db.query(Enrollment)
+        .join(
+            Course,
+            Enrollment.course_id == Course.id,
+        )
+        .join(
+            Subcategory,
+            Course.subcategory_id == Subcategory.id,
+        )
+        .filter(
+            Subcategory.category_id == category_id,
+            Enrollment.business_id == business_id,
+            Enrollment.deleted == False,
+        )
+        .update(
+            {"deleted": True},
+            synchronize_session=False,
+        )
+    )
 
 
 # --- Consultas (Lectura) ---

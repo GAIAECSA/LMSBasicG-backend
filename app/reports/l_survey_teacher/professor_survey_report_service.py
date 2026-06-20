@@ -6,7 +6,6 @@ from sqlalchemy.orm import Session
 
 from app.models.course import Course
 
-# Importaciones internas corregidas apuntando a los nuevos nombres de archivo
 from .professor_survey_report_pdf import export_professor_survey_report_pdf
 from .professor_survey_report_queries import (
     get_enrollments_with_optional_survey_responses,
@@ -21,23 +20,30 @@ from .professor_survey_report_schemas import (
 
 logger = logging.getLogger(__name__)
 
-# ID del rol correspondiente a los profesores en tu sistema
 PROFESSOR_ROLE_ID = 3
 
 
 def _extract_numeric_score(value) -> float | None:
     if value is None:
         return None
+
     if isinstance(value, (int, float)):
         return float(value)
 
     match = re.match(r"^\s*(\d+(?:\.\d+)?)", str(value))
+
     if match:
         return float(match.group(1))
+
     return None
 
 
-def generate_professor_surveys_pdf(db: Session, course_id: int):
+def generate_professor_surveys_pdf(
+    db: Session,
+    course_id: int,
+    business_id: int,
+    domain: str,
+):
     logger.info(
         "[PROFESSOR_SURVEY_REPORT] ===== INICIO REPORTE DOCENTE CURSO %s =====",
         course_id,
@@ -48,20 +54,25 @@ def generate_professor_surveys_pdf(db: Session, course_id: int):
         .filter(
             Course.id == course_id,
             Course.deleted.is_(False),
+            Course.business_id == business_id,
         )
         .first()
     )
+
+    if not course:
+        raise ValueError("Curso no encontrado")
 
     logger.info(
         "[PROFESSOR_SURVEY_REPORT] Curso encontrado=%s",
         course is not None,
     )
 
-    course_name = course.name if course else f"Curso ID: {course_id}"
+    course_name = course.name
 
     survey_blocks = get_survey_blocks_by_course(
         db=db,
         course_id=course_id,
+        business_id=business_id,
     )
 
     logger.info(
@@ -82,6 +93,7 @@ def generate_professor_surveys_pdf(db: Session, course_id: int):
             course_id=course_id,
             block_id=block.id,
             role_id=PROFESSOR_ROLE_ID,
+            business_id=business_id,
         )
 
         logger.info(
@@ -122,6 +134,7 @@ def generate_professor_surveys_pdf(db: Session, course_id: int):
             )
 
             response_json = res.survey_answers or {}
+
             answers_payload = response_json.get("answers", {})
 
             professor_answers = []
@@ -176,5 +189,6 @@ def generate_professor_surveys_pdf(db: Session, course_id: int):
 
     return export_professor_survey_report_pdf(
         report=report_data,
+        domain=domain,
         generated_at=datetime.now().strftime("%d/%m/%Y %H:%M"),
     )

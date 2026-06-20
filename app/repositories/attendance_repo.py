@@ -3,6 +3,7 @@ from sqlalchemy.orm import Session
 from app.models.attendance import Attendance
 from app.models.course import Course
 from app.models.course_attendance import CourseAttendance
+from app.models.enrollment import Enrollment
 from app.models.subcategory import Subcategory
 
 # =====================================================================
@@ -39,6 +40,28 @@ def delete_soft_by_enrollment(
     db.query(Attendance).filter(
         Attendance.enrollment_id == enrollment_id, Attendance.business_id == business_id
     ).update({"deleted": True}, synchronize_session=False)
+
+
+def delete_soft_by_user(
+    db: Session,
+    user_id: int,
+    business_id: int,
+) -> None:
+    (
+        db.query(Attendance)
+        .join(
+            Enrollment,
+            Attendance.enrollment_id == Enrollment.id,
+        )
+        .filter(
+            Attendance.business_id == business_id,
+            Attendance.deleted.is_(False),
+            Enrollment.user_id == user_id,
+            Enrollment.business_id == business_id,
+            Enrollment.deleted.is_(False),
+        )
+        .update({"deleted": True}, synchronize_session=False)
+    )
 
 
 def delete_hard_by_enrollment(

@@ -1,11 +1,13 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
+
 from app.db.session import SessionLocal
 from app.schemas.attendance import (
-    AttendanceUpdate,
     AttendanceResponse,
+    AttendanceUpdate,
     AttendanceWithEnrollmentResponse,
 )
+from app.schemas.others.auth import UserSession
 from app.services import attendance_service
 from app.utils.jwt import get_current_user
 
@@ -20,6 +22,78 @@ def get_db():
         db.close()
 
 
+@router.put("/attendance/{attendance_id}", response_model=AttendanceResponse)
+def update_attendance(
+    attendance_id: int,
+    data: AttendanceUpdate,
+    db: Session = Depends(get_db),
+    current_user: UserSession = Depends(get_current_user),
+):
+    try:
+        return attendance_service.update_attendance(
+            db, attendance_id, data, current_user.business_id
+        )
+    except attendance_service.AttendanceNotFoundError as e:
+        raise HTTPException(status_code=404, detail=str(e))
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+
+@router.get(
+    "/attendance/{attendance_id}", response_model=AttendanceWithEnrollmentResponse
+)
+def get_attendance(
+    attendance_id: int,
+    db: Session = Depends(get_db),
+    current_user: UserSession = Depends(get_current_user),
+):
+    try:
+        return attendance_service.get_attendance(
+            db, attendance_id, current_user.business_id
+        )
+    except attendance_service.AttendanceNotFoundError as e:
+        raise HTTPException(status_code=404, detail=str(e))
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+
+@router.get(
+    "/attendance/course-attendance/{course_attendance_id}",
+    response_model=list[AttendanceWithEnrollmentResponse],
+)
+def get_all_attendance_by_course_attendance(
+    course_attendance_id: int,
+    db: Session = Depends(get_db),
+    current_user: UserSession = Depends(get_current_user),
+):
+    try:
+        return attendance_service.get_all_attendance_by_course_attendance(
+            db, course_attendance_id, current_user.business_id
+        )
+
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+
+@router.get(
+    "/attendance/enrollment/{enrollment_id}",
+    response_model=list[AttendanceWithEnrollmentResponse],
+)
+def get_all_attendance_by_enrollment(
+    enrollment_id: int,
+    db: Session = Depends(get_db),
+    current_user: UserSession = Depends(get_current_user),
+):
+    try:
+        return attendance_service.get_all_attendance_by_enrollment(
+            db, enrollment_id, current_user.business_id
+        )
+
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+
+"""
 @router.put("/attendance/{attendance_id}", response_model=AttendanceResponse)
 def update_attendance(
     attendance_id: int,
@@ -77,3 +151,4 @@ def get_all_attendance_by_enrollment(
 
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
+"""

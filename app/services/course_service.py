@@ -5,6 +5,7 @@ from fastapi import UploadFile
 from sqlalchemy import select, update
 from sqlalchemy.orm import Session
 
+from app.constants import constants_default_blocks_mdt
 from app.models.block_progress import BlockProgress
 from app.models.certificate import Certificate
 from app.models.certificate_template import CertificateTemplate
@@ -20,46 +21,60 @@ from app.models.module import Module
 from app.models.quizz_response import QuizzResponse
 from app.models.survey_response import SurveyResponse
 from app.repositories import (
+    attendance_repo,
+    block_progress_repo,
     certificate_repo,
+    certificate_template_repo,
+    course_attendance_repo,
     course_repo,
     enrollment_repo,
+    forum_response_repo,
+    homework_response_repo,
     lesson_block_repo,
+    lesson_repo,
+    mdt_certificate_repo,
+    module_repo,
+    quizz_response_repo,
+    survey_response_repo,
 )
 from app.schemas.course import CourseCreate, CourseUpdate
 from app.utils.file_upload import save_course_image
 
+# =====================================================================
+# EXCEPCIONES PERSONALIZADAS
+# =====================================================================
+
+
+class CourseNotFoundError(Exception):
+    pass
+
+
+class CourseAlreadyExistsError(Exception):
+    pass
+
+
+# =====================================================================
+# SERVICIOS
+# =====================================================================
+
 
 def create_course(
-    db: Session,
-    data: CourseCreate,
-    image: UploadFile | None = None,
+    db: Session, data: CourseCreate, business_id: int, image: UploadFile | None = None
 ):
-
     with db.begin():
-
         existing = course_repo.get_by_name_and_subcategory(
-            db,
-            data.name,
-            data.subcategory_id,
+            db, data.name, data.subcategory_id, business_id
         )
-
         if existing:
-            raise ValueError("El curso ya existe en esta subcategoría")
+            raise CourseAlreadyExistsError("El curso ya existe")
 
-        image_url = save_course_image(image) if image else None
+        image_url = save_course_image(image, business_id) if image else None
 
         course = Course(
-            **data.model_dump(),
-            image_url=image_url,
+            **data.model_dump(), image_url=image_url, business_id=business_id
         )
-
-        course_repo.create(db, course)
-
-        lesson_block_repo.create_all(
-            db,
-            create_default_blocks(course.id),
-        )
-
+        course_repo.create(course)
+        lesson_block_repo.create_bulk(db, create_default_blocks(course.id, business_id))
         return course
 
 
@@ -67,174 +82,106 @@ def update_course(
     db: Session,
     course_id: int,
     data: CourseUpdate,
+    business_id: int,
     image: UploadFile | None = None,
 ):
-    new_image_url = None
-    if image:
-        new_image_url = save_course_image(image)
-
     with db.begin():
-        course = course_repo.get_by_id(db, course_id)
+        course = course_repo.get_by_id(
+            db=db,
+            course_id=course_id,
+            business_id=business_id,
+        )
 
         if not course:
-            raise ValueError("Curso no encontrado")
+            raise CourseNotFoundError("Curso no encontrado")
 
         update_data = data.model_dump(exclude_unset=True)
 
-        if "name" in update_data and update_data["name"] != course.name:
-            existing = course_repo.get_by_name_and_subcategory(
-                db,
-                update_data["name"],
+        if "name" in update_data:
+            subcategory_id = update_data.get(
+                "subcategory_id",
                 course.subcategory_id,
             )
-            if existing:
-                raise ValueError("El curso ya existe en esta subcategoría")
 
-        old_is_mdt = course.is_mdt
-        new_is_mdt = update_data.get("is_mdt", old_is_mdt)
+            existing = course_repo.get_by_name_and_subcategory(
+                db=db,
+                name=update_data["name"],
+                subcategory_id=subcategory_id,
+            )
+
+            if existing and existing.id != course.id:
+                raise CourseAlreadyExistsError("El curso ya existe")
 
         for key, value in update_data.items():
             setattr(course, key, value)
 
-        if new_image_url:
+        if image:
+            new_image = save_course_image(
+                file=image,
+                business_id=business_id,
+            )
+
             if course.image_url:
                 old_path = course.image_url.lstrip("/")
-                if os.path.exists(old_path):
-                    try:
+
+                try:
+                    if os.path.exists(old_path):
                         os.remove(old_path)
-                    except Exception as e:
-                        print(f"Error al eliminar imagen antigua: {e}")
+                except OSError:
+                    pass
 
-            course.image_url = new_image_url
+            course.image_url = new_image
 
-        handle_mdt_blocks_transition(
-            db=db,
-            course=course,
-            old_is_mdt=old_is_mdt,
-            new_is_mdt=new_is_mdt,
-        )
-
-        if old_is_mdt and not new_is_mdt:
-            enrollments = enrollment_repo.get_all_by_course_id(db, course.id)
-
-            existing_certs = certificate_repo.get_all_by_course(db, course.id)
-            users_with_certs = {cert.user_id for cert in existing_certs}
-
-            new_certificates = []
-            for enrollment in enrollments:
-                if (
-                    enrollment.role_id == 4
-                    and enrollment.user_id not in users_with_certs
-                ):
-                    code = f"CERT-{uuid.uuid4().hex[:10].upper()}"
-                    new_certificates.append(
-                        Certificate(
-                            user_id=enrollment.user_id,
-                            course_id=course.id,
-                            certificate_code=code,
-                        )
-                    )
-
-            if new_certificates:
-                db.add_all(new_certificates)
-
-        return course_repo.update(db, course)
+        return course
 
 
-def delete_course(db: Session, course_id: int):
-    course = course_repo.get_by_id(db, course_id)
-
-    if not course:
-        raise Exception("Curso no encontrado")
-
-    enrollment_repo.delete_by_course_id(db, course_id)
-    return course_repo.delete(db, course)
+def get_course(db: Session, course_id: int, business_id: int):
+    return course_repo.get_by_id(db, course_id, business_id)
 
 
-def get_course(db: Session, course_id: int):
-    return course_repo.get_by_id(db, course_id)
+def get_courses_by_subcategory(db: Session, subcategory_id: int, business_id: int):
+    return course_repo.get_by_subcategory_id(db, subcategory_id, business_id)
 
 
-def get_courses_by_subcategory(db: Session, subcategory_id: int):
-    return course_repo.get_by_subcategory_id(db, subcategory_id)
+def get_all_courses(db: Session, business_id: int):
+    return course_repo.get_all(db, business_id)
 
 
-def get_all_courses(db: Session):
-    return course_repo.get_all(db)
+def delete_course(db: Session, course_id: int, business_id: int):
+    with db.begin():
+        course = course_repo.get_by_id(db, course_id, business_id)
+
+        if not course:
+            raise CourseNotFoundError("Curso no encontrado")
+        cascade_steps = [
+            # Blocks
+            homework_response_repo.delete_soft_by_course(),
+            forum_response_repo.delete_soft_by_course(),
+            survey_response_repo.delete_soft_by_course(),
+            quizz_response_repo.delete_soft_by_course(),
+            # Navigation
+            lesson_block_repo.delete_soft_by_course(),
+            lesson_repo.delete_soft_by_course(),
+            module_repo.delete_soft_by_course(),
+            # Certificates
+            certificate_repo.delete_soft_by_course(),
+            mdt_certificate_repo.delete_soft_by_course(),
+            certificate_template_repo.delete_soft_by_course(),
+            # Attendance
+            attendance_repo.delete_soft_by_course(),
+            course_attendance_repo.delete_soft_by_course(),
+            # Enrollments
+            enrollment_repo.delete_soft_by_course(),
+            # Block Progress
+            block_progress_repo.delete_soft_by_course(),
+        ]
+        for step in cascade_steps:
+            step(db, course_id, business_id)
+
+        course_repo.delete_soft_by_id(course_id)
 
 
-# Privados
-DEFAULT_MDT_BLOCKS = [
-    {
-        "content": {
-            "title": "Copia Cédula",
-            "instructions": "Subir la copia de cédula",
-            "attachments": [],
-        },
-        "order": 0,
-        "completion_type": "SUBIR",
-        "is_active": True,
-        "type": 6,
-    },
-    {
-        "content": {
-            "title": "Copia Título",
-            "instructions": "Subir la copia de título",
-            "attachments": [],
-        },
-        "order": 1,
-        "completion_type": "SUBIR",
-        "is_active": True,
-        "type": 6,
-    },
-    {
-        "content": {
-            "title": "Copia de Certificado Laboral",
-            "instructions": "Subir la copia de certificado laboral",
-            "attachments": [],
-        },
-        "order": 2,
-        "completion_type": "SUBIR",
-        "is_active": True,
-        "type": 6,
-    },
-    {
-        "content": {
-            "title": "Comprobante de pago",
-            "instructions": "Subir el comprobante de pago",
-            "attachments": [],
-        },
-        "order": 3,
-        "completion_type": "SUBIR",
-        "is_active": True,
-        "type": 6,
-    },
-    {
-        "content": {
-            "title": "Informe del Instructor",
-            "instructions": "Subir el informe del instructor",
-            "attachments": [],
-        },
-        "order": 4,
-        "completion_type": "VER",
-        "is_active": False,
-        "type": 5,
-    },
-    {
-        "content": {
-            "title": "Evidencia asistencia",
-            "instructions": "Evidencia asistencia",
-            "attachments": [],
-        },
-        "order": 5,
-        "completion_type": "VER",
-        "is_active": False,
-        "type": 5,
-    },
-]
-
-
-def create_default_blocks(course_id: int):
+def create_default_blocks(course_id: int, business_id: int):
 
     return [
         build_lesson_block(
@@ -244,8 +191,9 @@ def create_default_blocks(course_id: int):
             is_active=block["is_active"],
             course_id=course_id,
             block_type_id=block["type"],
+            business_id=business_id,
         )
-        for block in DEFAULT_MDT_BLOCKS
+        for block in constants_default_blocks_mdt.DEFAULT_MDT_BLOCKS
     ]
 
 
@@ -272,35 +220,178 @@ def build_lesson_block(
     )
 
 
-def handle_mdt_blocks_transition(
-    db: Session,
-    course: Course,
-    old_is_mdt: bool,
-    new_is_mdt: bool,
+# Viejos
+# def create_course(
+#   db: Session,
+#  data: CourseCreate,
+#   image: UploadFile | None = None,
+# ):
+
+#   with db.begin():
+
+#      existing = course_repo.get_by_name_and_subcategory(
+#         db,
+#        data.name,
+#       data.subcategory_id,
+#  )
+
+# if existing:
+#    raise ValueError("El curso ya existe en esta subcategoría")
+
+# image_url = save_course_image(image) if image else None
+
+# course = Course(
+#   **data.model_dump(),
+#  image_url=image_url,
+# )
+
+# course_repo.create(db, course)
+
+# lesson_block_repo.create_all(
+#   db,
+#  create_default_blocks(course.id),
+# )
+
+# return course
+
+
+# def update_course(
+#   db: Session,
+#  course_id: int,
+# data: CourseUpdate,
+# image: UploadFile | None = None,
+# ):
+#   new_image_url = None
+#  if image:
+#     new_image_url = save_course_image(image)
+
+# with db.begin():
+#   course = course_repo.get_by_id(db, course_id)
+
+#  if not course:
+#     raise ValueError("Curso no encontrado")
+
+# update_data = data.model_dump(exclude_unset=True)
+
+# if "name" in update_data and update_data["name"] != course.name:
+#   existing = course_repo.get_by_name_and_subcategory(
+#      db,
+#     update_data["name"],
+#    course.subcategory_id,
+# )
+# if existing:
+#   raise ValueError("El curso ya existe en esta subcategoría")
+
+# old_is_mdt = course.is_mdt
+# new_is_mdt = update_data.get("is_mdt", old_is_mdt)
+
+# for key, value in update_data.items():
+#   setattr(course, key, value)
+
+# if new_image_url:
+#   if course.image_url:
+#      old_path = course.image_url.lstrip("/")
+#     if os.path.exists(old_path):
+#        try:
+#           os.remove(old_path)
+#      except Exception as e:
+#         print(f"Error al eliminar imagen antigua: {e}")
+
+# course.image_url = new_image_url
+
+# handle_mdt_blocks_transition(
+#   db=db,
+#  course=course,
+# old_is_mdt=old_is_mdt,
+# new_is_mdt=new_is_mdt,
+# )
+
+# if old_is_mdt and not new_is_mdt:
+#   enrollments = enrollment_repo.get_all_by_course_id(db, course.id)
+
+#  existing_certs = certificate_repo.get_all_by_course(db, course.id)
+# users_with_certs = {cert.user_id for cert in existing_certs}
+
+# new_certificates = []
+# for enrollment in enrollments:
+#   if (
+#      enrollment.role_id == 4
+#     and enrollment.user_id not in users_with_certs
+# ):
+#   code = f"CERT-{uuid.uuid4().hex[:10].upper()}"
+#  new_certificates.append(
+#     Certificate(
+#        user_id=enrollment.user_id,
+#       course_id=course.id,
+#      certificate_code=code,
+# )
+# )
+
+# if new_certificates:
+#   db.add_all(new_certificates)
+
+# return course_repo.update(db, course)
+
+
+# def delete_course(db: Session, course_id: int):
+#   course = course_repo.get_by_id(db, course_id)
+
+#  if not course:
+#     raise Exception("Curso no encontrado")
+
+# enrollment_repo.delete_by_course_id(db, course_id)
+# return course_repo.delete(db, course)
+
+
+# def get_course(db: Session, course_id: int):
+#   return course_repo.get_by_id(db, course_id)
+
+
+# def get_courses_by_subcategory(db: Session, subcategory_id: int):
+#   return course_repo.get_by_subcategory_id(db, subcategory_id)
+
+
+# def get_all_courses(db: Session):
+#   return course_repo.get_all(db)
+
+'''
+def create_default_blocks(course_id: int, business_id: int):
+
+    return [
+        build_lesson_block(
+            content=block["content"],
+            order=block["order"],
+            completion_type=block["completion_type"],
+            is_active=block["is_active"],
+            course_id=course_id,
+            block_type_id=block["type"],
+            business_id=business_id,
+        )
+        for block in constants_default_blocks_mdt.DEFAULT_MDT_BLOCKS
+    ]
+
+
+def build_lesson_block(
+    content: dict,
+    order: int,
+    completion_type: str,
+    is_active: bool,
+    course_id: int,
+    block_type_id: int,
 ):
-
-    if not old_is_mdt and new_is_mdt:
-
-        existing_blocks = lesson_block_repo.get_default_by_course_id(
-            db,
-            course.id,
-        )
-
-        if not existing_blocks:
-
-            blocks = create_default_blocks(course.id)
-
-            lesson_block_repo.create_all(
-                db,
-                blocks,
-            )
-
-    elif old_is_mdt and not new_is_mdt:
-
-        lesson_block_repo.delete_default_by_course_id(
-            db,
-            course.id,
-        )
+    return LessonBlock(
+        content=content,
+        completion_type=completion_type,
+        completion_value=0,
+        order=order,
+        default=True,
+        lesson_id=None,
+        block_type_id=block_type_id,
+        course_id=course_id,
+        date_available=None,
+        is_active=is_active,
+        deleted=False,
+    )
 
 
 def soft_delete_course_cascade(db: Session, course_id: int) -> bool:
@@ -397,3 +488,4 @@ def soft_delete_course_cascade(db: Session, course_id: int) -> bool:
 
     # Si llegamos aquí, el commit ya se realizó con éxito
     return True
+'''

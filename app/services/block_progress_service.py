@@ -6,7 +6,59 @@ from app.models.block_progress import BlockProgress
 from app.repositories import block_progress_repo
 from app.schemas.block_progress import BlockProgressCreate, BlockProgressUpdate
 
+# =====================================================================
+# EXCEPCIONES PERSONALIZADAS
+# =====================================================================
 
+
+class BlockProgressNotFoundError(Exception):
+    pass
+
+
+# =====================================================================
+# SERVICIOS
+# =====================================================================
+
+
+def get_block_progress(db: Session, progress_id: int, business_id: int):
+    progress = block_progress_repo.get_by_id(db, progress_id, business_id)
+
+    if not progress:
+        raise BlockProgressNotFoundError("Progreso no encontrado")
+
+    return progress
+
+
+def get_progress_by_enrollment(db: Session, enrollment_id: int, business_id: int):
+    return block_progress_repo.get_by_enrollment(db, enrollment_id, business_id)
+
+
+def complete_block(
+    db: Session, enrollment_id: int, lesson_block_id: int, business_id: int
+):
+    with db.begin():
+        progress = block_progress_repo.get_by_enrollment_block(
+            db, enrollment_id, lesson_block_id, business_id
+        )
+
+        if not progress:
+            progress = BlockProgress(
+                enrollment_id=enrollment_id,
+                lesson_block_id=lesson_block_id,
+                is_completed=True,
+                started_at=datetime.utcnow(),
+                completed_at=datetime.utcnow(),
+                business_id=business_id,
+            )
+            return block_progress_repo.create(db, progress)
+
+        progress.is_completed = True
+        progress.completed_at = datetime.utcnow()
+
+        return progress
+
+
+"""
 def create_block_progress(db: Session, data: BlockProgressCreate):
     existing = block_progress_repo.get_by_enrollment_block(
         db, data.enrollment_id, data.lesson_block_id
@@ -30,11 +82,6 @@ def get_block_progress(db: Session, progress_id: int):
         raise Exception("Progreso no encontrado")
 
     return progress
-
-
-def get_progress_by_enrollment(db: Session, enrollment_id: int):
-    return block_progress_repo.get_by_enrollment(db, enrollment_id)
-
 
 def update_block_progress(db: Session, progress_id: int, data: BlockProgressUpdate):
     progress = block_progress_repo.get_by_id(db, progress_id)
@@ -81,3 +128,4 @@ def delete_block_progress(db: Session, progress_id: int):
         raise Exception("Progreso no encontrado")
 
     return block_progress_repo.delete(db, progress)
+"""

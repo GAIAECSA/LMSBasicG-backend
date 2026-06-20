@@ -3,15 +3,224 @@ from typing import Optional
 from fastapi import Form, Request, UploadFile
 from sqlalchemy.orm import Session
 
+from app.helpers import delete_files
 from app.models.certificate_template import CertificateTemplate
-from app.repositories import certificate_template_repo
+from app.repositories import certificate_repo, certificate_template_repo
 from app.schemas.certificate_template import (
     CertificateTemplateCreate,
     CertificateTemplateUpdate,
 )
 from app.utils.file_upload import save_certificate_template_image
 
+# =====================================================================
+# EXCEPCIONES PERSONALIZADAS
+# =====================================================================
 
+
+class CertificateTemplateNotFoundError(Exception):
+    pass
+
+
+class CertificateTemplateAlreadyExistsError(Exception):
+    pass
+
+
+# =====================================================================
+# SERVICIOS
+# =====================================================================
+
+
+async def create_certificate_template(
+    db: Session,
+    data: dict,
+    business_id: int,
+    background_image: UploadFile = None,
+    request: Request = None,
+):
+    with db.begin():
+        existing = certificate_template_repo.get_by_course(
+            db, data["course_id"], business_id
+        )
+        if existing:
+            raise CertificateTemplateAlreadyExistsError(
+                "Plantilla existente en el curso"
+            )
+
+        form = await request.form()
+
+        image_url = None
+        if background_image:
+            image_url = save_certificate_template_image(background_image, business_id)
+
+        processed_fields = []
+
+        for field in data.get("fields", []):
+            field = dict(field)
+            field_id = field.get("id")
+
+            file_key = f"signature_{field_id}"
+            file = form.get(file_key)
+
+            if file is not None and getattr(file, "filename", ""):
+                field["signatureImage"] = save_certificate_template_image(
+                    file, business_id
+                )
+            else:
+                field["signatureImage"] = None
+
+            processed_fields.append(field)
+
+        template = CertificateTemplate(
+            course_id=data["course_id"],
+            background_image_url=image_url,
+            fields=processed_fields,
+            qr_config=data.get("qr_config"),
+            business_id=business_id,
+        )
+
+        return certificate_template_repo.create(db, template)
+
+
+async def update_certificate_template(
+    db: Session,
+    template_id: int,
+    data: dict,
+    business_id: int,
+    background_image: UploadFile = None,
+    request: Request = None,
+):
+    with db.begin():
+        template = certificate_template_repo.get_by_id(
+            db,
+            template_id,
+            business_id,
+        )
+
+        if not template:
+            raise CertificateTemplateNotFoundError("Plantilla no encontrada")
+
+        form = await request.form()
+
+        # =========================
+        # Fondo
+        # =========================
+
+        if background_image:
+            if template.background_image_url:
+                delete_files.delete_file(template.background_image_url)
+
+            template.background_image_url = save_certificate_template_image(
+                background_image,
+                business_id,
+            )
+
+        # =========================
+        # Campos
+        # =========================
+
+        existing_fields = template.fields or []
+        incoming_fields = data.get(
+            "fields",
+            existing_fields,
+        )
+
+        existing_by_id = {
+            field.get("id"): field for field in existing_fields if field.get("id")
+        }
+
+        incoming_ids = {field.get("id") for field in incoming_fields if field.get("id")}
+
+        # Eliminar firmas de campos borrados
+        for old_field in existing_fields:
+            old_id = old_field.get("id")
+
+            if old_id not in incoming_ids:
+                old_signature = old_field.get("signatureImage")
+
+                if old_signature:
+                    delete_files.delete_file(old_signature)
+
+        updated_fields = []
+
+        for field in incoming_fields:
+            field = dict(field)
+
+            field_id = field.get("id")
+
+            old_field = existing_by_id.get(
+                field_id,
+                {},
+            )
+
+            old_signature = old_field.get("signatureImage")
+
+            file_key = f"signature_{field_id}"
+            file = form.get(file_key)
+
+            # Nueva firma subida
+            if file is not None and getattr(file, "filename", ""):
+                if old_signature:
+                    delete_files.delete_file(old_signature)
+
+                field["signatureImage"] = save_certificate_template_image(
+                    file,
+                    business_id,
+                )
+
+            # Mantener firma existente
+            else:
+                field["signatureImage"] = old_signature
+
+            updated_fields.append(field)
+
+        template.fields = updated_fields
+
+        template.qr_config = data.get(
+            "qr_config",
+            template.qr_config,
+        )
+
+        return template
+
+
+def delete_certificate_template(
+    db: Session,
+    certificate_template_id: int,
+    business_id: int,
+):
+    with db.begin():
+        template = certificate_template_repo.get_by_id(
+            db, certificate_template_id, business_id
+        )
+
+        if not template:
+            raise CertificateTemplateNotFoundError("Plantilla no encontrada")
+
+        return certificate_template_repo.delete_soft_by_id(db, template, business_id)
+
+
+def get_certificate_template(
+    db: Session,
+    certificate_template_id: int,
+    business_id: int,
+):
+    template = certificate_template_repo.get_by_id(
+        db, certificate_template_id, business_id
+    )
+    if not template:
+        raise CertificateTemplateNotFoundError("Plantilla no encontrada")
+    return template
+
+
+def get_all_certificate_templates(db: Session, business_id):
+    return certificate_template_repo.get_all(db, business_id)
+
+
+def get_certificate_template_by_course(db: Session, course_id: int, business_id):
+    return certificate_template_repo.get_by_course(db, course_id, business_id)
+
+
+"""
 async def create_certificate_template(
     db: Session,
     data: dict,
@@ -129,3 +338,4 @@ def get_all_certificate_templates(db: Session):
 
 def get_certificate_template_by_course(db: Session, course_id: int):
     return certificate_template_repo.get_by_course(db, course_id)
+"""

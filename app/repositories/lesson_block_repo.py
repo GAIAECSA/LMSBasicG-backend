@@ -211,6 +211,27 @@ def get_default_by_course_id(db: Session, course_id: int, business_id: int):
     )
 
 
+def get_no_default_by_course_id(
+    db: Session,
+    course_id: int,
+    business_id: int,
+):
+    return (
+        db.query(LessonBlock)
+        .join(LessonBlock.lesson)
+        .join(Lesson.module)
+        .filter(
+            LessonBlock.deleted.is_(False),
+            LessonBlock.default.is_(False),
+            LessonBlock.business_id == business_id,
+            Lesson.deleted.is_(False),
+            Module.deleted.is_(False),
+            Module.course_id == course_id,
+        )
+        .all()
+    )
+
+
 def get_all_default_blocks_by_course_and_block_type(
     db: Session, course_id: int, block_type_id: int, business_id: int
 ):

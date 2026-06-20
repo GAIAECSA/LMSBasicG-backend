@@ -14,30 +14,38 @@ from app.models.user import User
 logger = logging.getLogger(__name__)
 
 
-def get_survey_blocks_by_course(db: Session, course_id: int):
+def get_survey_blocks_by_course(db: Session, course_id: int, business_id: int):
     logger.info(
-        "[SURVEY_REPORT] Buscando encuestas para curso=%s",
+        "[SURVEY_REPORT] Buscando encuestas para curso=%s, business=%s",
         course_id,
+        business_id,
     )
 
     blocks = (
         db.query(LessonBlock)
         .join(
             Lesson,
-            Lesson.id == LessonBlock.lesson_id,
+            and_(
+                Lesson.id == LessonBlock.lesson_id,
+                Lesson.business_id == business_id,
+                Lesson.deleted.is_(False),
+            ),
         )
         .join(
             Module,
-            Module.id == Lesson.module_id,
+            and_(
+                Module.id == Lesson.module_id,
+                Module.course_id == course_id,
+                Module.business_id == business_id,
+                Module.deleted.is_(False),
+            ),
         )
         .join(
             LessonBlockType,
             LessonBlockType.id == LessonBlock.block_type_id,
         )
         .filter(
-            Module.course_id == course_id,
-            Lesson.deleted.is_(False),
-            Module.deleted.is_(False),
+            LessonBlock.business_id == business_id,
             LessonBlock.deleted.is_(False),
             LessonBlockType.key == "survey",
         )
@@ -49,19 +57,7 @@ def get_survey_blocks_by_course(db: Session, course_id: int):
         .all()
     )
 
-    logger.info(
-        "[SURVEY_REPORT] Encuestas encontradas=%s",
-        len(blocks),
-    )
-
-    for block in blocks:
-        logger.info(
-            "[SURVEY_REPORT] block_id=%s lesson_id=%s type_id=%s",
-            block.id,
-            block.lesson_id,
-            block.block_type_id,
-        )
-
+    logger.info("[SURVEY_REPORT] Encuestas encontradas=%s", len(blocks))
     return blocks
 
 
@@ -70,11 +66,13 @@ def get_enrollments_with_optional_survey_responses(
     course_id: int,
     block_id: int,
     role_id: int,
+    business_id: int,
 ):
     logger.info(
-        "[SURVEY_REPORT] Consultando estudiantes curso=%s bloque=%s",
+        "[SURVEY_REPORT] Consultando estudiantes curso=%s bloque=%s business=%s",
         course_id,
         block_id,
+        business_id,
     )
 
     rows = (
@@ -93,6 +91,7 @@ def get_enrollments_with_optional_survey_responses(
             User,
             and_(
                 Enrollment.user_id == User.id,
+                User.business_id == business_id,
                 User.deleted.is_(False),
             ),
         )
@@ -101,12 +100,14 @@ def get_enrollments_with_optional_survey_responses(
             and_(
                 SurveyResponse.enrollment_id == Enrollment.id,
                 SurveyResponse.lesson_block_id == block_id,
+                SurveyResponse.business_id == business_id,
                 SurveyResponse.deleted.is_(False),
             ),
         )
         .filter(
             Enrollment.course_id == course_id,
             Enrollment.role_id == role_id,
+            Enrollment.business_id == business_id,
             Enrollment.deleted.is_(False),
         )
         .order_by(
@@ -116,9 +117,5 @@ def get_enrollments_with_optional_survey_responses(
         .all()
     )
 
-    logger.info(
-        "[SURVEY_REPORT] Estudiantes encontrados=%s",
-        len(rows),
-    )
-
+    logger.info("[SURVEY_REPORT] Estudiantes encontrados=%s", len(rows))
     return rows

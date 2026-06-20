@@ -1,6 +1,7 @@
 from sqlalchemy.orm import Session
 
 from app.models.course import Course
+from app.models.enrollment import Enrollment
 from app.models.lesson import Lesson
 from app.models.lesson_block import LessonBlock
 from app.models.module import Module
@@ -50,6 +51,28 @@ def delete_soft_by_enrollment(
             SurveyResponse.enrollment_id == enrollment_id,
             SurveyResponse.business_id == business_id,
             SurveyResponse.deleted.is_(False),
+        )
+        .update({"deleted": True}, synchronize_session=False)
+    )
+
+
+def delete_soft_by_user(
+    db: Session,
+    user_id: int,
+    business_id: int,
+) -> None:
+    (
+        db.query(SurveyResponse)
+        .join(
+            Enrollment,
+            SurveyResponse.enrollment_id == Enrollment.id,
+        )
+        .filter(
+            SurveyResponse.business_id == business_id,
+            SurveyResponse.deleted.is_(False),
+            Enrollment.user_id == user_id,
+            Enrollment.business_id == business_id,
+            Enrollment.deleted.is_(False),
         )
         .update({"deleted": True}, synchronize_session=False)
     )
@@ -257,6 +280,21 @@ def get_all_by_lesson_block(db: Session, lesson_block_id: int, business_id: int)
         db.query(SurveyResponse)
         .filter(
             SurveyResponse.lesson_block_id == lesson_block_id,
+            SurveyResponse.business_id == business_id,
+            SurveyResponse.deleted == False,
+        )
+        .all()
+    )
+
+
+def get_by_enrollment_lesson_block(
+    db: Session, enrollment_id: int, lesson_block_id: int, business_id: int
+):
+    return (
+        db.query(SurveyResponse)
+        .filter(
+            SurveyResponse.lesson_block_id == lesson_block_id,
+            SurveyResponse.enrollment_id == enrollment_id,
             SurveyResponse.business_id == business_id,
             SurveyResponse.deleted == False,
         )

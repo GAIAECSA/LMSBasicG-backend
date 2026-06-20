@@ -1,18 +1,90 @@
 # app/services/privacy_policy_service.py
-from sqlalchemy.orm import Session
+import logging
+import os
+
 from fastapi import UploadFile
+from sqlalchemy.orm import Session
 
 from app.models.privacy_policy import PrivacyPolicy
 from app.repositories import privacy_policy_repo
 from app.schemas.privacy_policy import PrivacyPolicyCreate, PrivacyPolicyUpdate
 from app.utils.file_upload import save_policy_privacy_file
 
-import os
-import logging
-
 logger = logging.getLogger(__name__)
 
+# =====================================================================
+# EXCEPCIONES PERSONALIZADAS
+# =====================================================================
 
+
+class VersionExistError(Exception):
+    pass
+
+
+class PrivacyPolicyNotFound(Exception):
+    pass
+
+
+# =====================================================================
+# SERVICIOS
+# =====================================================================
+
+
+def create_privacy_policy(
+    db: Session,
+    data: PrivacyPolicyCreate,
+    business_id: int,
+    file: UploadFile | None,
+):
+
+    with db.begin():
+
+        existing = privacy_policy_repo.get_by_version(db, data.version, business_id)
+
+        if existing:
+            raise VersionExistError("La versión ya existe")
+
+        file_url = None
+
+        if file:
+            file_data = save_policy_privacy_file(file, business_id)
+            file_url = file_data["file_url"]
+
+        privacy_policy = PrivacyPolicy(
+            **data.model_dump(exclude={"file_url"}),
+            file_url=file_url,
+            business_id=business_id
+        )
+
+        privacy_policy_repo.deactivate(db, business_id)
+
+        return privacy_policy_repo.create(db, privacy_policy)
+
+
+def get_privacy_policy(db: Session, privacy_policy_id: int, business_id: int):
+    privacy_policy = privacy_policy_repo.get_by_id(db, privacy_policy_id, business_id)
+
+    if not privacy_policy:
+        raise PrivacyPolicyNotFound("Política no encontrada")
+
+    return privacy_policy
+
+
+def get_all_privacy_policies(db: Session, business_id: int):
+    return privacy_policy_repo.get_all(db, business_id)
+
+
+def get_active_privacy_policy(db: Session, business_id: int):
+
+    privacy_policy = privacy_policy_repo.get_active(db, business_id)
+
+    if not privacy_policy:
+        raise PrivacyPolicyNotFound("No existe una política activa")
+
+    return privacy_policy
+
+
+"""
 def create_privacy_policy(
     db: Session,
     data: PrivacyPolicyCreate,
@@ -76,3 +148,4 @@ def get_active_privacy_policy(db: Session):
         raise Exception("No existe una política activa")
 
     return privacy_policy
+"""

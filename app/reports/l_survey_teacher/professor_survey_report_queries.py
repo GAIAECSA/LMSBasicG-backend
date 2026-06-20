@@ -14,19 +14,27 @@ from app.models.user import User
 logger = logging.getLogger(__name__)
 
 
-def get_survey_blocks_by_course(db: Session, course_id: int):
+def get_survey_blocks_by_course(db: Session, course_id: int, business_id: int):
     logger.info(
-        "[PROFESSOR_SURVEY_REPORT] Buscando encuestas para curso=%s",
+        "[PROFESSOR_SURVEY_REPORT] Buscando encuestas para curso=%s, business=%s",
         course_id,
+        business_id,
     )
 
     blocks = (
         db.query(LessonBlock)
-        .join(Lesson, Lesson.id == LessonBlock.lesson_id)
-        .join(Module, Module.id == Lesson.module_id)
+        .join(
+            Lesson,
+            and_(Lesson.id == LessonBlock.lesson_id, Lesson.business_id == business_id),
+        )
+        .join(
+            Module,
+            and_(Module.id == Lesson.module_id, Module.business_id == business_id),
+        )
         .join(LessonBlockType, LessonBlockType.id == LessonBlock.block_type_id)
         .filter(
             Module.course_id == course_id,
+            LessonBlock.business_id == business_id,
             Lesson.deleted.is_(False),
             Module.deleted.is_(False),
             LessonBlock.deleted.is_(False),
@@ -52,11 +60,13 @@ def get_enrollments_with_optional_survey_responses(
     course_id: int,
     block_id: int,
     role_id: int,
+    business_id: int,
 ):
     logger.info(
-        "[PROFESSOR_SURVEY_REPORT] Consultando docentes curso=%s bloque=%s",
+        "[PROFESSOR_SURVEY_REPORT] Consultando docentes curso=%s bloque=%s business=%s",
         course_id,
         block_id,
+        business_id,
     )
 
     rows = (
@@ -71,6 +81,7 @@ def get_enrollments_with_optional_survey_responses(
             User,
             and_(
                 Enrollment.user_id == User.id,
+                User.business_id == business_id,
                 User.deleted.is_(False),
             ),
         )
@@ -79,12 +90,14 @@ def get_enrollments_with_optional_survey_responses(
             and_(
                 SurveyResponse.enrollment_id == Enrollment.id,
                 SurveyResponse.lesson_block_id == block_id,
+                SurveyResponse.business_id == business_id,
                 SurveyResponse.deleted.is_(False),
             ),
         )
         .filter(
             Enrollment.course_id == course_id,
             Enrollment.role_id == role_id,
+            Enrollment.business_id == business_id,
             Enrollment.deleted.is_(False),
         )
         .order_by(

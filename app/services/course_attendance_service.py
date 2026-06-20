@@ -1,11 +1,108 @@
 from sqlalchemy.orm import Session
 
+from app.constants import constants_attendance_state
 from app.models.attendance import Attendance
 from app.models.course_attendance import CourseAttendance
 from app.repositories import attendance_repo, course_attendance_repo, enrollment_repo
 from app.schemas.course_attendance import CourseAttendanceCreate, CourseAttendanceUpdate
 
+# =====================================================================
+# EXCEPCIONES PERSONALIZADAS
+# =====================================================================
 
+
+class CourseAttendanceNotFoundError(Exception):
+    pass
+
+
+# =====================================================================
+# SERVICIOS
+# =====================================================================
+
+
+def create_course_attendance(
+    db: Session,
+    data: CourseAttendanceCreate,
+    business_id: int,
+):
+
+    with db.begin():
+
+        course_attendance = CourseAttendance(
+            **data.model_dump(), business_id=business_id
+        )
+
+        created = course_attendance_repo.create(db, course_attendance)
+
+        enrollments = enrollment_repo.get_all_by_course(db, data.course_id, business_id)
+
+        attendances = [
+            Attendance(
+                enrollment_id=e.id,
+                course_attendance_id=created.id,
+                attendance_state=constants_attendance_state.ATTENDANCE_STATE_PENDING,
+                business_id=business_id,
+            )
+            for e in enrollments
+        ]
+
+        attendance_repo.create_bulk(db, attendances)
+
+    return created
+
+
+def update_course_attendance(
+    db: Session,
+    course_attendance_id: int,
+    data: CourseAttendanceUpdate,
+    business_id: int,
+):
+    with db.begin():
+        course_attendance = course_attendance_repo.get_by_id(
+            db, course_attendance_id, business_id
+        )
+        if not course_attendance:
+            raise CourseAttendanceNotFoundError("No encontrado")
+
+        update_data = data.model_dump(exclude_unset=True)
+
+        for key, value in update_data.items():
+            setattr(course_attendance, key, value)
+
+        return course_attendance
+
+
+def delete_course_attendance(
+    db: Session,
+    course_attendance_id: int,
+    business_id: int,
+):
+    with db.begin():
+        course_attendance = course_attendance_repo.get_by_id(
+            db, course_attendance_id, business_id
+        )
+
+        if not course_attendance:
+            raise CourseAttendanceNotFoundError("No encontrado")
+
+        attendance_repo.delete_soft_by_course_attendance(
+            db, course_attendance_id, business_id
+        )
+
+        return course_attendance_repo.delete_soft_by_id(
+            db, course_attendance_id, business_id
+        )
+
+
+def get_course_attendance(db: Session, course_attendance_id: int, business_id: int):
+    return course_attendance_repo.get_by_id(db, course_attendance_id, business_id)
+
+
+def get_course_attendances_by_course(db: Session, course_id: int, business_id: int):
+    return course_attendance_repo.get_by_course(db, course_id, business_id)
+
+
+"""
 def create_course_attendance(db: Session, data: CourseAttendanceCreate):
 
     try:
@@ -78,3 +175,4 @@ def get_course_attendance(db: Session, course_attendance_id: int):
 
 def get_course_attendances_by_course(db: Session, course_id: int):
     return course_attendance_repo.get_by_course(db, course_id)
+"""

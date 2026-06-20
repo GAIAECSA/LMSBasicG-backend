@@ -2,6 +2,7 @@ from sqlalchemy.orm import Session
 
 from app.models.block_progress import BlockProgress
 from app.models.course import Course
+from app.models.enrollment import Enrollment
 from app.models.lesson import Lesson
 from app.models.lesson_block import LessonBlock
 from app.models.module import Module
@@ -58,6 +59,28 @@ def delete_soft_by_enrollment(
             BlockProgress.enrollment_id == enrollment_id,
             BlockProgress.business_id == business_id,
             BlockProgress.deleted.is_(False),
+        )
+        .update({"deleted": True}, synchronize_session=False)
+    )
+
+
+def delete_soft_by_user(
+    db: Session,
+    user_id: int,
+    business_id: int,
+) -> None:
+    (
+        db.query(BlockProgress)
+        .join(
+            Enrollment,
+            BlockProgress.enrollment_id == Enrollment.id,
+        )
+        .filter(
+            BlockProgress.business_id == business_id,
+            BlockProgress.deleted.is_(False),
+            Enrollment.user_id == user_id,
+            Enrollment.business_id == business_id,
+            Enrollment.deleted.is_(False),
         )
         .update({"deleted": True}, synchronize_session=False)
     )

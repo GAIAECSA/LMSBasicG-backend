@@ -9,7 +9,7 @@ from app.models.user import User
 TEACHER_ROLE_ID = 3
 
 
-def get_teacher_attendance_report_data(db: Session, course_id: int):
+def get_teacher_attendance_report_data(db: Session, course_id: int, business_id: int):
     """
     Recupera todas las sesiones de asistencia programadas para un curso
     junto con el estado de asistencia marcado para el docente.
@@ -28,6 +28,7 @@ def get_teacher_attendance_report_data(db: Session, course_id: int):
             Attendance,
             and_(
                 Attendance.course_attendance_id == CourseAttendance.id,
+                Attendance.business_id == business_id,
                 Attendance.deleted.is_(False),
             ),
         )
@@ -36,6 +37,7 @@ def get_teacher_attendance_report_data(db: Session, course_id: int):
             and_(
                 Enrollment.id == Attendance.enrollment_id,
                 Enrollment.course_id == course_id,
+                Enrollment.business_id == business_id,
                 Enrollment.role_id == TEACHER_ROLE_ID,
                 Enrollment.deleted.is_(False),
             ),
@@ -44,11 +46,13 @@ def get_teacher_attendance_report_data(db: Session, course_id: int):
             User,
             and_(
                 User.id == Enrollment.user_id,
+                User.business_id == business_id,
                 User.deleted.is_(False),
             ),
         )
         .filter(
             CourseAttendance.course_id == course_id,
+            CourseAttendance.business_id == business_id,
             CourseAttendance.deleted.is_(False),
         )
         .order_by(

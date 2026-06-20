@@ -1,9 +1,11 @@
-from pydantic import BaseModel, field_validator
 from typing import Optional
+
 from fastapi import Form
-from app.schemas.user import UserBasicResponse, UserCreate
+from pydantic import BaseModel, field_validator
+
 from app.schemas.course import CourseBasicResponse
 from app.schemas.role import RoleBasicResponse
+from app.schemas.user import UserBasicResponse, UserCreate
 
 
 class EnrollmentCreate(BaseModel):
@@ -42,8 +44,6 @@ class EnrollmentUpdate(BaseModel):
     comment: Optional[str] = None
     reference_code: Optional[str] = None
 
-    user_id: Optional[int] = None
-    course_id: Optional[int] = None
     role_id: Optional[int] = None
 
     @classmethod
@@ -52,16 +52,12 @@ class EnrollmentUpdate(BaseModel):
         accepted: Optional[bool] = Form(None),
         reference_code: Optional[str] = Form(None),
         comment: Optional[str] = Form(None),
-        user_id: Optional[int] = Form(None),
-        course_id: Optional[int] = Form(None),
         role_id: Optional[int] = Form(None),
     ):
         return cls(
             accepted=accepted,
             reference_code=reference_code,
             comment=comment,
-            user_id=user_id,
-            course_id=course_id,
             role_id=role_id,
         )
 

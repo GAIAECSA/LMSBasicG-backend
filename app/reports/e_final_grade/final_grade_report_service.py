@@ -21,6 +21,8 @@ from .final_grade_report_schemas import (
 def generate_course_final_grades_pdf(
     db: Session,
     course_id: int,
+    business_id: int,
+    domain: str,
 ):
     # 1. Validar curso
     course = (
@@ -28,6 +30,7 @@ def generate_course_final_grades_pdf(
         .filter(
             Course.id == course_id,
             Course.deleted.is_(False),
+            Course.business_id == business_id,
         )
         .first()
     )
@@ -36,11 +39,17 @@ def generate_course_final_grades_pdf(
         raise ValueError("Curso no encontrado")
 
     # 2. Obtener bloques evaluables (Headers)
-    evaluable_blocks = get_evaluable_blocks(db=db, course_id=course_id)
+    evaluable_blocks = get_evaluable_blocks(
+        db=db,
+        course_id=course_id,
+        business_id=business_id,
+    )
 
     headers = []
+
     for block in evaluable_blocks:
         title = f"Bloque {block.id}"
+
         try:
             if isinstance(block.content, dict):
                 title = block.content.get("title", f"Bloque {block.id}")
@@ -58,12 +67,25 @@ def generate_course_final_grades_pdf(
             )
         )
 
-    # 3. Obtener Estudiantes (Filas)
-    students = get_course_students(db=db, course_id=course_id)
+    # 3. Obtener estudiantes (Filas)
+    students = get_course_students(
+        db=db,
+        course_id=course_id,
+        business_id=business_id,
+    )
 
-    # 4. Obtener Notas y armar mapa en memoria: mapa[enrollment_id][block_id] = score
-    hw_scores = get_homework_scores(db=db, course_id=course_id)
-    qz_scores = get_quizz_scores(db=db, course_id=course_id)
+    # 4. Obtener notas y construir mapa
+    hw_scores = get_homework_scores(
+        db=db,
+        course_id=course_id,
+        business_id=business_id,
+    )
+
+    qz_scores = get_quizz_scores(
+        db=db,
+        course_id=course_id,
+        business_id=business_id,
+    )
 
     scores_map = {student.enrollment_id: {} for student in students}
 
@@ -75,31 +97,35 @@ def generate_course_final_grades_pdf(
         if qz.enrollment_id in scores_map:
             scores_map[qz.enrollment_id][qz.lesson_block_id] = qz.score
 
-    # 5. Construir filas del reporte evaluando condiciones de entrega
+    # 5. Construir filas del reporte
     report_rows = []
     total_blocks_count = len(headers)
 
     for student in students:
         grades = []
         total_score = 0.0
+
         student_scores = scores_map[student.enrollment_id]
 
         for block in evaluable_blocks:
             if block.id not in student_scores:
-                # No existe el registro en HomeworkResponse ni QuizzResponse
                 grades.append("No entregado")
+
             else:
                 score = student_scores[block.id]
+
                 if score is None:
-                    # Existe el registro pero el campo score es nulo
                     grades.append("Sin calificación")
+
                 else:
-                    # Tiene calificación
                     score_float = float(score)
+
                     grades.append(f"{score_float:.2f}")
+
                     total_score += score_float
 
         average = total_score / total_blocks_count if total_blocks_count > 0 else 0.0
+
         status = "PASÓ" if average >= 7.0 else "NO PASÓ"
 
         report_rows.append(
@@ -122,5 +148,6 @@ def generate_course_final_grades_pdf(
     # 7. Exportar PDF
     return export_final_grade_report_pdf(
         report=report_data,
+        domain=domain,
         generated_at=datetime.now().strftime("%d/%m/%Y %H:%M"),
     )

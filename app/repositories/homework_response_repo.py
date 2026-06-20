@@ -56,6 +56,28 @@ def delete_soft_by_enrollment(
     )
 
 
+def delete_soft_by_user(
+    db: Session,
+    user_id: int,
+    business_id: int,
+) -> None:
+    (
+        db.query(HomeworkResponse)
+        .join(
+            Enrollment,
+            HomeworkResponse.enrollment_id == Enrollment.id,
+        )
+        .filter(
+            HomeworkResponse.business_id == business_id,
+            HomeworkResponse.deleted.is_(False),
+            Enrollment.user_id == user_id,
+            Enrollment.business_id == business_id,
+            Enrollment.deleted.is_(False),
+        )
+        .update({"deleted": True}, synchronize_session=False)
+    )
+
+
 def delete_soft_by_lesson_block(
     db: Session,
     lesson_block_id: int,
@@ -238,6 +260,26 @@ def get_all_by_enrollment(db: Session, enrollment_id: int, business_id: int):
             HomeworkResponse.deleted == False,
             HomeworkResponse.business_id == business_id,
             HomeworkResponse.enrollment_id == enrollment_id,
+        )
+        .all()
+    )
+
+
+def get_all_by_enrollment_count_towards_grade(
+    db: Session, enrollment_id: int, business_id: int
+):
+    return (
+        db.query(HomeworkResponse)
+        .join(HomeworkResponse.lesson_block)
+        .filter(
+            # Filtros de HomeworkResponse
+            HomeworkResponse.deleted == False,
+            HomeworkResponse.business_id == business_id,
+            HomeworkResponse.enrollment_id == enrollment_id,
+            # Filtros de seguridad y lógica en LessonBlock
+            LessonBlock.counts_toward_grade == True,
+            LessonBlock.deleted == False,
+            LessonBlock.business_id == business_id,
         )
         .all()
     )

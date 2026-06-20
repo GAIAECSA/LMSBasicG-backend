@@ -4,7 +4,59 @@ from app.models.attendance import Attendance
 from app.repositories import attendance_repo
 from app.schemas.attendance import AttendanceCreate, AttendanceUpdate
 
+# =====================================================================
+# EXCEPCIONES PERSONALIZADAS
+# =====================================================================
 
+
+class AttendanceNotFoundError(Exception):
+    pass
+
+
+# =====================================================================
+# SERVICIOS
+# =====================================================================
+
+
+def update_attendance(
+    db: Session, attendance_id: int, data: AttendanceUpdate, business_id: int
+):
+    with db.begin():
+        attendance = attendance_repo.get_by_id(db, attendance_id, business_id)
+
+        if not attendance:
+            raise AttendanceNotFoundError("Asistencia no encontrada")
+
+        update_data = data.model_dump(
+            exclude_unset=True, exclude={"enrollment_id", "course_attendance_id"}
+        )
+
+        for key, value in update_data.items():
+            setattr(attendance, key, value)
+
+        return attendance
+
+
+def get_attendance(db: Session, attendance_id: int, business_id: int):
+    attendance = attendance_repo.get_by_id(db, attendance_id, business_id)
+    if not attendance:
+        raise AttendanceNotFoundError("Asistencia no encontrada")
+    return attendance
+
+
+def get_all_attendance_by_course_attendance(
+    db: Session, course_attendance_id: int, business_id: int
+):
+    return attendance_repo.get_all_by_course_attendance(
+        db, course_attendance_id, business_id
+    )
+
+
+def get_all_attendance_by_enrollment(db: Session, enrollment_id: int, business_id: int):
+    return attendance_repo.get_all_by_enrollment(db, enrollment_id, business_id)
+
+
+"""
 def create_attendance(db: Session, data: AttendanceCreate):
     existing = attendance_repo.get_by_enrollment_and_course_attendance(
         db, data.enrollment_id, data.course_attendance_id
@@ -56,3 +108,4 @@ def get_all_attendance_by_course_attendance(db: Session, course_attendance_id: i
 
 def get_all_attendance_by_enrollment(db: Session, enrollment_id: int):
     return attendance_repo.get_all_by_enrollment(db, enrollment_id)
+"""

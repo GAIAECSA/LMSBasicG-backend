@@ -1,6 +1,6 @@
 from typing import Optional
 
-from pydantic import BaseModel, ConfigDict, EmailStr, field_validator
+from pydantic import BaseModel, ConfigDict, EmailStr, ValidationInfo, field_validator
 
 
 class UserCreate(BaseModel):
@@ -13,53 +13,49 @@ class UserCreate(BaseModel):
     phone_number: Optional[str] = None
     departament: Optional[str] = None
 
-    @field_validator("email")
-    def validate_email(cls, v):
+    @field_validator(
+        "username", "password", "firstname", "lastname", "email", check_fields=False
+    )
+    @classmethod
+    def validate_not_empty(cls, v: Optional[str], info: ValidationInfo):
         if v is None:
             return v
 
         v = v.strip()
-
         if not v:
-            raise ValueError("El correo electrónico no puede estar vacío")
+            mensajes = {
+                "username": "El nombre de usuario",
+                "password": "La contraseña",
+                "firstname": "El nombre",
+                "lastname": "El apellido",
+                "email": "El correo electrónico",
+            }
+            campo = mensajes.get(info.field_name, "El campo")
+            raise ValueError(f"{campo} no puede estar vacío")
 
         return v
 
-    @field_validator("username")
-    def validate_username(cls, v):
+    @field_validator("phone_number")
+    @classmethod
+    def validate_phone_number(cls, v: Optional[str]):
+        if v is None:
+            return v
+
         v = v.strip()
-
         if not v:
-            raise ValueError("El nombre de usuario no puede estar vacío")
+            raise ValueError("El número de teléfono no puede estar vacío")
+
+        check_val = v.replace("+", "", 1) if v.startswith("+") else v
+        if not check_val.isdigit():
+            raise ValueError(
+                "El número de teléfono solo debe contener números y opcionalmente un '+' al inicio"
+            )
 
         return v
 
-    @field_validator("password")
-    def validate_password(cls, v):
-        v = v.strip()
 
-        if not v:
-            raise ValueError("La contraseña no puede estar vacía")
-
-        return v
-
-    @field_validator("firstname")
-    def validate_firstname(cls, v):
-        v = v.strip()
-
-        if not v:
-            raise ValueError("El nombre no puede estar vacío")
-
-        return v
-
-    @field_validator("lastname")
-    def validate_lastname(cls, v):
-        v = v.strip()
-
-        if not v:
-            raise ValueError("El apellido no puede estar vacío")
-
-        return v
+class UserRegister(UserCreate):
+    domain: str
 
 
 class UserUpdate(BaseModel):
@@ -72,63 +68,43 @@ class UserUpdate(BaseModel):
     phone_number: Optional[str] = None
     departament: Optional[str] = None
 
-    @field_validator("email")
-    def validate_email(cls, v):
+    @field_validator(
+        "username", "password", "firstname", "lastname", "email", check_fields=False
+    )
+    @classmethod
+    def validate_not_empty(cls, v: Optional[str], info: ValidationInfo):
         if v is None:
             return v
 
         v = v.strip()
-
         if not v:
-            raise ValueError("El correo electrónico no puede estar vacío")
+            mensajes = {
+                "username": "El nombre de usuario",
+                "password": "La contraseña",
+                "firstname": "El nombre",
+                "lastname": "El apellido",
+                "email": "El correo electrónico",
+            }
+            campo = mensajes.get(info.field_name, "El campo")
+            raise ValueError(f"{campo} no puede estar vacío")
 
         return v
 
-    @field_validator("username")
-    def validate_username(cls, v):
+    @field_validator("phone_number")
+    @classmethod
+    def validate_phone_number(cls, v: Optional[str]):
         if v is None:
             return v
 
         v = v.strip()
-
         if not v:
-            raise ValueError("El nombre de usuario no puede estar vacío")
+            raise ValueError("El número de teléfono no puede estar vacío")
 
-        return v
-
-    @field_validator("password")
-    def validate_password(cls, v):
-        if v is None:
-            return v
-
-        v = v.strip()
-
-        if not v:
-            raise ValueError("La contraseña no puede estar vacía")
-
-        return v
-
-    @field_validator("firstname")
-    def validate_firstname(cls, v):
-        if v is None:
-            return v
-
-        v = v.strip()
-
-        if not v:
-            raise ValueError("El nombre no puede estar vacío")
-
-        return v
-
-    @field_validator("lastname")
-    def validate_lastname(cls, v):
-        if v is None:
-            return v
-
-        v = v.strip()
-
-        if not v:
-            raise ValueError("El apellido no puede estar vacío")
+        check_val = v.replace("+", "", 1) if v.startswith("+") else v
+        if not check_val.isdigit():
+            raise ValueError(
+                "El número de teléfono solo debe contener números y opcionalmente un '+' al inicio"
+            )
 
         return v
 

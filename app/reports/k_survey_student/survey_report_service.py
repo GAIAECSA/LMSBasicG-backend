@@ -26,16 +26,24 @@ STUDENT_ROLE_ID = 4
 def _extract_numeric_score(value) -> float | None:
     if value is None:
         return None
+
     if isinstance(value, (int, float)):
         return float(value)
 
     match = re.match(r"^\s*(\d+(?:\.\d+)?)", str(value))
+
     if match:
         return float(match.group(1))
+
     return None
 
 
-def generate_course_surveys_pdf(db: Session, course_id: int):
+def generate_course_surveys_pdf(
+    db: Session,
+    course_id: int,
+    business_id: int,
+    domain: str,
+):
     logger.info(
         "[SURVEY_REPORT] ===== INICIO REPORTE CURSO %s =====",
         course_id,
@@ -46,20 +54,25 @@ def generate_course_surveys_pdf(db: Session, course_id: int):
         .filter(
             Course.id == course_id,
             Course.deleted.is_(False),
+            Course.business_id == business_id,
         )
         .first()
     )
+
+    if not course:
+        raise ValueError("Curso no encontrado")
 
     logger.info(
         "[SURVEY_REPORT] Curso encontrado=%s",
         course is not None,
     )
 
-    course_name = course.name if course else f"Curso ID: {course_id}"
+    course_name = course.name
 
     survey_blocks = get_survey_blocks_by_course(
         db=db,
         course_id=course_id,
+        business_id=business_id,
     )
 
     logger.info(
@@ -80,6 +93,7 @@ def generate_course_surveys_pdf(db: Session, course_id: int):
             course_id=course_id,
             block_id=block.id,
             role_id=STUDENT_ROLE_ID,
+            business_id=business_id,
         )
 
         logger.info(
@@ -206,5 +220,6 @@ def generate_course_surveys_pdf(db: Session, course_id: int):
 
     return export_survey_report_pdf(
         report=report_data,
+        domain=domain,
         generated_at=datetime.now().strftime("%d/%m/%Y %H:%M"),
     )

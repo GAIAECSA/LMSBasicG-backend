@@ -1,6 +1,7 @@
 from sqlalchemy.orm import Session, joinedload
 
 from app.models.course import Course
+from app.models.enrollment import Enrollment
 from app.models.lesson import Lesson
 from app.models.lesson_block import LessonBlock
 from app.models.module import Module
@@ -50,6 +51,28 @@ def delete_soft_by_enrollment(
             QuizzResponse.enrollment_id == enrollment_id,
             QuizzResponse.business_id == business_id,
             QuizzResponse.deleted.is_(False),
+        )
+        .update({"deleted": True}, synchronize_session=False)
+    )
+
+
+def delete_soft_by_user(
+    db: Session,
+    user_id: int,
+    business_id: int,
+) -> None:
+    (
+        db.query(QuizzResponse)
+        .join(
+            Enrollment,
+            QuizzResponse.enrollment_id == Enrollment.id,
+        )
+        .filter(
+            QuizzResponse.business_id == business_id,
+            QuizzResponse.deleted.is_(False),
+            Enrollment.user_id == user_id,
+            Enrollment.business_id == business_id,
+            Enrollment.deleted.is_(False),
         )
         .update({"deleted": True}, synchronize_session=False)
     )
@@ -252,6 +275,26 @@ def get_all_by_enrollment(db: Session, enrollment_id: int, business_id: int):
             QuizzResponse.deleted == False,
             QuizzResponse.enrollment_id == enrollment_id,
             QuizzResponse.business_id == business_id,
+        )
+        .all()
+    )
+
+
+def get_all_by_enrollment_count_towards_grade(
+    db: Session, enrollment_id: int, business_id: int
+):
+    return (
+        db.query(QuizzResponse)
+        .join(QuizzResponse.lesson_block)
+        .filter(
+            # Filtros de QuizzResponse
+            QuizzResponse.deleted == False,
+            QuizzResponse.enrollment_id == enrollment_id,
+            QuizzResponse.business_id == business_id,
+            # Filtros de LessonBlock
+            LessonBlock.counts_toward_grade == True,
+            LessonBlock.deleted == False,
+            LessonBlock.business_id == business_id,
         )
         .all()
     )
