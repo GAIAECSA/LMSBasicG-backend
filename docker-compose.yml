@@ -3,16 +3,23 @@ version: "3.9"
 services:
   api:
     build: .
-    container_name: fastapi_app_mdt_lms
+    container_name: athena_back
     ports:
-      - "9002:9002"
+      - "9000:9000"
     volumes:
       - ./app:/app/app
-      - mdt_demo_uploads:/app/uploads
+      - athena:/app/uploads
     env_file:
       - .env
     restart: always
+    networks:
+      - red_puente
 
 volumes:
-  mdt_demo_uploads:
+  athena:
+    external: true
+
+networks:
+  red_puente:
+    name: athena_global_net
     external: true
