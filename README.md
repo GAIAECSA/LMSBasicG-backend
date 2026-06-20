@@ -49,7 +49,7 @@ docker run -d \
   docker logs -f fastapi_app_mdt_lms
 
 
-  docker volume create mdt_demo_uploads
+  docker volume create athena_uploads
 
   # creacion de subdirectorios
 
